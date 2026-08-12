@@ -3,71 +3,146 @@
 
 <head>
     <meta charset="UTF-8">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Finanças Online</title>
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-
-        button {
-            margin-right: 10px;
-            padding: 8px 14px;
-        }
-
-        #status {
-            margin: 20px 0;
-            font-weight: bold;
-        }
-
-        #resultado {
-            white-space: pre-wrap;
-            background: #f5f5f5;
-            padding: 15px;
-        }
-
-        table {
-            border-collapse: collapse;
-            margin-top: 20px;
-            font-size: 12px;
-        }
-
-        th,
-        td {
-            border: 1px solid #ccc;
-            padding: 5px;
-            white-space: nowrap;
-        }
-
-        th {
-            font-weight: bold;
-        }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="./styles.css">
 </head>
 
 <body>
 
-    <h1>Finanças Online</h1>
+    <header class="app-header">
+        <div class="brand">
+            <span class="brand-icon"><i class="fa-solid fa-chart-line"></i></span>
+            <div>
+                <span class="brand-name">FinançasOnline</span>
+                <span class="brand-subtitle">Seu patrimônio em movimento</span>
+            </div>
+        </div>
 
-    <button id="btnCarregar">
-        Carregar patrimônio
-    </button>
+        <nav class="tab-navigation" aria-label="Navegação principal" role="tablist">
+            <button
+                class="tab-button active"
+                type="button"
+                role="tab"
+                aria-selected="true"
+                aria-controls="tab-patrimonio-consolidado"
+                data-tab="tab-patrimonio-consolidado">
+                <i class="fa-solid fa-clipboard-list"></i>
+                <span>Patrimônio Consolidado</span>
+            </button>
+            <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="tab-carteira-consolidada" data-tab="tab-carteira-consolidada">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Carteira Consolidada</span>
+            </button>
+            <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="tab-rentabilidade" data-tab="tab-rentabilidade">
+                <i class="fa-solid fa-arrow-trend-up"></i>
+                <span>Rentabilidade</span>
+            </button>
+            <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="tab-patrimonio" data-tab="tab-patrimonio">
+                <i class="fa-solid fa-wallet"></i>
+                <span>Patrimônio</span>
+            </button>
+            <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="tab-tabela-carteira" data-tab="tab-tabela-carteira">
+                <i class="fa-solid fa-table-list"></i>
+                <span>Tabela Carteira</span>
+            </button>
+            <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="tab-tabela-rentabilidade" data-tab="tab-tabela-rentabilidade">
+                <i class="fa-solid fa-chart-column"></i>
+                <span>Tabela Rentabilidade</span>
+            </button>
+        </nav>
+    </header>
 
-    <div id="status">
-        Inicializando...
-    </div>
+    <main class="app-main">
+        <section id="tab-patrimonio-consolidado" class="tab-content active" role="tabpanel">
+            <div class="page-heading">
+                <div>
+                    <span class="eyebrow"><i class="fa-solid fa-sparkles"></i> Visão geral</span>
+                    <h1>Patrimônio Consolidado</h1>
+                    <p>Atualize suas cotações e acompanhe sua carteira em um só lugar.</p>
+                </div>
+            </div>
 
-    <table id="tabela"></table>
+            <div class="content-card portfolio-card">
+                <div class="card-toolbar">
+                    <div>
+                        <h2><i class="fa-solid fa-wallet"></i> Seus ativos</h2>
+                        <p>Consulte e atualize os indicadores de mercado da sua carteira.</p>
+                    </div>
+                    <div class="action-buttons">
+                        <button id="btnCarregar" class="button button-secondary" type="button">
+                            <i class="fa-solid fa-rotate"></i>
+                            Carregar patrimônio
+                        </button>
+                    </div>
+                </div>
 
-    <pre id="resultado"></pre>
+                <div id="status" class="status-message" aria-live="polite">Inicializando...</div>
 
-    <script
-        type="module"
-        src="./app.js">
-    </script>
+                <div class="table-wrapper">
+                    <table id="tabela"></table>
+                </div>
 
+                <pre id="resultado" class="progress-output" aria-live="polite"></pre>
+            </div>
+        </section>
+
+        <section id="tab-carteira-consolidada" class="tab-content" role="tabpanel" hidden>
+            <div class="placeholder-card">
+                <div class="placeholder-icon"><i class="fa-solid fa-chart-pie"></i></div>
+                <span class="badge">Em desenvolvimento</span>
+                <h2>Carteira Consolidada</h2>
+                <p>Gráficos, KPIs e indicadores visuais desta seção serão implementados em breve.</p>
+            </div>
+        </section>
+
+        <section id="tab-rentabilidade" class="tab-content" role="tabpanel" hidden>
+            <div class="placeholder-card">
+                <div class="placeholder-icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                <span class="badge">Em desenvolvimento</span>
+                <h2>Rentabilidade</h2>
+                <p>Gráficos, KPIs e indicadores visuais desta seção serão implementados em breve.</p>
+            </div>
+        </section>
+
+        <section id="tab-patrimonio" class="tab-content" role="tabpanel" hidden>
+            <div class="placeholder-card">
+                <div class="placeholder-icon"><i class="fa-solid fa-coins"></i></div>
+                <span class="badge">Em desenvolvimento</span>
+                <h2>Patrimônio</h2>
+                <p>Gráficos, KPIs e indicadores visuais desta seção serão implementados em breve.</p>
+            </div>
+        </section>
+
+        <section id="tab-tabela-carteira" class="tab-content" role="tabpanel" hidden>
+            <div class="placeholder-card">
+                <div class="placeholder-icon"><i class="fa-solid fa-table-list"></i></div>
+                <span class="badge">Em desenvolvimento</span>
+                <h2>Tabela Carteira</h2>
+                <p>Gráficos, KPIs e indicadores visuais desta seção serão implementados em breve.</p>
+            </div>
+        </section>
+
+        <section id="tab-tabela-rentabilidade" class="tab-content" role="tabpanel" hidden>
+            <div class="placeholder-card">
+                <div class="placeholder-icon"><i class="fa-solid fa-chart-column"></i></div>
+                <span class="badge">Em desenvolvimento</span>
+                <h2>Tabela Rentabilidade</h2>
+                <p>Gráficos, KPIs e indicadores visuais desta seção serão implementados em breve.</p>
+            </div>
+        </section>
+    </main>
+
+    <script type="module" src="./app.js"></script>
 </body>
 
 </html>

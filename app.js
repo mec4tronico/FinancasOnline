@@ -50,6 +50,8 @@ let patrimonio = [];
 const status = document.getElementById("status");
 const resultado = document.getElementById("resultado");
 const btnCarregar = document.getElementById("btnCarregar");
+const botoesAbas = document.querySelectorAll(".tab-button");
+const conteudosAbas = document.querySelectorAll(".tab-content");
 let btnAtualizarTodos = null;
 
 
@@ -74,6 +76,41 @@ function criarBotaoAtualizarTodos() {
     }
 
     return botao;
+}
+
+
+// ============================================================
+// NAVEGAÇÃO POR ABAS
+// ============================================================
+
+function ativarAba(idAba) {
+
+    for (const botao of botoesAbas) {
+
+        const estaAtiva = botao.dataset.tab === idAba;
+
+        botao.classList.toggle("active", estaAtiva);
+        botao.setAttribute("aria-selected", String(estaAtiva));
+    }
+
+    for (const conteudo of conteudosAbas) {
+
+        const estaAtiva = conteudo.id === idAba;
+
+        conteudo.classList.toggle("active", estaAtiva);
+        conteudo.hidden = !estaAtiva;
+    }
+}
+
+
+function configurarAbas() {
+
+    for (const botao of botoesAbas) {
+
+        botao.addEventListener("click", () => {
+            ativarAba(botao.dataset.tab);
+        });
+    }
 }
 
 
@@ -581,6 +618,8 @@ if (btnAtualizarTodos) {
 // ============================================================
 // INICIALIZAÇÃO
 // ============================================================
+
+configurarAbas();
 
 mostrarStatus(
     "Aplicação pronta."
