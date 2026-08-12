@@ -11,9 +11,9 @@
 //      coluna 2 = TIPO
 // 4. Lê dados_mercados.csv (separado por ,)
 // 5. Verifica a data geral de atualização
-// 6. Se tiver menos de 24 horas:
+// 6. Se tiver menos de 24 horas (e não for forçado):
 //      não faz scraping
-// 7. Se tiver 24 horas ou mais:
+// 7. Se tiver 24 horas ou mais (ou forçado pelo botão):
 //      faz scraping de todos os ativos
 // 8. Grava dados_mercados.csv através do Worker CSV
 // 9. Exibe os dados de mercado
@@ -52,10 +52,20 @@ iniciarCarteiraConsolidada();
 
 
 // ============================================================
+// FUNÇÃO PARA BURLAR AS 24H VIA BOTÃO
+// ============================================================
+
+function forcarAtualizacaoMercado() {
+    console.log("Atualização manual solicitada. Bypassando regra de 24h...");
+    iniciarAplicacao(true);
+}
+
+
+// ============================================================
 // FUNÇÃO PRINCIPAL
 // ============================================================
 
-async function iniciarAplicacao() {
+async function iniciarAplicacao(forcar = false) {
 
     console.log(
         "========================================"
@@ -289,7 +299,7 @@ async function iniciarAplicacao() {
 
 
     // ========================================================
-    // 6. VERIFICAR DATA DE ATUALIZAÇÃO
+    // 6. VERIFICAR DATA DE ATUALIZAÇÃO (SE NÃO FOR FORÇADO)
     // ========================================================
 
     const atualizacao =
@@ -298,7 +308,7 @@ async function iniciarAplicacao() {
         );
 
 
-    if (atualizacao) {
+    if (!forcar && atualizacao) {
 
         console.log(
             "Data de atualização:",
@@ -366,7 +376,7 @@ async function iniciarAplicacao() {
     );
 
     console.log(
-        "INICIANDO NOVO SCRAPING"
+        "INICIANDO NOVO SCRAPING (FORÇADO OU EXPIRADO)"
     );
 
 
@@ -1666,9 +1676,12 @@ function exibirResultadosScraping(
 
     let html = `
 
-        <h2>
-            Dados de Mercado
-        </h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2>Dados de Mercado</h2>
+            <button onclick="forcarAtualizacaoMercado()" style="padding: 8px 16px; cursor: pointer; font-weight: bold;">
+                🔄 Atualizar DADOS
+            </button>
+        </div>
 
         <p>
 
