@@ -7,7 +7,9 @@ import {
 // CONFIGURAÇÃO
 // ============================================================
 
-const ARQUIVO_CSV = "./patrimonio_consolidado.csv";
+const ARQUIVO_CSV =
+    "https://raw.githubusercontent.com/mec4tronico/FinancasOnline/main/" +
+    "patrimonio_consolidado.csv";
 const URL_WORKER_CSV =
     "https://financasonline-csv.augusto-gouveia2000.workers.dev/";
 
@@ -135,7 +137,7 @@ function mostrarStatus(mensagem) {
 async function carregarCSV(forcarAtualizacao = false) {
 
     mostrarStatus(
-        "Carregando patrimonio_consolidado.csv..."
+        "Carregando patrimonio_consolidado.csv do GitHub..."
     );
 
     const urlCSV = forcarAtualizacao
