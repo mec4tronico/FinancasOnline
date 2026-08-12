@@ -8,6 +8,8 @@ import {
 // ============================================================
 
 const ARQUIVO_CSV = "./patrimonio_consolidado.csv";
+const URL_WORKER_CSV =
+    "https://financasonline-csv.augusto-gouveia2000.workers.dev/";
 
 const COLUNAS = [
     "Ativo",
@@ -334,8 +336,23 @@ async function atualizarTodosOsAtivos() {
     registrarProgresso(`Mantidos sem altera\u00e7\u00e3o: ${erros}`);
 
     mostrarPatrimonio();
+
+    registrarProgresso("");
+    registrarProgresso("Gravando patrimonio_consolidado.csv...");
+
+    const respostaGravacao = await gravarPatrimonioNoWorker();
+
+    registrarProgresso("CSV gravado com sucesso no GitHub.");
+
+    if (respostaGravacao.commit) {
+        registrarProgresso(
+            `Commit: ${respostaGravacao.commit}`
+        );
+    }
+
     mostrarStatus(
-        `Scraping conclu\u00eddo: ${atualizados} atualizados, ${erros} mantidos.`
+        `Scraping e grava\u00e7\u00e3o conclu\u00eddos: ` +
+        `${atualizados} atualizados, ${erros} mantidos.`
     );
 }
 
@@ -448,6 +465,58 @@ function mostrarPatrimonio() {
 
     tabela.appendChild(thead);
     tabela.appendChild(tbody);
+}
+
+
+// ============================================================
+// GERAR E GRAVAR CSV
+// ============================================================
+
+function gerarCSVPatrimonio() {
+
+    const linhas = [COLUNAS.join(",")];
+
+    for (const registro of patrimonio) {
+
+        const valores = COLUNAS.map(
+            coluna => registro[coluna]
+        );
+
+        linhas.push(valores.join(","));
+    }
+
+    return linhas.join("\n");
+}
+
+
+async function gravarPatrimonioNoWorker() {
+
+    const resposta = await fetch(URL_WORKER_CSV, {
+        method: "POST",
+        headers: {
+            "Content-Type": "text/csv; charset=UTF-8"
+        },
+        body: gerarCSVPatrimonio()
+    });
+
+    let dados;
+
+    try {
+        dados = await resposta.json();
+    } catch {
+        throw new Error(
+            `Worker de CSV retornou uma resposta inv\u00e1lida (HTTP ${resposta.status}).`
+        );
+    }
+
+    if (!resposta.ok || !dados.sucesso) {
+        throw new Error(
+            dados.erro ||
+            `Worker de CSV retornou HTTP ${resposta.status}.`
+        );
+    }
+
+    return dados;
 }
 
 
