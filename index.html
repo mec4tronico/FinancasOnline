@@ -10,7 +10,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Teste de Scraping - StatusInvest</title>
+    <title>Carteira de Investimentos</title>
 
 
     <style>
@@ -133,7 +133,7 @@
         <h2>Teste do Scraping</h2>
 
         <p class="carregando">
-            Aguardando execução...
+            Testando scraping...
         </p>
 
     </div>
@@ -141,19 +141,91 @@
 
     <!-- =====================================================
          JAVASCRIPT
-         ===================================================== -->
+         =====================================================
 
-    <!--
-        scraping.js vem primeiro porque o app.js
-        utiliza a função definida nele.
+         IMPORTANTE:
+
+         Date.now() cria uma versão diferente a cada
+         carregamento da página.
+
+         Exemplo:
+
+         scraping.js?v=1755000000000
+
+         Na próxima abertura:
+
+         scraping.js?v=1755000005000
+
+         Portanto o navegador não reutiliza o JS antigo
+         armazenado no cache.
     -->
 
-    <script src="scraping.js"></script>
+
+    <script>
+
+        const versaoArquivos =
+            Date.now();
 
 
-    <!-- Aplicação principal -->
+        // ----------------------------------------------------
+        // Carregar scraping.js
+        // ----------------------------------------------------
 
-    <script src="app.js"></script>
+        const scriptScraping =
+            document.createElement("script");
+
+
+        scriptScraping.src =
+            "scraping.js?v=" +
+            versaoArquivos;
+
+
+        document.body.appendChild(
+            scriptScraping
+        );
+
+
+        // ----------------------------------------------------
+        // Carregar app.js somente depois do scraping.js
+        // ----------------------------------------------------
+
+        scriptScraping.onload =
+            function () {
+
+                console.log(
+                    "scraping.js carregado."
+                );
+
+
+                const scriptApp =
+                    document.createElement(
+                        "script"
+                    );
+
+
+                scriptApp.src =
+                    "app.js?v=" +
+                    versaoArquivos;
+
+
+                document.body.appendChild(
+                    scriptApp
+                );
+
+            };
+
+
+        scriptScraping.onerror =
+            function () {
+
+                console.error(
+                    "ERRO: não foi possível " +
+                    "carregar scraping.js."
+                );
+
+            };
+
+    </script>
 
 
 </body>
