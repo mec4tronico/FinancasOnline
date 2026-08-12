@@ -169,110 +169,81 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
     // ====================================================
 
     function obterDY12MAcao() {
-      console.log(`[${ticker}] Procurando DY 12M específico de ação...`);
 
-      // ESTRATÉGIA CORRIGIDA: Buscar container pequeno que contém DY e seu valor,
-      // garantindo que não estamos pegando Valorização por engano.
+    console.log(
+        `[${ticker}] Procurando DY 12M específico de ação...`
+    );
 
-      const candidatosTitulo = documento.querySelectorAll("h1, h2, h3, h4, h5, div, span, small, p, label");
+    // ====================================================
+    // Estrutura atual do StatusInvest:
+    //
+    // <div ...>
+    //   <div title="Dividend Yield com base nos últimos 12 meses">
+    //       ...
+    //       <h3>Dividend Yield</h3>
+    //       ...
+    //   </div>
+    //
+    //   <strong class="value">6,33</strong>
+    //   <span>%</span>
+    // </div>
+    //
+    // O percentual NÃO está dentro do strong.value.
+    // ====================================================
 
-      for (const elemento of candidatosTitulo) {
-        const texto = elemento.textContent.trim().toUpperCase();
+    const elementos =
+        documento.querySelectorAll("h3");
+
+    for (const elemento of elementos) {
+
+        const texto =
+            elemento.textContent
+                .trim()
+                .toUpperCase();
+
         if (texto !== "DIVIDEND YIELD") {
-          continue;
+            continue;
         }
 
-        // Sobe apenas 3 níveis (não 8) para evitar pegar container gigante com Valorização
-        let pai = elemento.parentElement;
-        let tentativas = 0;
+        // Procura o bloco principal do indicador.
+        const bloco =
+            elemento.closest(".info");
 
-        while (pai && tentativas < 3) {
-          const textoPaiUpper = pai.textContent.toUpperCase();
-          const temValorizacaoNoPai = textoPaiUpper.includes("VALORIZAÇÃO");
-
-          // Se o pai contém Valorização, ele é grande demais - só aceita se tiver estrutura que separa DY e Valorização
-          // No HTML real da PETR4:
-          // Dividend Yield
-          // 6,34 %
-          // Últimos 12 meses
-          // e separadamente:
-          // Valorização (12m)
-          // 44,60%
-          // Esses dois NÃO podem estar no mesmo pai pequeno.
-
-          const valoresNoPai = pai.querySelectorAll("strong.value");
-
-          // CASO 1: Pai pequeno com apenas 1 valor e sem Valorização -> é o DY
-          if (valoresNoPai.length === 1 && !temValorizacaoNoPai) {
-            const textoValor = valoresNoPai[0].textContent.trim();
-            if (/\d+[,.]\d+\s*%/.test(textoValor)) {
-              console.log(`[${ticker}] DY 12M encontrado via container específico:`, textoValor);
-              return textoValor.replace("%", "").trim();
-            }
-          }
-
-          // CASO 2: Pai com múltiplos valores mas contém DY e Valorização juntos
-          // Precisa garantir que pegamos o valor que pertence ao DY, não à Valorização
-          if (valoresNoPai.length >= 1) {
-            // Pega o texto do pai para verificar proximidade
-            const posDY = textoPaiUpper.indexOf("DIVIDEND YIELD");
-            const posValorizacao = textoPaiUpper.indexOf("VALORIZAÇÃO");
-
-            for (const valorEl of valoresNoPai) {
-              const textoValor = valorEl.textContent.trim();
-              if (!/\d+[,.]\d+\s*%/.test(textoValor)) continue;
-
-              const posValor = textoPaiUpper.indexOf(textoValor.toUpperCase().replace("%", "").trim());
-
-              // Se tem Valorização no pai, o DY deve vir antes e o valor deve estar entre DY e Valorização, com distância curta
-              if (posValorizacao !== -1) {
-                if (posDY !== -1 && posValor !== -1 && posDY < posValor && posValor < posValorizacao) {
-                  // Distância entre DY e seu valor deve ser pequena (<150 chars) - evita pegar Valorização distante
-                  if ((posValor - posDY) < 150) {
-                    console.log(`[${ticker}] DY 12M encontrado via container com Valorização próxima:`, textoValor);
-                    return textoValor.replace("%", "").trim();
-                  }
-                }
-              } else {
-                // Sem Valorização no pai, valor deve estar próximo ao título DY (<100 chars)
-                if (posDY !== -1 && posValor !== -1 && posValor > posDY && (posValor - posDY) < 100) {
-                  console.log(`[${ticker}] DY 12M encontrado via container específico:`, textoValor);
-                  return textoValor.replace("%", "").trim();
-                }
-              }
-            }
-          }
-
-          pai = pai.parentElement;
-          tentativas++;
+        if (!bloco) {
+            continue;
         }
-      }
 
-      // SEGUNDA TENTATIVA CORRIGIDA: Busca em divs pequenos, não em elementos gigantes
-      // Evita regex com 500 chars que pegava Valorização por engano
-      const divs = documento.querySelectorAll("div");
-      for (const div of divs) {
-        const textoDiv = div.textContent;
-        if (!/Dividend\s+Yield/i.test(textoDiv)) continue;
-        // Se div é muito grande e contém Valorização, pula - é container gigante
-        if (/Valorização/i.test(textoDiv) && textoDiv.length > 400) continue;
+        const valor =
+            bloco.querySelector("strong.value");
 
-        // Procura porcentagem dentro do mesmo div pequeno (até 100 chars após DY)
-        const match = textoDiv.match(/Dividend\s+Yield[\s\S]{0,100}?(\d+[,.]\d+)\s*%/i);
-        if (match) {
-          // Garante que não é Valorização: verifica se antes da porcentagem não tem "Valorização"
-          const trechoAntes = textoDiv.substring(0, textoDiv.indexOf(match[0]) + 20).toUpperCase();
-          if (!trechoAntes.includes("VALORIZAÇÃO")) {
-            console.log(`[${ticker}] DY 12M encontrado por texto no mesmo card:`, match[1]);
-            return match[1].trim();
-          }
+        if (!valor) {
+            continue;
         }
-      }
 
-      console.error(`[${ticker}] DY 12M de ação não encontrado.`);
-      return null;
+        const dyEncontrado =
+            valor.textContent.trim();
+
+        if (
+            /^\d+[,.]\d+$/.test(
+                dyEncontrado
+            )
+        ) {
+
+            console.log(
+                `[${ticker}] DY 12M encontrado:`,
+                dyEncontrado
+            );
+
+            return dyEncontrado;
+        }
     }
 
+    console.error(
+        `[${ticker}] DY 12M de ação não encontrado.`
+    );
+
+    return null;
+}
     // ====================================================
     // 10. EXTRAIR OS CINCO DADOS
     // ====================================================
