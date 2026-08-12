@@ -50,6 +50,33 @@ const resultado = document.getElementById("resultado");
 const btnCarregar = document.getElementById("btnCarregar");
 const btnScraping = document.getElementById("btnScraping");
 const btnBaixar = document.getElementById("btnBaixar");
+let btnAtualizarTodos = null;
+
+
+// ============================================================
+// BOTÃO DE ATUALIZAÇÃO COMPLETA
+// Criado pelo JavaScript para preservar a estrutura do HTML.
+// ============================================================
+
+function criarBotaoAtualizarTodos() {
+
+    if (document.getElementById("btnAtualizarTodos")) {
+        return document.getElementById("btnAtualizarTodos");
+    }
+
+    const botao = document.createElement("button");
+
+    botao.id = "btnAtualizarTodos";
+    botao.textContent = "Atualizar todos";
+
+    if (btnScraping) {
+        btnScraping.insertAdjacentElement("afterend", botao);
+    } else if (btnBaixar) {
+        btnBaixar.insertAdjacentElement("beforebegin", botao);
+    }
+
+    return botao;
+}
 
 
 // ============================================================
@@ -213,17 +240,119 @@ function dadosScrapingValidos(dados) {
 
     for (const campo of camposObrigatorios) {
 
+        const valor = dados[campo];
+
         if (
-            dados[campo] === undefined ||
-            dados[campo] === null ||
-            dados[campo] === "" ||
-            dados[campo] === "ERRO"
+            valor === undefined ||
+            valor === null ||
+            (typeof valor === "string" && valor.trim() === "") ||
+            (typeof valor === "string" && valor.trim() === "ERRO")
         ) {
             return false;
         }
     }
 
     return true;
+}
+
+
+// ============================================================
+// SCRAPING DE TODOS OS ATIVOS
+// ============================================================
+
+async function atualizarTodosOsAtivos() {
+
+    if (patrimonio.length === 0) {
+        throw new Error(
+            "Carregue o patrim\u00f4nio antes de atualizar todos os ativos."
+        );
+    }
+
+    const total = patrimonio.length;
+    let atualizados = 0;
+    let erros = 0;
+    const mensagens = [];
+
+    function registrarProgresso(mensagem) {
+
+        mensagens.push(mensagem);
+        console.log(mensagem);
+
+        if (resultado) {
+            resultado.textContent = mensagens.join("\n");
+        }
+    }
+
+    registrarProgresso("========================================");
+    registrarProgresso("SCRAPING DO PATRIM\u00d4NIO");
+    registrarProgresso("========================================");
+
+    for (let indice = 0; indice < total; indice++) {
+
+        const registro = patrimonio[indice];
+
+        registrarProgresso("");
+        registrarProgresso(
+            `Processando ${indice + 1}/${total}: ${registro.Ativo}`
+        );
+        registrarProgresso(`Tipo: ${registro.Tipo}`);
+
+        try {
+
+            const dados =
+                await buscarIndicadoresStatusInvest(
+                    registro.Ativo,
+                    registro.Tipo
+                );
+
+            if (!dadosScrapingValidos(dados)) {
+
+                erros++;
+                registrarProgresso("Resultado: ERRO");
+                registrarProgresso("Dados anteriores mantidos.");
+
+                continue;
+            }
+
+            // Atualiza exclusivamente as colunas 6–11.
+            registro.DataAtualizacao = formatarDataAtualizacao();
+            registro.ValorAtual = dados.valorAtual;
+            registro.Min52 = dados.min52;
+            registro.Max52 = dados.max52;
+            registro.DY = dados.dy;
+            registro.Valorizacao = dados.valorizacao;
+
+            atualizados++;
+            registrarProgresso("Resultado: OK");
+
+        } catch (erro) {
+
+            // Nenhuma atribui\u00e7\u00e3o ocorre antes da valida\u00e7\u00e3o, logo as
+            // colunas 6–11 permanecem intactas neste caso.
+            console.error(
+                `Erro no scraping de ${registro.Ativo}:`,
+                erro
+            );
+
+            erros++;
+            registrarProgresso("Resultado: ERRO");
+            registrarProgresso("Dados anteriores mantidos.");
+        }
+    }
+
+    registrarProgresso("");
+    registrarProgresso("========================================");
+    registrarProgresso("SCRAPING CONCLU\u00cdDO");
+    registrarProgresso("========================================");
+    registrarProgresso(`Total de ativos: ${total}`);
+    registrarProgresso(`Atualizados com sucesso: ${atualizados}`);
+    registrarProgresso(`Com erro: ${erros}`);
+    registrarProgresso(`Mantidos sem altera\u00e7\u00e3o: ${erros}`);
+
+    mostrarPatrimonio();
+    mostrarStatus(
+        `Scraping conclu\u00eddo: ${atualizados} atualizados, ${erros} mantidos.`
+    );
 }
 
 
@@ -554,6 +683,37 @@ if (btnScraping) {
                 mostrarStatus(
                     `ERRO: ${erro.message}`
                 );
+            }
+        }
+    );
+}
+
+
+btnAtualizarTodos = criarBotaoAtualizarTodos();
+
+if (btnAtualizarTodos) {
+
+    btnAtualizarTodos.addEventListener(
+        "click",
+        async () => {
+
+            btnAtualizarTodos.disabled = true;
+
+            try {
+
+                await atualizarTodosOsAtivos();
+
+            } catch (erro) {
+
+                console.error(erro);
+
+                mostrarStatus(
+                    `ERRO: ${erro.message}`
+                );
+
+            } finally {
+
+                btnAtualizarTodos.disabled = false;
             }
         }
     );
