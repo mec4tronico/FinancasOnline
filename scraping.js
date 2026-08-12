@@ -1,18 +1,25 @@
 // ============================================================
 // scraping.js
-// Scraping StatusInvest via Cloudflare Worker
+// Consulta StatusInvest através do Cloudflare Worker
 // ============================================================
 
-// Seu Cloudflare Worker
 const PROXY_CLOUDFLARE =
     "https://financasonline.augusto-gouveia2000.workers.dev/";
 
-// Timeout máximo por consulta
+
 const TIMEOUT_30_SEGUNDOS = 30000;
 
 
 // ============================================================
 // FUNÇÃO PRINCIPAL
+// Recebe:
+//   ticker = "AXIA3"
+//   tipo   = "acoes"
+//
+// ou:
+//
+//   ticker = "KNCR11"
+//   tipo   = "fii"
 // ============================================================
 
 async function buscarIndicadoresStatusInvest(ticker, tipo) {
@@ -34,7 +41,10 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
     };
 
 
-    console.log("========================================");
+    console.log(
+        "========================================"
+    );
+
 
     console.log(
         `INICIANDO SCRAPING: ${ticker} / ${tipo}`
@@ -44,84 +54,50 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
     try {
 
         // ====================================================
-        // ETAPA 1 — VALIDAR PARÂMETROS
+        // 1. VALIDAR
         // ====================================================
 
-        console.log(
-            `[${ticker}] ETAPA 1 - Validando parâmetros...`
-        );
-
-
-        if (!ticker || !tipo) {
-
-            console.error(
-                `[${ticker}] ERRO ETAPA 1: ` +
-                "Ticker ou tipo não informado."
-            );
-
-            return resultadoErro;
-        }
-
-
         ticker =
-            ticker.trim().toUpperCase();
+            String(ticker)
+                .trim()
+                .toUpperCase();
 
 
         tipo =
-            tipo.trim().toLowerCase();
+            String(tipo)
+                .trim()
+                .toLowerCase();
+
+
+        console.log(
+            `[${ticker}] Parâmetros OK`
+        );
 
 
         if (
-            tipo !== "fii" &&
-            tipo !== "acoes"
+            !ticker ||
+            (
+                tipo !== "acoes" &&
+                tipo !== "fii"
+            )
         ) {
 
             console.error(
-                `[${ticker}] ERRO ETAPA 1: ` +
-                `Tipo inválido: ${tipo}`
+                `[${ticker}] Parâmetros inválidos.`
             );
 
             return resultadoErro;
         }
 
 
-        console.log(
-            `[${ticker}] ETAPA 1 OK`
-        );
-
-
         // ====================================================
-        // ETAPA 2 — DEFINIR CATEGORIA
+        // 2. DEFINIR URL DO STATUSINVEST
         // ====================================================
-
-        console.log(
-            `[${ticker}] ETAPA 2 - Definindo categoria...`
-        );
-
 
         const categoria =
             tipo === "fii"
                 ? "fundos-imobiliarios"
                 : "acoes";
-
-
-        console.log(
-            `[${ticker}] Categoria: ${categoria}`
-        );
-
-
-        console.log(
-            `[${ticker}] ETAPA 2 OK`
-        );
-
-
-        // ====================================================
-        // ETAPA 3 — MONTAR URL DO STATUSINVEST
-        // ====================================================
-
-        console.log(
-            `[${ticker}] ETAPA 3 - Montando URL...`
-        );
 
 
         const urlStatusInvest =
@@ -131,26 +107,16 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
 
 
         console.log(
-            `[${ticker}] URL StatusInvest:`,
+            `[${ticker}] StatusInvest:`,
             urlStatusInvest
         );
 
 
-        console.log(
-            `[${ticker}] ETAPA 3 OK`
-        );
-
-
         // ====================================================
-        // ETAPA 4 — MONTAR URL DO CLOUDFLARE
+        // 3. MONTAR URL DO WORKER
         // ====================================================
 
-        console.log(
-            `[${ticker}] ETAPA 4 - Montando URL do Worker...`
-        );
-
-
-        const urlProxy =
+        const urlWorker =
             PROXY_CLOUDFLARE +
             "?url=" +
             encodeURIComponent(
@@ -159,21 +125,17 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
 
 
         console.log(
-            `[${ticker}] URL do Worker preparada.`
-        );
-
-
-        console.log(
-            `[${ticker}] ETAPA 4 OK`
+            `[${ticker}] Worker:`,
+            urlWorker
         );
 
 
         // ====================================================
-        // ETAPA 5 — ACESSAR WORKER
+        // 4. FETCH COM LIMITE DE 30 SEGUNDOS
         // ====================================================
 
         console.log(
-            `[${ticker}] ETAPA 5 - Acessando Worker...`
+            `[${ticker}] Acessando Worker...`
         );
 
 
@@ -181,7 +143,7 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
             new AbortController();
 
 
-        const temporizador =
+        const timeout =
             setTimeout(
                 () => {
 
@@ -199,9 +161,11 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
 
             resposta =
                 await fetch(
-                    urlProxy,
+                    urlWorker,
                     {
                         method: "GET",
+
+                        cache: "no-store",
 
                         signal:
                             controlador.signal
@@ -209,34 +173,30 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
                 );
 
         }
-        catch (erroFetch) {
+        catch (erro) {
 
-            clearTimeout(
-                temporizador
-            );
+            clearTimeout(timeout);
 
 
             if (
-                erroFetch.name ===
+                erro.name ===
                 "AbortError"
             ) {
 
                 console.error(
-                    `[${ticker}] ERRO ETAPA 5: ` +
-                    "Timeout de 30 segundos."
+                    `[${ticker}] ` +
+                    "ERRO: timeout de 30 segundos."
                 );
 
             }
             else {
 
                 console.error(
-                    `[${ticker}] ERRO ETAPA 5: ` +
-                    "Falha ao acessar o Worker."
+                    `[${ticker}] ` +
+                    "ERRO ao acessar Worker."
                 );
 
-                console.error(
-                    erroFetch
-                );
+                console.error(erro);
 
             }
 
@@ -245,31 +205,24 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
         }
 
 
-        clearTimeout(
-            temporizador
-        );
-
-
-        console.log(
-            `[${ticker}] ETAPA 5 OK - ` +
-            `Status HTTP: ${resposta.status}`
-        );
+        clearTimeout(timeout);
 
 
         // ====================================================
-        // ETAPA 6 — LER HTML
+        // 5. STATUS HTTP
         // ====================================================
 
         console.log(
-            `[${ticker}] ETAPA 6 - Lendo HTML...`
+            `[${ticker}] HTTP:`,
+            resposta.status
         );
 
 
         if (!resposta.ok) {
 
             console.error(
-                `[${ticker}] ERRO ETAPA 6: ` +
-                `HTTP ${resposta.status}`
+                `[${ticker}] ` +
+                `Worker retornou HTTP ${resposta.status}`
             );
 
 
@@ -277,8 +230,24 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
         }
 
 
+        // ====================================================
+        // 6. LER HTML
+        // ====================================================
+
+        console.log(
+            `[${ticker}] Lendo HTML...`
+        );
+
+
         const html =
             await resposta.text();
+
+
+        console.log(
+            `[${ticker}] HTML recebido:`,
+            html.length,
+            "caracteres"
+        );
 
 
         if (
@@ -287,8 +256,7 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
         ) {
 
             console.error(
-                `[${ticker}] ERRO ETAPA 6: ` +
-                "HTML vazio."
+                `[${ticker}] HTML vazio.`
             );
 
 
@@ -296,20 +264,9 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
         }
 
 
-        console.log(
-            `[${ticker}] ETAPA 6 OK - ` +
-            `${html.length} caracteres recebidos.`
-        );
-
-
         // ====================================================
-        // ETAPA 7 — CONVERTER HTML PARA DOM
+        // 7. TRANSFORMAR HTML EM DOM
         // ====================================================
-
-        console.log(
-            `[${ticker}] ETAPA 7 - Criando DOM...`
-        );
-
 
         const parser =
             new DOMParser();
@@ -323,12 +280,13 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
 
 
         console.log(
-            `[${ticker}] ETAPA 7 OK`
+            `[${ticker}] DOM criado.`
         );
 
 
         // ====================================================
-        // FUNÇÃO DE EXTRAÇÃO
+        // 8. FUNÇÃO DE EXTRAÇÃO
+        // Mesma lógica que funcionou no Python
         // ====================================================
 
         function obterValorPorTitulo(titulo) {
@@ -344,33 +302,38 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
                 of elementos
             ) {
 
-                if (
+                const texto =
                     elemento.textContent
-                        .toUpperCase()
-                        .includes(
-                            titulo.toUpperCase()
-                        )
+                        .trim()
+                        .toUpperCase();
+
+
+                if (
+                    texto.includes(
+                        titulo.toUpperCase()
+                    )
                 ) {
 
                     const pai =
                         elemento.closest("div");
 
 
-                    if (pai) {
-
-                        const valor =
-                            pai.querySelector(
-                                "strong.value"
-                            );
+                    if (!pai) {
+                        continue;
+                    }
 
 
-                        if (valor) {
+                    const valor =
+                        pai.querySelector(
+                            "strong.value"
+                        );
 
-                            return valor
-                                .textContent
-                                .trim();
 
-                        }
+                    if (valor) {
+
+                        return valor
+                            .textContent
+                            .trim();
 
                     }
 
@@ -384,11 +347,11 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
 
 
         // ====================================================
-        // ETAPA 8 — EXTRAIR INDICADORES
+        // 9. EXTRAIR OS CINCO DADOS
         // ====================================================
 
         console.log(
-            `[${ticker}] ETAPA 8 - Extraindo indicadores...`
+            `[${ticker}] Extraindo indicadores...`
         );
 
 
@@ -429,13 +392,13 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
 
 
         console.log(
-            `[${ticker}] Mín. 52 semanas:`,
+            `[${ticker}] Mín. 52 Semanas:`,
             min52
         );
 
 
         console.log(
-            `[${ticker}] Máx. 52 semanas:`,
+            `[${ticker}] Máx. 52 Semanas:`,
             max52
         );
 
@@ -453,13 +416,13 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
 
 
         // ====================================================
-        // ETAPA 9 — VALIDAR E RETORNAR
+        // 10. VALIDAR VALOR PRINCIPAL
         // ====================================================
 
         if (!valorAtual) {
 
             console.error(
-                `[${ticker}] ERRO ETAPA 9: ` +
+                `[${ticker}] ` +
                 "Valor Atual não encontrado."
             );
 
@@ -467,6 +430,10 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
             return resultadoErro;
         }
 
+
+        // ====================================================
+        // 11. RETORNAR OBJETO
+        // ====================================================
 
         const resultado = {
 
@@ -488,11 +455,6 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
                 valorizacao || "ERRO"
 
         };
-
-
-        console.log(
-            `[${ticker}] ETAPA 9 OK`
-        );
 
 
         console.log(
@@ -521,9 +483,7 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
         );
 
 
-        console.error(
-            erro
-        );
+        console.error(erro);
 
 
         return resultadoErro;
