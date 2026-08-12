@@ -132,13 +132,19 @@ function mostrarStatus(mensagem) {
 // LER CSV
 // ============================================================
 
-async function carregarCSV() {
+async function carregarCSV(forcarAtualizacao = false) {
 
     mostrarStatus(
         "Carregando patrimonio_consolidado.csv..."
     );
 
-    const resposta = await fetch(ARQUIVO_CSV);
+    const urlCSV = forcarAtualizacao
+        ? `${ARQUIVO_CSV}?atualizadoEm=${Date.now()}`
+        : ARQUIVO_CSV;
+
+    const resposta = await fetch(urlCSV, {
+        cache: "no-store"
+    });
 
     if (!resposta.ok) {
 
@@ -384,6 +390,21 @@ async function atualizarTodosOsAtivos() {
     if (respostaGravacao.commit) {
         registrarProgresso(
             `Commit: ${respostaGravacao.commit}`
+        );
+    }
+
+    registrarProgresso("Recarregando patrimônio gravado...");
+
+    try {
+
+        await carregarCSV(true);
+        registrarProgresso("Tabela recarregada com os dados gravados.");
+
+    } catch (erro) {
+
+        console.error("Erro ao recarregar CSV gravado:", erro);
+        registrarProgresso(
+            "CSV foi gravado, mas não foi possível recarregá-lo agora."
         );
     }
 
