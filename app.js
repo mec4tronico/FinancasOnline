@@ -179,8 +179,7 @@ function converterCSVParaPatrimonio(texto) {
         throw new Error("CSV vazio.");
     }
 
-    const cabecalho = linhas[0]
-        .split(",")
+    const cabecalho = separarLinhaCSV(linhas[0])
         .map(valor => valor.trim());
 
     // --------------------------------------------------------
@@ -223,7 +222,7 @@ function converterCSVParaPatrimonio(texto) {
             continue;
         }
 
-        const valores = linhas[i].split(",");
+        const valores = separarLinhaCSV(linhas[i]);
 
         if (valores.length !== 21) {
 
@@ -246,6 +245,58 @@ function converterCSVParaPatrimonio(texto) {
     }
 
     return dados;
+}
+
+
+// ============================================================
+// LER LINHA CSV
+// Aceita valores entre aspas, incluindo vírgulas decimais como
+// "49,84" e aspas escapadas no padrão CSV ("").
+// ============================================================
+
+function separarLinhaCSV(linha) {
+
+    const valores = [];
+    let valorAtual = "";
+    let dentroDeAspas = false;
+
+    for (let indice = 0; indice < linha.length; indice++) {
+
+        const caractere = linha[indice];
+
+        if (caractere === '"') {
+
+            if (
+                dentroDeAspas &&
+                linha[indice + 1] === '"'
+            ) {
+
+                valorAtual += '"';
+                indice++;
+
+            } else {
+
+                dentroDeAspas = !dentroDeAspas;
+            }
+
+        } else if (caractere === "," && !dentroDeAspas) {
+
+            valores.push(valorAtual);
+            valorAtual = "";
+
+        } else {
+
+            valorAtual += caractere;
+        }
+    }
+
+    if (dentroDeAspas) {
+        throw new Error("CSV possui aspas não fechadas.");
+    }
+
+    valores.push(valorAtual);
+
+    return valores;
 }
 
 
@@ -536,14 +587,35 @@ function gerarCSVPatrimonio() {
 
     for (const registro of patrimonio) {
 
-        const valores = COLUNAS.map(
-            coluna => registro[coluna]
+        const valores = COLUNAS.map(coluna =>
+            escaparValorCSV(registro[coluna])
         );
 
         linhas.push(valores.join(","));
     }
 
     return linhas.join("\n");
+}
+
+
+function escaparValorCSV(valor) {
+
+    if (valor === undefined || valor === null) {
+        return "";
+    }
+
+    const texto = String(valor);
+
+    if (
+        texto.includes(",") ||
+        texto.includes('"') ||
+        texto.includes("\n") ||
+        texto.includes("\r")
+    ) {
+        return `"${texto.replace(/"/g, '""')}"`;
+    }
+
+    return texto;
 }
 
 
