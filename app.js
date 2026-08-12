@@ -8,19 +8,22 @@
 // CONFIGURAÇÃO
 // ============================================================
 
-const VERSAO_APP =
-    Date.now();
+const VERSAO_APP = Date.now();
 
 
 // ============================================================
 // INICIALIZAÇÃO
 // ============================================================
 
-document.addEventListener(
-    "DOMContentLoaded",
-    iniciarAplicacao
-);
+// O app.js é carregado dinamicamente pelo index.html.
+// Por isso NÃO dependemos do DOMContentLoaded.
 
+iniciarAplicacao();
+
+
+// ============================================================
+// FUNÇÃO PRINCIPAL
+// ============================================================
 
 async function iniciarAplicacao() {
 
@@ -55,6 +58,10 @@ async function iniciarAplicacao() {
 
     resultado.innerHTML = `
 
+        <h2>
+            Teste do Scraping
+        </h2>
+
         <p class="carregando">
             Carregando scraping.js...
         </p>
@@ -70,8 +77,9 @@ async function iniciarAplicacao() {
 
         await carregarScraping();
 
+    }
 
-    } catch (erro) {
+    catch (erro) {
 
         console.error(
             "ERRO ao carregar scraping.js:"
@@ -81,6 +89,10 @@ async function iniciarAplicacao() {
 
 
         resultado.innerHTML = `
+
+            <h2>
+                Teste do Scraping
+            </h2>
 
             <p class="erro">
                 ERRO ao carregar scraping.js.
@@ -99,7 +111,7 @@ async function iniciarAplicacao() {
 
 
     // ========================================================
-    // VERIFICAR SE A FUNÇÃO EXISTE
+    // VERIFICAR FUNÇÃO
     // ========================================================
 
     if (
@@ -108,11 +120,15 @@ async function iniciarAplicacao() {
     ) {
 
         console.error(
-            "A função buscarIndicadoresStatusInvest não foi encontrada."
+            "Função buscarIndicadoresStatusInvest não encontrada."
         );
 
 
         resultado.innerHTML = `
+
+            <h2>
+                Teste do Scraping
+            </h2>
 
             <p class="erro">
                 ERRO: função de scraping não encontrada.
@@ -131,7 +147,7 @@ async function iniciarAplicacao() {
 
 
     // ========================================================
-    // PREPARAR TELA
+    // PREPARAR RESULTADO
     // ========================================================
 
     resultado.innerHTML = `
@@ -140,13 +156,11 @@ async function iniciarAplicacao() {
             Teste do Scraping
         </h2>
 
-        <p>
-            Executando testes...
-        </p>
 
         <h3>
             AXIA3 — Ação
         </h3>
+
 
         <pre id="resultado-axia3">
 Aguardando...
@@ -198,11 +212,12 @@ Aguardando...
 
 
     // ========================================================
-    // PAUSA ENTRE OS TESTES
+    // INTERVALO ENTRE TESTES
     // ========================================================
 
     await new Promise(
         resolve =>
+
             setTimeout(
                 resolve,
                 1500
@@ -219,6 +234,7 @@ Aguardando...
         <h3>
             KNCR11 — FII
         </h3>
+
 
         <pre id="resultado-kncr11">
 Aguardando...
