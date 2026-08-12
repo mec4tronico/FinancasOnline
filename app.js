@@ -73,14 +73,14 @@ async function iniciarAplicacao() {
 
     const resultado =
         document.querySelector(
-            "#resultado-scraping"
+            "#resultado-mercado"
         );
 
 
     if (!resultado) {
 
         console.error(
-            "Elemento #resultado-scraping não encontrado."
+            "Elemento #resultado-mercado não encontrado."
         );
 
         return;
