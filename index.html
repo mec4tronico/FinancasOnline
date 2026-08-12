@@ -1,4 +1,50 @@
-/index.html
-/style.css
-/app.js
-/assets/   (opcional, não necessária agora)
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel de Consolidação B3</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 30px; background-color: #f8f9fa; }
+        h2 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 8px; margin-top: 30px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 25px; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        th, td { border: 1px solid #dee2e6; padding: 12px; text-align: left; }
+        th { background-color: #34495e; color: white; }
+        .carregando { color: #d35400; font-style: italic; }
+        .classe-erro { color: #c0392b; font-weight: bold; background-color: #fadbd8; }
+    </style>
+</head>
+<body>
+
+    <h1>Consolidação de Ativos - B3</h1>
+
+    <h2>1. Carteira Original (carteira_b3_consolidada.csv)</h2>
+    <table id="tabela-original">
+        <thead>
+            <tr>
+                <th>Ativo</th>
+                <th>Quantidade</th>
+                <th>Total Investido</th>
+                <th>Data da 1ª Compra</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <h2>2. Indicadores Coletados em Tempo Real (Status Invest)</h2>
+    <table id="tabela-scraping">
+        <thead>
+            <tr>
+                <th>Ativo</th>
+                <th>Valor Atual</th>
+                <th>Mín. 52 Semanas</th>
+                <th>Máx. 52 Semanas</th>
+                <th>Dividend Yield (12M)</th>
+                <th>Valorização (12M)</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script src="app.js"></script>
+</body>
+</html>
