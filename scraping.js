@@ -307,3 +307,7 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
     return resultadoErro;
   }
 }
+
+export {
+    buscarIndicadoresStatusInvest
+};
