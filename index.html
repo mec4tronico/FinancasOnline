@@ -10,7 +10,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Carteira de Investimentos</title>
+    <title>Teste do Scraping</title>
 
 
     <style>
@@ -30,27 +30,21 @@
 
         h2 {
             margin-top: 30px;
-            margin-bottom: 15px;
         }
 
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 30px;
+        h3 {
+            margin-top: 25px;
         }
 
 
-        th,
-        td {
-            border: 1px solid #ccc;
-            padding: 8px;
-            text-align: left;
-        }
-
-
-        th {
-            background: #f2f2f2;
+        pre {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            white-space: pre-wrap;
+            overflow-x: auto;
         }
 
 
@@ -60,22 +54,15 @@
         }
 
 
-        .classe-erro {
-            color: red;
+        .sucesso {
+            color: green;
             font-weight: bold;
         }
 
 
-        #resultado-scraping {
-            margin-top: 30px;
-        }
-
-
-        pre {
-            background: #f5f5f5;
-            padding: 15px;
-            border: 1px solid #ddd;
-            overflow-x: auto;
+        .erro {
+            color: red;
+            font-weight: bold;
         }
 
     </style>
@@ -86,80 +73,23 @@
 <body>
 
 
-    <h1>Carteira de Investimentos</h1>
+    <h1>
+        Teste do Scraping
+    </h1>
 
-
-    <!-- =====================================================
-         CARTEIRA B3
-         ===================================================== -->
-
-    <h2>Carteira B3</h2>
-
-
-    <table id="tabela-original">
-
-        <thead>
-
-            <tr>
-
-                <th>
-                    Dados da Carteira
-                </th>
-
-            </tr>
-
-        </thead>
-
-
-        <tbody>
-
-            <tr>
-
-                <td class="carregando">
-
-                    Carregando carteira...
-
-                </td>
-
-            </tr>
-
-        </tbody>
-
-    </table>
-
-
-    <!-- =====================================================
-         TESTE DO SCRAPING
-         ===================================================== -->
 
     <div id="resultado-scraping">
 
-        <h2>
-            Teste do Scraping
-        </h2>
-
-
         <p class="carregando">
-
-            Testando scraping...
-
+            Carregando aplicação...
         </p>
 
     </div>
 
 
     <!-- =====================================================
-         CARREGAMENTO DOS JAVASCRIPTS
-         =====================================================
-
-         Date.now() impede cache.
-
-         Os dois arquivos são carregados diretamente.
-
-         Não dependemos mais de scraping.js carregar
-         o app.js.
-    -->
-
+         APP.JS É O PONTO DE ENTRADA
+         ===================================================== -->
 
     <script>
 
@@ -173,7 +103,12 @@
 
 
         console.log(
-            "CARREGANDO JAVASCRIPTS"
+            "INDEX.HTML"
+        );
+
+
+        console.log(
+            "Carregando app.js..."
         );
 
 
@@ -182,50 +117,6 @@
             versao
         );
 
-
-        // ----------------------------------------------------
-        // SCRAPING.JS
-        // ----------------------------------------------------
-
-        const scriptScraping =
-            document.createElement(
-                "script"
-            );
-
-
-        scriptScraping.src =
-            "scraping.js?v=" +
-            versao;
-
-
-        scriptScraping.onload =
-            function () {
-
-                console.log(
-                    "scraping.js carregado."
-                );
-
-            };
-
-
-        scriptScraping.onerror =
-            function () {
-
-                console.error(
-                    "ERRO ao carregar scraping.js."
-                );
-
-            };
-
-
-        document.body.appendChild(
-            scriptScraping
-        );
-
-
-        // ----------------------------------------------------
-        // APP.JS
-        // ----------------------------------------------------
 
         const scriptApp =
             document.createElement(
@@ -255,16 +146,30 @@
                     "ERRO ao carregar app.js."
                 );
 
+
+                const resultado =
+                    document.querySelector(
+                        "#resultado-scraping"
+                    );
+
+
+                if (resultado) {
+
+                    resultado.innerHTML = `
+
+                        <p class="erro">
+                            ERRO ao carregar app.js.
+                        </p>
+
+                    `;
+
+                }
+
             };
 
 
         document.body.appendChild(
             scriptApp
-        );
-
-
-        console.log(
-            "Scripts adicionados à página."
         );
 
     </script>
