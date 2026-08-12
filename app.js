@@ -1,48 +1,95 @@
-const ARQUIVO_CARTEIRA = "./carteira_b3_consolidada.csv";
-const ARQUIVO_DADOS_MERCADO = "./dados_mercado.csv";
-const VALIDADE_DADOS_HORAS = 24;
-
-document.addEventListener("DOMContentLoaded", () => {
-    iniciarAplicacao();
-});
+// ============================================================
+// app.js
+// TESTE DO SCRAPING
+// ============================================================
+//
+// Este arquivo, nesta etapa, faz somente:
+//
+// 1. Lê a carteira B3
+// 2. Exibe a Tabela 1
+// 3. Testa o scraping com:
+//      - AXIA3 / acoes
+//      - KNCR11 / fii
+//
+// NÃO:
+// - chama escreverCSV.js
+// - lê dados_mercado.csv
+// - grava CSV
+// - executa loop de ativos
+//
+// ============================================================
 
 
 // ============================================================
-// FLUXO PRINCIPAL DA APLICAÇÃO
+// ARQUIVO DA CARTEIRA
+// ============================================================
+
+const ARQUIVO_CARTEIRA =
+    "./carteira_b3_consolidada.csv";
+
+
+// ============================================================
+// INICIALIZAÇÃO
+// ============================================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        iniciarAplicacao();
+
+    }
+);
+
+
+// ============================================================
+// FLUXO PRINCIPAL
 // ============================================================
 
 async function iniciarAplicacao() {
 
     try {
 
-        // --------------------------------------------------------
+        // ----------------------------------------------------
         // 1. Ler carteira B3
-        // --------------------------------------------------------
+        // ----------------------------------------------------
 
         const textoCarteira =
-            await lerArquivoCSV(ARQUIVO_CARTEIRA);
+            await lerArquivoCSV(
+                ARQUIVO_CARTEIRA
+            );
+
 
         const linhasCarteira =
-            processarCSV(textoCarteira);
+            processarCSV(
+                textoCarteira
+            );
 
 
-        if (linhasCarteira.length <= 1) {
+        if (
+            linhasCarteira.length <= 1
+        ) {
+
             console.error(
                 "Carteira B3 vazia ou sem dados válidos."
             );
+
             return;
+
         }
 
 
-        // --------------------------------------------------------
+        // ----------------------------------------------------
         // 2. Exibir Tabela 1
-        // --------------------------------------------------------
+        // ----------------------------------------------------
 
         const cabecalhosCarteira =
             linhasCarteira[0];
 
+
         const dadosCarteira =
             linhasCarteira.slice(1);
+
 
         preencherTabela1(
             cabecalhosCarteira,
@@ -50,121 +97,15 @@ async function iniciarAplicacao() {
         );
 
 
-        // --------------------------------------------------------
-        // 3. Verificar dados_mercado.csv
-        // --------------------------------------------------------
+        // ----------------------------------------------------
+        // 3. Executar teste do scraping
+        // ----------------------------------------------------
 
-        let precisaAtualizar =
-            true;
-
-
-        try {
-
-            const textoMercado =
-                await lerArquivoCSV(
-                    ARQUIVO_DADOS_MERCADO
-                );
+        await testarScraping();
 
 
-            const dataAtualizacao =
-                obterDataAtualizacao(
-                    textoMercado
-                );
-
-
-            if (dataAtualizacao) {
-
-                const agora =
-                    new Date();
-
-
-                const diferencaMs =
-                    agora.getTime() -
-                    dataAtualizacao.getTime();
-
-
-                const diferencaHoras =
-                    diferencaMs /
-                    (1000 * 60 * 60);
-
-
-                if (
-                    diferencaHoras >= 0 &&
-                    diferencaHoras < VALIDADE_DADOS_HORAS
-                ) {
-
-                    precisaAtualizar = false;
-
-                }
-
-            }
-
-        } catch (erro) {
-
-            // Se o arquivo não existir ou não puder
-            // ser lido, será gerado novamente.
-
-            precisaAtualizar = true;
-
-        }
-
-
-        // --------------------------------------------------------
-        // 4. Se necessário, gerar dados_mercado.csv
-        // --------------------------------------------------------
-
-        if (precisaAtualizar) {
-
-            await gerarDadosMercado(
-                dadosCarteira
-            );
-
-        }
-
-
-        // --------------------------------------------------------
-        // 5. Ler dados_mercado.csv
-        // --------------------------------------------------------
-
-        const textoMercadoFinal =
-            await lerArquivoCSV(
-                ARQUIVO_DADOS_MERCADO
-            );
-
-
-        const linhasMercado =
-            processarCSV(
-                textoMercadoFinal
-            );
-
-
-        if (linhasMercado.length <= 1) {
-
-            console.error(
-                "dados_mercado.csv vazio ou sem dados válidos."
-            );
-
-            return;
-        }
-
-
-        // --------------------------------------------------------
-        // 6. Exibir Tabela 2
-        // --------------------------------------------------------
-
-        const cabecalhosMercado =
-            linhasMercado[0];
-
-        const dadosMercado =
-            linhasMercado.slice(1);
-
-        preencherTabela2(
-            cabecalhosMercado,
-            dadosMercado
-        );
-
-
-    } catch (erro) {
+    }
+    catch (erro) {
 
         console.error(
             "Erro na aplicação:",
@@ -177,10 +118,12 @@ async function iniciarAplicacao() {
 
 
 // ============================================================
-// LÊ UM ARQUIVO CSV
+// LÊ ARQUIVO CSV
 // ============================================================
 
-async function lerArquivoCSV(caminho) {
+async function lerArquivoCSV(
+    caminho
+) {
 
     const resposta =
         await fetch(caminho);
@@ -201,10 +144,12 @@ async function lerArquivoCSV(caminho) {
 
 
 // ============================================================
-// CONVERTE TEXTO CSV EM LINHAS E COLUNAS
+// PROCESSA CSV
 // ============================================================
 
-function processarCSV(texto) {
+function processarCSV(
+    texto
+) {
 
     const linhas =
         texto
@@ -212,29 +157,35 @@ function processarCSV(texto) {
             .split(/\r?\n/);
 
 
-    return linhas.map(linha => {
+    return linhas.map(
+        linha => {
 
-        const delimitador =
-            linha.includes(";")
-                ? ";"
-                : ",";
+            const delimitador =
+                linha.includes(";")
+                    ? ";"
+                    : ",";
 
 
-        return linha
-            .split(delimitador)
-            .map(celula =>
-                celula
-                    .replace(/^["']|["']$/g, "")
-                    .trim()
-            );
+            return linha
+                .split(delimitador)
+                .map(
+                    celula =>
+                        celula
+                            .replace(
+                                /^["']|["']$/g,
+                                ""
+                            )
+                            .trim()
+                );
 
-    });
+        }
+    );
 
 }
 
 
 // ============================================================
-// PREENCHE TABELA 1
+// TABELA 1
 // ============================================================
 
 function preencherTabela1(
@@ -255,202 +206,123 @@ function preencherTabela1(
         );
 
         return;
+
     }
 
 
     tbody.innerHTML = "";
 
 
-    dados.forEach(linha => {
+    dados.forEach(
+        linha => {
 
-        const tr =
-            document.createElement("tr");
-
-
-        linha.forEach(celula => {
-
-            const td =
-                document.createElement("td");
+            const tr =
+                document.createElement(
+                    "tr"
+                );
 
 
-            td.textContent =
-                celula;
+            linha.forEach(
+                celula => {
+
+                    const td =
+                        document.createElement(
+                            "td"
+                        );
 
 
-            tr.appendChild(td);
+                    td.textContent =
+                        celula;
 
-        });
+
+                    tr.appendChild(td);
+
+                }
+            );
 
 
-        tbody.appendChild(tr);
+            tbody.appendChild(tr);
 
-    });
+        }
+    );
 
 }
 
 
 // ============================================================
-// PREENCHE TABELA 2
+// TESTE DO SCRAPING
 // ============================================================
 
-function preencherTabela2(
-    cabecalhos,
-    dados
-) {
+async function testarScraping() {
 
-    const tbody =
+    const area =
         document.querySelector(
-            "#tabela-scraping tbody"
+            "#resultado-scraping"
         );
 
 
-    if (!tbody) {
+    if (!area) {
 
         console.error(
-            "Tabela de dados de mercado não encontrada."
+            "Área #resultado-scraping não encontrada no HTML."
         );
 
         return;
-    }
-
-
-    tbody.innerHTML = "";
-
-
-    dados.forEach(linha => {
-
-        const tr =
-            document.createElement("tr");
-
-
-        linha.forEach(celula => {
-
-            const td =
-                document.createElement("td");
-
-
-            td.textContent =
-                celula;
-
-
-            tr.appendChild(td);
-
-        });
-
-
-        tbody.appendChild(tr);
-
-    });
-
-}
-
-
-// ============================================================
-// OBTÉM A DATA GERAL DE ATUALIZAÇÃO DO CSV
-// ============================================================
-
-function obterDataAtualizacao(textoCSV) {
-
-    const primeiraLinha =
-        textoCSV
-            .trim()
-            .split(/\r?\n/)[0];
-
-
-    if (!primeiraLinha) {
-        return null;
-    }
-
-
-    const partes =
-        primeiraLinha
-            .split(";");
-
-
-    if (
-        partes.length < 2 ||
-        partes[0].trim().toLowerCase() !==
-        "atualizado em"
-    ) {
-
-        return null;
 
     }
 
 
-    const textoData =
-        partes[1].trim();
+    area.innerHTML =
+        "<p>Testando scraping...</p>";
 
 
-    // Esperado:
-    // DD/MM/AAAA HH:MM:SS
+    // ========================================================
+    // TESTE 1 — AÇÃO
+    // ========================================================
 
-    const correspondencia =
-        textoData.match(
-            /^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2}):(\d{2})$/
+    const resultadoAcao =
+        await buscarIndicadoresStatusInvest(
+            "AXIA3",
+            "acoes"
         );
 
 
-    if (!correspondencia) {
-        return null;
-    }
+    // ========================================================
+    // TESTE 2 — FII
+    // ========================================================
 
-
-    const dia =
-        Number(correspondencia[1]);
-
-    const mes =
-        Number(correspondencia[2]) - 1;
-
-    const ano =
-        Number(correspondencia[3]);
-
-    const hora =
-        Number(correspondencia[4]);
-
-    const minuto =
-        Number(correspondencia[5]);
-
-    const segundo =
-        Number(correspondencia[6]);
-
-
-    return new Date(
-        ano,
-        mes,
-        dia,
-        hora,
-        minuto,
-        segundo
-    );
-
-}
-
-
-// ============================================================
-// CHAMA O ESCRITOR DO CSV
-// ============================================================
-
-async function gerarDadosMercado(
-    dadosCarteira
-) {
-
-    if (
-        typeof gerarArquivoDadosMercado !==
-        "function"
-    ) {
-
-        throw new Error(
-            "A função gerarArquivoDadosMercado " +
-            "do arquivo escreverCSV.js não está disponível."
+    const resultadoFII =
+        await buscarIndicadoresStatusInvest(
+            "KNCR11",
+            "fii"
         );
 
-    }
+
+    // ========================================================
+    // EXIBE RESULTADOS
+    // ========================================================
+
+    area.innerHTML = `
+
+        <h2>Teste do Scraping</h2>
+
+        <h3>AXIA3 — Ação</h3>
+
+        <pre>${JSON.stringify(
+            resultadoAcao,
+            null,
+            2
+        )}</pre>
 
 
-    await gerarArquivoDadosMercado(
-        dadosCarteira
-    );
+        <h3>KNCR11 — FII</h3>
+
+        <pre>${JSON.stringify(
+            resultadoFII,
+            null,
+            2
+        )}</pre>
+
+    `;
 
 }
-:::
