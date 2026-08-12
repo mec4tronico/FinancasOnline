@@ -48,8 +48,6 @@ let patrimonio = [];
 const status = document.getElementById("status");
 const resultado = document.getElementById("resultado");
 const btnCarregar = document.getElementById("btnCarregar");
-const btnScraping = document.getElementById("btnScraping");
-const btnBaixar = document.getElementById("btnBaixar");
 let btnAtualizarTodos = null;
 
 
@@ -69,10 +67,8 @@ function criarBotaoAtualizarTodos() {
     botao.id = "btnAtualizarTodos";
     botao.textContent = "Atualizar todos";
 
-    if (btnScraping) {
-        btnScraping.insertAdjacentElement("afterend", botao);
-    } else if (btnBaixar) {
-        btnBaixar.insertAdjacentElement("beforebegin", botao);
+    if (btnCarregar) {
+        btnCarregar.insertAdjacentElement("afterend", botao);
     }
 
     return botao;
@@ -205,18 +201,6 @@ function converterCSVParaPatrimonio(texto) {
     }
 
     return dados;
-}
-
-
-// ============================================================
-// LOCALIZAR ATIVO
-// ============================================================
-
-function encontrarAtivo(ticker) {
-
-    return patrimonio.find(
-        item => item.Ativo === ticker
-    );
 }
 
 
@@ -357,104 +341,6 @@ async function atualizarTodosOsAtivos() {
 
 
 // ============================================================
-// ATUALIZAR SOMENTE COLUNAS 6–11
-// ============================================================
-
-async function atualizarAtivoComScraping(ticker) {
-
-    const registro = encontrarAtivo(ticker);
-
-    if (!registro) {
-
-        throw new Error(
-            `Ativo ${ticker} não encontrado.`
-        );
-    }
-
-    mostrarStatus(
-        `Executando scraping para ${ticker}...`
-    );
-
-    console.log(
-        `Scraping: ${ticker} / ${registro.Tipo}`
-    );
-
-    const dados =
-        await buscarIndicadoresStatusInvest(
-            registro.Ativo,
-            registro.Tipo
-        );
-
-    console.log(
-        "Resultado do scraping:",
-        dados
-    );
-
-    // --------------------------------------------------------
-    // REGRA FUNDAMENTAL
-    //
-    // Se qualquer dado obrigatório estiver inválido,
-    // NÃO ALTERAR NENHUMA DAS COLUNAS 6–11.
-    // --------------------------------------------------------
-
-    if (!dadosScrapingValidos(dados)) {
-
-        mostrarStatus(
-            `Scraping de ${ticker} falhou. ` +
-            `Dados anteriores foram mantidos.`
-        );
-
-        resultado.textContent =
-            JSON.stringify(
-                dados,
-                null,
-                2
-            );
-
-        return false;
-    }
-
-    // --------------------------------------------------------
-    // TODOS OS DADOS VÁLIDOS
-    // Agora podemos atualizar 6–11.
-    // --------------------------------------------------------
-
-    registro.DataAtualizacao =
-        formatarDataAtualizacao();
-
-    registro.ValorAtual =
-        dados.valorAtual;
-
-    registro.Min52 =
-        dados.min52;
-
-    registro.Max52 =
-        dados.max52;
-
-    registro.DY =
-        dados.dy;
-
-    registro.Valorizacao =
-        dados.valorizacao;
-
-    mostrarStatus(
-        `${ticker} atualizado com sucesso.`
-    );
-
-    resultado.textContent =
-        JSON.stringify(
-            dados,
-            null,
-            2
-        );
-
-    mostrarPatrimonio();
-
-    return true;
-}
-
-
-// ============================================================
 // DATA/HORA
 // ============================================================
 
@@ -566,78 +452,6 @@ function mostrarPatrimonio() {
 
 
 // ============================================================
-// GERAR CSV
-// ============================================================
-
-function gerarCSV() {
-
-    const linhas = [];
-
-    // Cabeçalho
-    linhas.push(
-        COLUNAS.join(",")
-    );
-
-    // Dados
-    for (const registro of patrimonio) {
-
-        const valores =
-            COLUNAS.map(
-                coluna => registro[coluna]
-            );
-
-        linhas.push(
-            valores.join(",")
-        );
-    }
-
-    return linhas.join("\n");
-}
-
-
-// ============================================================
-// BAIXAR CSV
-// ============================================================
-
-function baixarCSV() {
-
-    const csv =
-        gerarCSV();
-
-    const blob =
-        new Blob(
-            [csv],
-            {
-                type: "text/csv;charset=utf-8;"
-            }
-        );
-
-    const url =
-        URL.createObjectURL(blob);
-
-    const link =
-        document.createElement("a");
-
-    link.href = url;
-
-    link.download =
-        "patrimonio_consolidado_atualizado.csv";
-
-    document.body.appendChild(link);
-
-    link.click();
-
-    link.remove();
-
-    URL.revokeObjectURL(url);
-
-    mostrarStatus(
-        "CSV atualizado gerado para download."
-    );
-}
-
-
-// ============================================================
 // EVENTOS
 // ============================================================
 
@@ -650,31 +464,6 @@ if (btnCarregar) {
             try {
 
                 await carregarCSV();
-
-            } catch (erro) {
-
-                console.error(erro);
-
-                mostrarStatus(
-                    `ERRO: ${erro.message}`
-                );
-            }
-        }
-    );
-}
-
-
-if (btnScraping) {
-
-    btnScraping.addEventListener(
-        "click",
-        async () => {
-
-            try {
-
-                await atualizarAtivoComScraping(
-                    "AXIA3"
-                );
 
             } catch (erro) {
 
@@ -716,15 +505,6 @@ if (btnAtualizarTodos) {
                 btnAtualizarTodos.disabled = false;
             }
         }
-    );
-}
-
-
-if (btnBaixar) {
-
-    btnBaixar.addEventListener(
-        "click",
-        baixarCSV
     );
 }
 
