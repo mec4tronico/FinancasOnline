@@ -426,10 +426,8 @@ async function iniciarAplicacao() {
         try {
 
             // ------------------------------------------------
-            // AQUI ESTÁ A MUDANÇA PRINCIPAL:
-            //
-            // primeira coluna → ticker
-            // segunda coluna  → tipo
+            // PRIMEIRA COLUNA → TICKER
+            // SEGUNDA COLUNA → TIPO
             // ------------------------------------------------
 
             const dados =
@@ -514,7 +512,7 @@ async function iniciarAplicacao() {
 
 
         // ----------------------------------------------------
-        // Esperar antes do próximo ativo
+        // ESPERAR ANTES DO PRÓXIMO ATIVO
         // ----------------------------------------------------
 
         if (
@@ -571,7 +569,7 @@ async function iniciarAplicacao() {
 
 
     // ========================================================
-    // 10. GRAVAR NO WORKER CSV
+    // 10. GRAVAR CSV NO WORKER
     // ========================================================
 
     resultado.innerHTML = `
@@ -765,55 +763,193 @@ async function lerCSV(
 
 // ============================================================
 // PROCESSAR CSV
+//
+// CORREÇÃO IMPORTANTE:
+//
+// O CSV pode conter:
+//
+// "49,43"
+//
+// Portanto NÃO podemos usar:
+//
+// linha.split(",")
+//
+// Este parser respeita campos entre aspas.
 // ============================================================
 
 function processarCSV(
     texto
 ) {
 
-    const linhasBrutas =
-        texto
-            .trim()
-            .split(/\r?\n/);
+    const linhas =
+        [];
 
 
-    if (
-        linhasBrutas.length === 0
+    let linhaAtual =
+        [];
+
+
+    let campoAtual =
+        "";
+
+
+    let dentroDeAspas =
+        false;
+
+
+    for (
+        let i = 0;
+        i < texto.length;
+        i++
     ) {
 
-        return [];
+        const caractere =
+            texto[i];
+
+
+        // ----------------------------------------------------
+        // ASPAS
+        // ----------------------------------------------------
+
+        if (
+            caractere === '"'
+        ) {
+
+            // Aspas duplas dentro de campo já entre aspas
+            if (
+                dentroDeAspas &&
+                texto[i + 1] === '"'
+            ) {
+
+                campoAtual += '"';
+
+                i++;
+
+                continue;
+
+            }
+
+
+            dentroDeAspas =
+                !dentroDeAspas;
+
+            continue;
+
+        }
+
+
+        // ----------------------------------------------------
+        // VÍRGULA
+        // ----------------------------------------------------
+
+        if (
+
+            caractere === "," &&
+
+            !dentroDeAspas
+
+        ) {
+
+            linhaAtual.push(
+                campoAtual.trim()
+            );
+
+            campoAtual =
+                "";
+
+            continue;
+
+        }
+
+
+        // ----------------------------------------------------
+        // FIM DA LINHA
+        // ----------------------------------------------------
+
+        if (
+
+            (
+                caractere === "\n" ||
+                caractere === "\r"
+            ) &&
+
+            !dentroDeAspas
+
+        ) {
+
+            // Ignorar \r do CRLF
+            if (
+                caractere === "\r" &&
+                texto[i + 1] === "\n"
+            ) {
+
+                i++;
+
+            }
+
+
+            linhaAtual.push(
+                campoAtual.trim()
+            );
+
+
+            if (
+                linhaAtual.length > 0
+            ) {
+
+                linhas.push(
+                    linhaAtual
+                );
+
+            }
+
+
+            linhaAtual =
+                [];
+
+            campoAtual =
+                "";
+
+            continue;
+
+        }
+
+
+        // ----------------------------------------------------
+        // CARACTERE NORMAL
+        // ----------------------------------------------------
+
+        campoAtual +=
+            caractere;
 
     }
 
 
-    return linhasBrutas.map(
+    // --------------------------------------------------------
+    // ÚLTIMA LINHA
+    // --------------------------------------------------------
 
-        linha => {
+    if (
 
-            const delimitador =
-                linha.includes(";")
-                    ? ";"
-                    : ",";
+        campoAtual.length > 0 ||
+
+        linhaAtual.length > 0
+
+    ) {
+
+        linhaAtual.push(
+            campoAtual.trim()
+        );
 
 
-            return linha
-                .split(delimitador)
-                .map(
+        linhas.push(
+            linhaAtual
+        );
 
-                    celula =>
+    }
 
-                        celula
-                            .replace(
-                                /^["']|["']$/g,
-                                ""
-                            )
-                            .trim()
 
-                );
-
-        }
-
-    );
+    return linhas;
 
 }
 
@@ -906,64 +1042,56 @@ function extrairAtivosDaCarteira(
         // SEGUNDA COLUNA
         // ----------------------------------------------------
 
-        const tipo =
+        const tipoOriginal =
             (linha[1] || "")
                 .trim()
                 .toLowerCase();
 
 
         // ----------------------------------------------------
-        // NÃO inventar o tipo.
-        //
-        // O tipo agora vem obrigatoriamente
-        // do CSV.
+        // NORMALIZAR TIPO
         // ----------------------------------------------------
+
+        let tipo;
+
 
         if (
 
-            tipo !== "acoes" &&
-
-            tipo !== "ação" &&
-
-            tipo !== "acoes" &&
-
-            tipo !== "fii" &&
-
-            tipo !== "fii"
+            tipoOriginal === "fii"
 
         ) {
 
-            console.warn(
-
-                `Tipo desconhecido para ${ticker}:`,
-
-                tipo
-
-            );
-
-            continue;
+            tipo =
+                "fii";
 
         }
 
+        else if (
 
-        let tipoNormalizado;
+            tipoOriginal === "acoes" ||
 
+            tipoOriginal === "ação" ||
 
-        if (
-
-            tipo === "fii"
+            tipoOriginal === "ações"
 
         ) {
 
-            tipoNormalizado =
-                "fii";
+            tipo =
+                "acoes";
 
         }
 
         else {
 
-            tipoNormalizado =
-                "acoes";
+            console.warn(
+
+                `Tipo desconhecido para ${ticker}:`,
+
+                tipoOriginal
+
+            );
+
+            continue;
 
         }
 
@@ -974,7 +1102,7 @@ function extrairAtivosDaCarteira(
                 ticker,
 
             tipo:
-                tipoNormalizado
+                tipo
 
         });
 
@@ -1331,7 +1459,7 @@ function escaparCSV(
 
 
 // ============================================================
-// GRAVAR CSV NO GITHUB
+// GRAVAR CSV NO WORKER
 // ============================================================
 
 async function gravarCSVNoGitHub(
