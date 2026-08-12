@@ -10,7 +10,8 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Dados da Carteira</title>
+    <title>Teste de Scraping - StatusInvest</title>
+
 
     <style>
 
@@ -21,20 +22,30 @@
             color: #222;
         }
 
+
         h1 {
             margin-bottom: 30px;
         }
+
 
         h2 {
             margin-top: 30px;
             margin-bottom: 15px;
         }
 
+
+        h3 {
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
+
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 30px;
         }
+
 
         th,
         td {
@@ -43,18 +54,30 @@
             text-align: left;
         }
 
+
         th {
             background: #f2f2f2;
         }
+
 
         .carregando {
             color: #666;
             font-style: italic;
         }
 
-        .classe-erro {
-            color: red;
-            font-weight: bold;
+
+        pre {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+
+        #resultado-scraping {
+            margin-top: 30px;
         }
 
     </style>
@@ -64,29 +87,36 @@
 
 <body>
 
+
     <h1>Carteira de Investimentos</h1>
 
 
-    <!-- ========================================================
+    <!-- =====================================================
          TABELA 1 — CARTEIRA B3
-         ======================================================== -->
+         ===================================================== -->
 
     <h2>Carteira B3</h2>
+
 
     <table id="tabela-original">
 
         <thead>
+
             <tr>
                 <th>Dados da Carteira</th>
             </tr>
+
         </thead>
+
 
         <tbody>
 
             <tr>
+
                 <td class="carregando">
                     Carregando carteira...
                 </td>
+
             </tr>
 
         </tbody>
@@ -94,58 +124,38 @@
     </table>
 
 
-    <!-- ========================================================
-         TABELA 2 — DADOS DE MERCADO
-         ======================================================== -->
+    <!-- =====================================================
+         RESULTADO DO TESTE DO SCRAPING
+         ===================================================== -->
 
-    <h2>Dados de Mercado</h2>
+    <div id="resultado-scraping">
 
-    <table id="tabela-scraping">
+        <h2>Teste do Scraping</h2>
 
-        <thead>
+        <p class="carregando">
+            Aguardando execução...
+        </p>
 
-            <tr>
-                <th>Ativo</th>
-                <th>Valor Atual</th>
-                <th>Mín. 52 Semanas</th>
-                <th>Máx. 52 Semanas</th>
-                <th>DY 12M</th>
-                <th>Valorização 12M</th>
-            </tr>
-
-        </thead>
-
-        <tbody>
-
-            <tr>
-                <td colspan="6" class="carregando">
-                    Verificando dados de mercado...
-                </td>
-            </tr>
-
-        </tbody>
-
-    </table>
+    </div>
 
 
-    <!-- ========================================================
+    <!-- =====================================================
          JAVASCRIPT
-         ======================================================== -->
+         ===================================================== -->
 
-    <!-- Scraping deve ser carregado primeiro,
-         pois escreverCSV.js depende dele. -->
+    <!--
+        scraping.js vem primeiro porque o app.js
+        utiliza a função definida nele.
+    -->
 
     <script src="scraping.js"></script>
 
-    <!-- Escrita/geração do CSV -->
-
-    <script src="escreverCSV.js"></script>
 
     <!-- Aplicação principal -->
 
     <script src="app.js"></script>
 
+
 </body>
 
 </html>
-:::
