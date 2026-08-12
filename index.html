@@ -2,579 +2,79 @@
 <html lang="pt-BR">
 
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
 
     <title>Finanças Online</title>
 
-
     <style>
-
-        /* =====================================================
-           CONFIGURAÇÃO GERAL
-           ===================================================== */
-
         body {
-
-            font-family:
-                Arial,
-                sans-serif;
-
-            margin: 0;
-
-            background:
-                #ffffff;
-
-            color:
-                #222222;
-
+            font-family: Arial, sans-serif;
+            margin: 20px;
         }
 
-
-        .container {
-
-            max-width:
-                1400px;
-
-            margin:
-                0 auto;
-
-            padding:
-                30px;
-
+        button {
+            margin-right: 10px;
+            padding: 8px 14px;
         }
 
-
-        h1 {
-
-            margin:
-                0 0 25px 0;
-
+        #status {
+            margin: 20px 0;
+            font-weight: bold;
         }
 
-
-        h2 {
-
-            margin-top:
-                0;
-
+        #resultado {
+            white-space: pre-wrap;
+            background: #f5f5f5;
+            padding: 15px;
         }
-
-
-        /* =====================================================
-           ABAS
-           ===================================================== */
-
-        .abas {
-
-            display:
-                flex;
-
-            gap:
-                5px;
-
-            border-bottom:
-                1px solid #cccccc;
-
-            margin-bottom:
-                25px;
-
-        }
-
-
-        .aba-botao {
-
-            border:
-                none;
-
-            background:
-                #eeeeee;
-
-            padding:
-                12px 20px;
-
-            font-size:
-                15px;
-
-            cursor:
-                pointer;
-
-            border-radius:
-                6px 6px 0 0;
-
-        }
-
-
-        .aba-botao:hover {
-
-            background:
-                #dddddd;
-
-        }
-
-
-        .aba-botao.ativa {
-
-            background:
-                #222222;
-
-            color:
-                #ffffff;
-
-        }
-
-
-        /* =====================================================
-           CONTEÚDO DAS ABAS
-           ===================================================== */
-
-        .aba-conteudo {
-
-            display:
-                none;
-
-        }
-
-
-        .aba-conteudo.ativa {
-
-            display:
-                block;
-
-        }
-
-
-        /* =====================================================
-           TABELAS
-           ===================================================== */
-
-        .tabela-container {
-
-            width:
-                100%;
-
-            overflow-x:
-                auto;
-
-        }
-
 
         table {
-
-            width:
-                100%;
-
-            border-collapse:
-                collapse;
-
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 12px;
         }
-
 
         th,
         td {
-
-            padding:
-                10px;
-
-            border:
-                1px solid #dddddd;
-
-            text-align:
-                left;
-
+            border: 1px solid #ccc;
+            padding: 5px;
+            white-space: nowrap;
         }
-
 
         th {
-
-            background:
-                #f2f2f2;
-
-            font-weight:
-                bold;
-
+            font-weight: bold;
         }
-
-
-        /* =====================================================
-           MENSAGENS
-           ===================================================== */
-
-        .carregando {
-
-            color:
-                #666666;
-
-            font-style:
-                italic;
-
-        }
-
-
-        .sucesso {
-
-            color:
-                green;
-
-            font-weight:
-                bold;
-
-        }
-
-
-        .erro {
-
-            color:
-                red;
-
-            font-weight:
-                bold;
-
-        }
-
-
     </style>
-
 </head>
-
 
 <body>
 
+    <h1>Finanças Online</h1>
 
-<div class="container">
+    <button id="btnCarregar">
+        Carregar patrimônio
+    </button>
 
+    <button id="btnScraping">
+        Testar scraping AXIA3
+    </button>
 
-    <!-- =====================================================
-         TÍTULO PRINCIPAL
-         ===================================================== -->
+    <button id="btnBaixar">
+        Baixar CSV atualizado
+    </button>
 
-    <h1>
-        Finanças Online
-    </h1>
-
-
-    <!-- =====================================================
-         BOTÕES DAS ABAS
-         ===================================================== -->
-
-    <div class="abas">
-
-
-        <button
-            class="aba-botao ativa"
-            data-aba="graficos"
-            type="button"
-        >
-            Gráficos e Visuais
-        </button>
-
-
-        <button
-            class="aba-botao"
-            data-aba="carteira"
-            type="button"
-        >
-            Carteira Consolidada
-        </button>
-
-
-        <button
-            class="aba-botao"
-            data-aba="mercado"
-            type="button"
-        >
-            Dados Mercado
-        </button>
-
-
+    <div id="status">
+        Inicializando...
     </div>
 
+    <pre id="resultado"></pre>
 
-    <!-- =====================================================
-         ABA 1
-         GRÁFICOS E VISUAIS
-         ===================================================== -->
+    <table id="tabela"></table>
 
-    <section
-        id="aba-graficos"
-        class="aba-conteudo ativa"
-    >
-
-        <h2>
-            Gráficos e Visuais
-        </h2>
-
-
-        <p>
-            Ainda vai ser implementado.
-        </p>
-
-    </section>
-
-
-    <!-- =====================================================
-         ABA 2
-         CARTEIRA CONSOLIDADA
-         ===================================================== -->
-
-    <section
-        id="aba-carteira"
-        class="aba-conteudo"
-    >
-
-        <h2>
-            Carteira Consolidada
-        </h2>
-
-
-        <div
-            id="resultado-carteira"
-        >
-
-            <p class="carregando">
-                Carregando carteira...
-            </p>
-
-        </div>
-
-    </section>
-
-
-    <!-- =====================================================
-         ABA 3
-         DADOS MERCADO
-         ===================================================== -->
-
-    <section
-        id="aba-mercado"
-        class="aba-conteudo"
-    >
-
-        <div
-            id="resultado-mercado"
-        >
-
-            <p class="carregando">
-                Carregando dados de mercado...
-            </p>
-
-        </div>
-
-    </section>
-
-
-</div>
-
-
-<!-- =========================================================
-     CONTROLE DAS ABAS
-     ========================================================= -->
-
-<script>
-
-    document
-        .querySelectorAll(
-            ".aba-botao"
-        )
-        .forEach(
-
-            botao => {
-
-                botao.addEventListener(
-
-                    "click",
-
-                    function () {
-
-
-                        /*
-                         * Remover aba ativa
-                         */
-
-                        document
-                            .querySelectorAll(
-                                ".aba-botao"
-                            )
-                            .forEach(
-
-                                item => {
-
-                                    item.classList
-                                        .remove(
-                                            "ativa"
-                                        );
-
-                                }
-
-                            );
-
-
-                        /*
-                         * Remover conteúdo ativo
-                         */
-
-                        document
-                            .querySelectorAll(
-                                ".aba-conteudo"
-                            )
-                            .forEach(
-
-                                item => {
-
-                                    item.classList
-                                        .remove(
-                                            "ativa"
-                                        );
-
-                                }
-
-                            );
-
-
-                        /*
-                         * Ativar botão clicado
-                         */
-
-                        this.classList.add(
-                            "ativa"
-                        );
-
-
-                        /*
-                         * Identificar aba
-                         */
-
-                        const nomeAba =
-                            this.dataset.aba;
-
-
-                        /*
-                         * Ativar conteúdo
-                         */
-
-                        const conteudo =
-                            document.querySelector(
-
-                                "#aba-" +
-                                nomeAba
-
-                            );
-
-
-                        if (conteudo) {
-
-                            conteudo.classList.add(
-                                "ativa"
-                            );
-
-                        }
-
-                    }
-
-                );
-
-            }
-
-        );
-
-</script>
-
-
-<!-- =========================================================
-     APP.JS
-     ========================================================= -->
-
-<script>
-
-    const versaoApp =
-        Date.now();
-
-
-    console.log(
-        "========================================"
-    );
-
-
-    console.log(
-        "FINANÇAS ONLINE"
-    );
-
-
-    console.log(
-        "Carregando app.js..."
-    );
-
-
-    console.log(
-        "Versão:",
-        versaoApp
-    );
-
-
-    const scriptApp =
-        document.createElement(
-            "script"
-        );
-
-
-    scriptApp.src =
-        "app.js?v=" +
-        versaoApp;
-
-
-    scriptApp.onload =
-        function () {
-
-            console.log(
-                "app.js carregado."
-            );
-
-        };
-
-
-    scriptApp.onerror =
-        function () {
-
-            console.error(
-                "ERRO ao carregar app.js."
-            );
-
-
-            const mercado =
-                document.querySelector(
-                    "#resultado-mercado"
-                );
-
-
-            if (mercado) {
-
-                mercado.innerHTML = `
-
-                    <p class="erro">
-
-                        Erro ao carregar
-                        a aplicação.
-
-                    </p>
-
-                `;
-
-            }
-
-        };
-
-
-    document.body.appendChild(
-        scriptApp
-    );
-
-</script>
-
+    <script
+        type="module"
+        src="./app.js">
+    </script>
 
 </body>
 
