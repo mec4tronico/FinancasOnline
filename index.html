@@ -34,12 +34,6 @@
         }
 
 
-        h3 {
-            margin-top: 25px;
-            margin-bottom: 10px;
-        }
-
-
         table {
             width: 100%;
             border-collapse: collapse;
@@ -66,18 +60,22 @@
         }
 
 
-        pre {
-            background: #f5f5f5;
-            border: 1px solid #ddd;
-            padding: 15px;
-            border-radius: 5px;
-            overflow-x: auto;
-            white-space: pre-wrap;
+        .classe-erro {
+            color: red;
+            font-weight: bold;
         }
 
 
         #resultado-scraping {
             margin-top: 30px;
+        }
+
+
+        pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border: 1px solid #ddd;
+            overflow-x: auto;
         }
 
     </style>
@@ -92,7 +90,7 @@
 
 
     <!-- =====================================================
-         TABELA 1 — CARTEIRA B3
+         CARTEIRA B3
          ===================================================== -->
 
     <h2>Carteira B3</h2>
@@ -103,7 +101,11 @@
         <thead>
 
             <tr>
-                <th>Dados da Carteira</th>
+
+                <th>
+                    Dados da Carteira
+                </th>
+
             </tr>
 
         </thead>
@@ -114,7 +116,9 @@
             <tr>
 
                 <td class="carregando">
+
                     Carregando carteira...
+
                 </td>
 
             </tr>
@@ -125,91 +129,80 @@
 
 
     <!-- =====================================================
-         RESULTADO DO TESTE DO SCRAPING
+         TESTE DO SCRAPING
          ===================================================== -->
 
     <div id="resultado-scraping">
 
-        <h2>Teste do Scraping</h2>
+        <h2>
+            Teste do Scraping
+        </h2>
+
 
         <p class="carregando">
+
             Testando scraping...
+
         </p>
 
     </div>
 
 
     <!-- =====================================================
-         JAVASCRIPT
+         CARREGAMENTO DOS JAVASCRIPTS
          =====================================================
 
-         IMPORTANTE:
+         Date.now() impede cache.
 
-         Date.now() cria uma versão diferente a cada
-         carregamento da página.
+         Os dois arquivos são carregados diretamente.
 
-         Exemplo:
-
-         scraping.js?v=1755000000000
-
-         Na próxima abertura:
-
-         scraping.js?v=1755000005000
-
-         Portanto o navegador não reutiliza o JS antigo
-         armazenado no cache.
+         Não dependemos mais de scraping.js carregar
+         o app.js.
     -->
 
 
     <script>
 
-        const versaoArquivos =
+        const versao =
             Date.now();
 
 
-        // ----------------------------------------------------
-        // Carregar scraping.js
-        // ----------------------------------------------------
-
-        const scriptScraping =
-            document.createElement("script");
+        console.log(
+            "========================================"
+        );
 
 
-        scriptScraping.src =
-            "scraping.js?v=" +
-            versaoArquivos;
+        console.log(
+            "CARREGANDO JAVASCRIPTS"
+        );
 
 
-        document.body.appendChild(
-            scriptScraping
+        console.log(
+            "Versão:",
+            versao
         );
 
 
         // ----------------------------------------------------
-        // Carregar app.js somente depois do scraping.js
+        // SCRAPING.JS
         // ----------------------------------------------------
+
+        const scriptScraping =
+            document.createElement(
+                "script"
+            );
+
+
+        scriptScraping.src =
+            "scraping.js?v=" +
+            versao;
+
 
         scriptScraping.onload =
             function () {
 
                 console.log(
                     "scraping.js carregado."
-                );
-
-
-                const scriptApp =
-                    document.createElement(
-                        "script"
-                    );
-
-
-                scriptApp.src =
-                    "app.js?v=" +
-                    versaoArquivos;
-
-
-                document.body.appendChild(
-                    scriptApp
                 );
 
             };
@@ -219,11 +212,60 @@
             function () {
 
                 console.error(
-                    "ERRO: não foi possível " +
-                    "carregar scraping.js."
+                    "ERRO ao carregar scraping.js."
                 );
 
             };
+
+
+        document.body.appendChild(
+            scriptScraping
+        );
+
+
+        // ----------------------------------------------------
+        // APP.JS
+        // ----------------------------------------------------
+
+        const scriptApp =
+            document.createElement(
+                "script"
+            );
+
+
+        scriptApp.src =
+            "app.js?v=" +
+            versao;
+
+
+        scriptApp.onload =
+            function () {
+
+                console.log(
+                    "app.js carregado."
+                );
+
+            };
+
+
+        scriptApp.onerror =
+            function () {
+
+                console.error(
+                    "ERRO ao carregar app.js."
+                );
+
+            };
+
+
+        document.body.appendChild(
+            scriptApp
+        );
+
+
+        console.log(
+            "Scripts adicionados à página."
+        );
 
     </script>
 
