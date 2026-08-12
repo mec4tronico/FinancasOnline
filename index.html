@@ -1,50 +1,151 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
+
     <meta charset="UTF-8">
-    <title>Painel de Consolidação B3</title>
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Dados da Carteira</title>
+
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 30px; background-color: #f8f9fa; }
-        h2 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 8px; margin-top: 30px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 25px; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        th, td { border: 1px solid #dee2e6; padding: 12px; text-align: left; }
-        th { background-color: #34495e; color: white; }
-        .carregando { color: #d35400; font-style: italic; }
-        .classe-erro { color: #c0392b; font-weight: bold; background-color: #fadbd8; }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            background: #ffffff;
+            color: #222;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background: #f2f2f2;
+        }
+
+        .carregando {
+            color: #666;
+            font-style: italic;
+        }
+
+        .classe-erro {
+            color: red;
+            font-weight: bold;
+        }
+
     </style>
+
 </head>
+
+
 <body>
 
-    <h1>Consolidação de Ativos - B3</h1>
+    <h1>Carteira de Investimentos</h1>
 
-    <h2>1. Carteira Original (carteira_b3_consolidada.csv)</h2>
+
+    <!-- ========================================================
+         TABELA 1 — CARTEIRA B3
+         ======================================================== -->
+
+    <h2>Carteira B3</h2>
+
     <table id="tabela-original">
+
         <thead>
             <tr>
-                <th>Ativo</th>
-                <th>Quantidade</th>
-                <th>Total Investido</th>
-                <th>Data da 1ª Compra</th>
+                <th>Dados da Carteira</th>
             </tr>
         </thead>
-        <tbody></tbody>
+
+        <tbody>
+
+            <tr>
+                <td class="carregando">
+                    Carregando carteira...
+                </td>
+            </tr>
+
+        </tbody>
+
     </table>
 
-    <h2>2. Indicadores Coletados em Tempo Real (Status Invest)</h2>
+
+    <!-- ========================================================
+         TABELA 2 — DADOS DE MERCADO
+         ======================================================== -->
+
+    <h2>Dados de Mercado</h2>
+
     <table id="tabela-scraping">
+
         <thead>
+
             <tr>
                 <th>Ativo</th>
                 <th>Valor Atual</th>
                 <th>Mín. 52 Semanas</th>
                 <th>Máx. 52 Semanas</th>
-                <th>Dividend Yield (12M)</th>
-                <th>Valorização (12M)</th>
+                <th>DY 12M</th>
+                <th>Valorização 12M</th>
             </tr>
+
         </thead>
-        <tbody></tbody>
+
+        <tbody>
+
+            <tr>
+                <td colspan="6" class="carregando">
+                    Verificando dados de mercado...
+                </td>
+            </tr>
+
+        </tbody>
+
     </table>
 
+
+    <!-- ========================================================
+         JAVASCRIPT
+         ======================================================== -->
+
+    <!-- Scraping deve ser carregado primeiro,
+         pois escreverCSV.js depende dele. -->
+
+    <script src="scraping.js"></script>
+
+    <!-- Escrita/geração do CSV -->
+
+    <script src="escreverCSV.js"></script>
+
+    <!-- Aplicação principal -->
+
     <script src="app.js"></script>
+
 </body>
+
 </html>
+:::
