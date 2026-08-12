@@ -2,13 +2,21 @@
 // app.js
 // Ponto de entrada da aplicação
 //
-// Responsabilidades:
-// 1. Ler carteira_b3_consolidada.csv
-// 2. Ler dados_mercados.csv
-// 3. Verificar atualização dos dados de mercado
-// 4. Se necessário, chamar scraping.js
-// 5. Gravar o novo dados_mercados.csv através do Worker CSV
-// 6. Exibir os dados de mercado
+// Fluxo:
+//
+// 1. Carrega scraping.js
+// 2. Lê carteira_b3_consolidada.csv
+// 3. Usa:
+//      coluna 1 = NOME DO ATIVO
+//      coluna 2 = TIPO
+// 4. Lê dados_mercados.csv
+// 5. Verifica a data geral de atualização
+// 6. Se tiver menos de 24 horas:
+//      não faz scraping
+// 7. Se tiver 24 horas ou mais:
+//      faz scraping de todos os ativos
+// 8. Grava dados_mercados.csv através do Worker CSV
+// 9. Exibe os dados de mercado
 // ============================================================
 
 
@@ -190,13 +198,19 @@ async function iniciarAplicacao() {
     }
 
 
+    // ========================================================
+    // 4. EXTRAIR ATIVOS
+    // ========================================================
+
     const ativos =
         extrairAtivosDaCarteira(
             carteira
         );
 
 
-    if (ativos.length === 0) {
+    if (
+        ativos.length === 0
+    ) {
 
         mostrarErro(
 
@@ -212,16 +226,37 @@ async function iniciarAplicacao() {
 
 
     console.log(
-        "Ativos encontrados:",
-        ativos
+        "========================================"
+    );
+
+    console.log(
+        "ATIVOS ENCONTRADOS NA CARTEIRA:"
+    );
+
+
+    ativos.forEach(
+
+        ativo => {
+
+            console.log(
+
+                ativo.ticker,
+                "/",
+                ativo.tipo
+
+            );
+
+        }
+
     );
 
 
     // ========================================================
-    // 4. TENTAR LER DADOS DE MERCADO EXISTENTES
+    // 5. LER DADOS DE MERCADO EXISTENTES
     // ========================================================
 
-    let dadosMercadoExistentes = null;
+    let dadosMercadoExistentes =
+        null;
 
 
     try {
@@ -231,23 +266,28 @@ async function iniciarAplicacao() {
                 ARQUIVO_MERCADO
             );
 
+
+        console.log(
+            "dados_mercados.csv carregado."
+        );
+
     }
 
     catch (erro) {
 
         console.log(
-            "dados_mercados.csv não pôde ser lido."
+            "dados_mercados.csv não disponível."
         );
 
         console.log(
-            "Será necessário fazer novo scraping."
+            "Será necessário fazer scraping."
         );
 
     }
 
 
     // ========================================================
-    // 5. VERIFICAR DATA DE ATUALIZAÇÃO
+    // 6. VERIFICAR DATA DE ATUALIZAÇÃO
     // ========================================================
 
     const atualizacao =
@@ -259,9 +299,10 @@ async function iniciarAplicacao() {
     if (atualizacao) {
 
         console.log(
-            "Data de atualização encontrada:",
+            "Data de atualização:",
             atualizacao
         );
+
 
         const horas =
             calcularHorasDesde(
@@ -280,8 +321,11 @@ async function iniciarAplicacao() {
         // ----------------------------------------------------
 
         if (
+
             horas >= 0 &&
+
             horas < LIMITE_ATUALIZACAO_HORAS
+
         ) {
 
             console.log(
@@ -289,7 +333,7 @@ async function iniciarAplicacao() {
             );
 
             console.log(
-                "Novo scraping NÃO será realizado."
+                "Scraping não será executado."
             );
 
 
@@ -305,21 +349,22 @@ async function iniciarAplicacao() {
 
 
             return;
+
         }
 
     }
 
 
     // ========================================================
-    // 6. DADOS AUSENTES OU VENCIDOS
+    // 7. FAZER NOVO SCRAPING
     // ========================================================
 
     console.log(
-        "Dados inexistentes ou vencidos."
+        "========================================"
     );
 
     console.log(
-        "Iniciando novo scraping."
+        "INICIANDO NOVO SCRAPING"
     );
 
 
@@ -336,18 +381,18 @@ async function iniciarAplicacao() {
     `;
 
 
-    // ========================================================
-    // 7. FAZER SCRAPING
-    // ========================================================
-
     const resultados =
         [];
 
 
     for (
+
         let i = 0;
+
         i < ativos.length;
+
         i++
+
     ) {
 
         const ativo =
@@ -358,14 +403,34 @@ async function iniciarAplicacao() {
             "========================================"
         );
 
+
         console.log(
-            `Processando ${i + 1}/${ativos.length}:`,
-            ativo.ticker,
+
+            `Processando ${i + 1}/${ativos.length}`
+
+        );
+
+
+        console.log(
+            "Ticker:",
+            ativo.ticker
+        );
+
+
+        console.log(
+            "Tipo:",
             ativo.tipo
         );
 
 
         try {
+
+            // ------------------------------------------------
+            // AQUI ESTÁ A MUDANÇA PRINCIPAL:
+            //
+            // primeira coluna → ticker
+            // segunda coluna  → tipo
+            // ------------------------------------------------
 
             const dados =
                 await buscarIndicadoresStatusInvest(
@@ -386,19 +451,24 @@ async function iniciarAplicacao() {
                     ativo.tipo,
 
                 valorAtual:
-                    dados.valorAtual || "ERRO",
+                    dados.valorAtual ||
+                    "ERRO",
 
                 min52:
-                    dados.min52 || "ERRO",
+                    dados.min52 ||
+                    "ERRO",
 
                 max52:
-                    dados.max52 || "ERRO",
+                    dados.max52 ||
+                    "ERRO",
 
                 dy:
-                    dados.dy || "ERRO",
+                    dados.dy ||
+                    "ERRO",
 
                 valorizacao:
-                    dados.valorizacao || "ERRO"
+                    dados.valorizacao ||
+                    "ERRO"
 
             });
 
@@ -444,12 +514,14 @@ async function iniciarAplicacao() {
 
 
         // ----------------------------------------------------
-        // Delay entre ativos
+        // Esperar antes do próximo ativo
         // ----------------------------------------------------
 
         if (
+
             i <
             ativos.length - 1
+
         ) {
 
             await esperar(
@@ -462,7 +534,7 @@ async function iniciarAplicacao() {
 
 
     // ========================================================
-    // 8. MONTAR CSV
+    // 8. DATA DE ATUALIZAÇÃO
     // ========================================================
 
     const dataAtualizacao =
@@ -470,6 +542,10 @@ async function iniciarAplicacao() {
             new Date()
         );
 
+
+    // ========================================================
+    // 9. MONTAR CSV
+    // ========================================================
 
     const csvNovo =
         montarCSVMercado(
@@ -486,12 +562,16 @@ async function iniciarAplicacao() {
     );
 
     console.log(
-        "CSV preparado."
+        "CSV DE MERCADO GERADO:"
+    );
+
+    console.log(
+        csvNovo
     );
 
 
     // ========================================================
-    // 9. ENVIAR PARA O WORKER CSV
+    // 10. GRAVAR NO WORKER CSV
     // ========================================================
 
     resultado.innerHTML = `
@@ -528,20 +608,15 @@ async function iniciarAplicacao() {
         );
 
 
-        // ----------------------------------------------------
-        // Mesmo que a gravação falhe,
-        // podemos mostrar os dados obtidos.
-        // ----------------------------------------------------
-
         console.warn(
-            "Exibindo os dados obtidos mesmo sem gravação."
+            "Os dados serão exibidos mesmo assim."
         );
 
     }
 
 
     // ========================================================
-    // 10. EXIBIR DADOS OBTIDOS
+    // 11. EXIBIR RESULTADOS
     // ========================================================
 
     exibirResultadosScraping(
@@ -589,6 +664,10 @@ function carregarScraping() {
 
             script.onload =
                 function () {
+
+                    console.log(
+                        "scraping.js carregado."
+                    );
 
                     resolve();
 
@@ -661,12 +740,17 @@ async function lerCSV(
 
 
     if (
+
         !texto ||
+
         texto.trim().length === 0
+
     ) {
 
         throw new Error(
+
             `Arquivo vazio: ${caminho}`
+
         );
 
     }
@@ -736,6 +820,15 @@ function processarCSV(
 
 // ============================================================
 // EXTRAIR ATIVOS DA CARTEIRA
+//
+// CSV:
+//
+// NOME DO ATIVO ; TIPO ; QUANTIDADE ; TOTAL INVESTIDO ; DATA
+//
+// Portanto:
+//
+// linha[0] = ticker
+// linha[1] = tipo
 // ============================================================
 
 function extrairAtivosDaCarteira(
@@ -743,8 +836,11 @@ function extrairAtivosDaCarteira(
 ) {
 
     if (
+
         !linhas ||
+
         linhas.length <= 1
+
     ) {
 
         return [];
@@ -757,9 +853,13 @@ function extrairAtivosDaCarteira(
 
 
     for (
+
         let i = 1;
+
         i < linhas.length;
+
         i++
+
     ) {
 
         const linha =
@@ -767,14 +867,21 @@ function extrairAtivosDaCarteira(
 
 
         if (
+
             !linha ||
+
             linha.length === 0
+
         ) {
 
             continue;
 
         }
 
+
+        // ----------------------------------------------------
+        // PRIMEIRA COLUNA
+        // ----------------------------------------------------
 
         const ticker =
             (linha[0] || "")
@@ -783,9 +890,11 @@ function extrairAtivosDaCarteira(
 
 
         if (
+
             !ticker ||
-            ticker === "ATIVO" ||
-            ticker === "TICKER"
+
+            ticker === "NOME DO ATIVO"
+
         ) {
 
             continue;
@@ -794,47 +903,67 @@ function extrairAtivosDaCarteira(
 
 
         // ----------------------------------------------------
-        // Segunda coluna contém o tipo quando disponível.
+        // SEGUNDA COLUNA
         // ----------------------------------------------------
 
-        let tipo =
+        const tipo =
             (linha[1] || "")
                 .trim()
                 .toLowerCase();
 
 
         // ----------------------------------------------------
-        // Normalizar tipos
+        // NÃO inventar o tipo.
+        //
+        // O tipo agora vem obrigatoriamente
+        // do CSV.
         // ----------------------------------------------------
 
         if (
-            tipo.includes("fii") ||
-            tipo.includes("fundo")
+
+            tipo !== "acoes" &&
+
+            tipo !== "ação" &&
+
+            tipo !== "acoes" &&
+
+            tipo !== "fii" &&
+
+            tipo !== "fii"
+
         ) {
 
-            tipo = "fii";
+            console.warn(
+
+                `Tipo desconhecido para ${ticker}:`,
+
+                tipo
+
+            );
+
+            continue;
 
         }
 
-        else if (
-            tipo.includes("ação") ||
-            tipo.includes("acao") ||
-            tipo.includes("stock")
+
+        let tipoNormalizado;
+
+
+        if (
+
+            tipo === "fii"
+
         ) {
 
-            tipo = "acoes";
+            tipoNormalizado =
+                "fii";
 
         }
 
-        else if (!tipo) {
+        else {
 
-            // Fallback apenas quando a carteira
-            // não informar o tipo.
-
-            tipo =
-                ticker.endsWith("11")
-                    ? "fii"
-                    : "acoes";
+            tipoNormalizado =
+                "acoes";
 
         }
 
@@ -845,7 +974,7 @@ function extrairAtivosDaCarteira(
                 ticker,
 
             tipo:
-                tipo
+                tipoNormalizado
 
         });
 
@@ -866,8 +995,11 @@ function obterDataAtualizacao(
 ) {
 
     if (
+
         !linhas ||
+
         linhas.length === 0
+
     ) {
 
         return null;
@@ -884,9 +1016,13 @@ function obterDataAtualizacao(
 
 
     for (
+
         let i = 0;
+
         i < cabecalho.length;
+
         i++
+
     ) {
 
         const nome =
@@ -919,8 +1055,11 @@ function obterDataAtualizacao(
 
 
     if (
+
         indiceData === -1 ||
+
         linhas.length < 2
+
     ) {
 
         return null;
@@ -932,36 +1071,27 @@ function obterDataAtualizacao(
         linhas[1][indiceData];
 
 
-    if (
-        !valor
-    ) {
+    if (!valor) {
 
         return null;
 
     }
 
 
-    const data =
-        converterDataCSV(
-            valor
-        );
-
-
-    return data;
+    return converterDataCSV(
+        valor
+    );
 
 }
 
 
 // ============================================================
-// CONVERTER DATA DO CSV
+// CONVERTER DATA
 // ============================================================
 
 function converterDataCSV(
     valor
 ) {
-
-    // Formato:
-    // 2026-08-12 09:54:00
 
     const padrao =
         /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/;
@@ -973,9 +1103,7 @@ function converterDataCSV(
         );
 
 
-    if (
-        encontrado
-    ) {
+    if (encontrado) {
 
         return new Date(
 
@@ -1015,9 +1143,11 @@ function converterDataCSV(
 
 
     if (
+
         isNaN(
             data.getTime()
         )
+
     ) {
 
         return null;
@@ -1048,12 +1178,15 @@ function calcularHorasDesde(
 
 
     return (
+
         diferenca /
+
         (
             1000 *
             60 *
             60
         )
+
     );
 
 }
@@ -1157,7 +1290,7 @@ function montarCSVMercado(
 
 
 // ============================================================
-// ESCAPAR CAMPO CSV
+// ESCAPAR CSV
 // ============================================================
 
 function escaparCSV(
@@ -1181,10 +1314,12 @@ function escaparCSV(
     ) {
 
         return '"' +
+
             texto.replace(
                 /"/g,
                 '""'
             ) +
+
             '"';
 
     }
@@ -1250,16 +1385,21 @@ async function gravarCSVNoGitHub(
     catch {
 
         throw new Error(
+
             "Worker CSV retornou resposta inválida: " +
             texto
+
         );
 
     }
 
 
     if (
+
         !resposta.ok ||
+
         !dados.sucesso
+
     ) {
 
         throw new Error(
@@ -1312,7 +1452,7 @@ function exibirDadosMercado(
 
 
 // ============================================================
-// CONVERTER LINHAS DO CSV DE MERCADO
+// CONVERTER DADOS DE MERCADO
 // ============================================================
 
 function converterLinhasMercado(
@@ -1320,8 +1460,11 @@ function converterLinhasMercado(
 ) {
 
     if (
+
         !linhas ||
+
         linhas.length <= 1
+
     ) {
 
         return [];
@@ -1342,12 +1485,14 @@ function converterLinhasMercado(
         (nome, i) => {
 
             indice[
+
                 nome
                     .toLowerCase()
                     .replace(
                         /[^a-z0-9]/g,
                         ""
                     )
+
             ] = i;
 
         }
@@ -1418,8 +1563,11 @@ function exibirResultadosScraping(
 ) {
 
     if (
+
         !resultados ||
+
         resultados.length === 0
+
     ) {
 
         mostrarErro(
@@ -1436,6 +1584,7 @@ function exibirResultadosScraping(
 
 
     const dataTexto =
+
         dataAtualizacao instanceof Date
 
             ? dataAtualizacao.toLocaleString(
@@ -1452,10 +1601,13 @@ function exibirResultadosScraping(
         </h2>
 
         <p>
+
             <strong>
                 Atualização:
             </strong>
+
             ${dataTexto}
+
         </p>
 
         <div style="overflow-x:auto;">
@@ -1483,6 +1635,7 @@ function exibirResultadosScraping(
                 </thead>
 
                 <tbody>
+
     `;
 
 
@@ -1495,41 +1648,55 @@ function exibirResultadosScraping(
                 <tr>
 
                     <td>
+
                         <strong>
+
                             ${escaparHTML(
                                 ativo.ticker
                             )}
+
                         </strong>
+
                     </td>
 
                     <td>
+
                         ${escaparHTML(
                             ativo.valorAtual
                         )}
+
                     </td>
 
                     <td>
+
                         ${escaparHTML(
                             ativo.min52
                         )}
+
                     </td>
 
                     <td>
+
                         ${escaparHTML(
                             ativo.max52
                         )}
+
                     </td>
 
                     <td>
+
                         ${escaparHTML(
                             ativo.dy
                         )}
+
                     </td>
 
                     <td>
+
                         ${escaparHTML(
                             ativo.valorizacao
                         )}
+
                     </td>
 
                 </tr>
@@ -1602,9 +1769,11 @@ function mostrarErro(
         </h2>
 
         <p class="erro">
+
             ${escaparHTML(
                 mensagem
             )}
+
         </p>
 
     `;
@@ -1613,7 +1782,7 @@ function mostrarErro(
 
 
 // ============================================================
-// FORMATAR DATA PARA CSV
+// FORMATAR DATA
 // ============================================================
 
 function formatarDataCSV(
