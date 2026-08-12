@@ -2,6 +2,10 @@ import {
     buscarIndicadoresStatusInvest
 } from "./scraping.js";
 
+import {
+    calcularColunasPatrimonio
+} from "./calculos.js";
+
 
 // ============================================================
 // CONFIGURAÇÃO
@@ -430,6 +434,13 @@ async function atualizarTodosOsAtivos() {
     registrarProgresso(`Atualizados com sucesso: ${atualizados}`);
     registrarProgresso(`Com erro: ${erros}`);
     registrarProgresso(`Mantidos sem altera\u00e7\u00e3o: ${erros}`);
+
+    registrarProgresso("");
+    registrarProgresso("Calculando colunas 12–21...");
+
+    patrimonio = calcularColunasPatrimonio(patrimonio);
+
+    registrarProgresso("Cálculos concluídos.");
 
     mostrarPatrimonio();
 
