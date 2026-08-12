@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -10,60 +11,233 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Teste do Scraping</title>
+    <title>Finanças Online</title>
 
 
     <style>
 
+        /* =====================================================
+           CONFIGURAÇÃO GERAL
+           ===================================================== */
+
         body {
-            font-family: Arial, sans-serif;
-            margin: 30px;
-            background: #ffffff;
-            color: #222;
+
+            font-family:
+                Arial,
+                sans-serif;
+
+            margin: 0;
+
+            background:
+                #ffffff;
+
+            color:
+                #222222;
+
+        }
+
+
+        .container {
+
+            max-width:
+                1400px;
+
+            margin:
+                0 auto;
+
+            padding:
+                30px;
+
         }
 
 
         h1 {
-            margin-bottom: 30px;
+
+            margin:
+                0 0 25px 0;
+
         }
 
 
         h2 {
-            margin-top: 30px;
+
+            margin-top:
+                0;
+
         }
 
 
-        h3 {
-            margin-top: 25px;
+        /* =====================================================
+           ABAS
+           ===================================================== */
+
+        .abas {
+
+            display:
+                flex;
+
+            gap:
+                5px;
+
+            border-bottom:
+                1px solid #cccccc;
+
+            margin-bottom:
+                25px;
+
         }
 
 
-        pre {
-            background: #f5f5f5;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 15px;
-            white-space: pre-wrap;
-            overflow-x: auto;
+        .aba-botao {
+
+            border:
+                none;
+
+            background:
+                #eeeeee;
+
+            padding:
+                12px 20px;
+
+            font-size:
+                15px;
+
+            cursor:
+                pointer;
+
+            border-radius:
+                6px 6px 0 0;
+
         }
 
+
+        .aba-botao:hover {
+
+            background:
+                #dddddd;
+
+        }
+
+
+        .aba-botao.ativa {
+
+            background:
+                #222222;
+
+            color:
+                #ffffff;
+
+        }
+
+
+        /* =====================================================
+           CONTEÚDO DAS ABAS
+           ===================================================== */
+
+        .aba-conteudo {
+
+            display:
+                none;
+
+        }
+
+
+        .aba-conteudo.ativa {
+
+            display:
+                block;
+
+        }
+
+
+        /* =====================================================
+           TABELAS
+           ===================================================== */
+
+        .tabela-container {
+
+            width:
+                100%;
+
+            overflow-x:
+                auto;
+
+        }
+
+
+        table {
+
+            width:
+                100%;
+
+            border-collapse:
+                collapse;
+
+        }
+
+
+        th,
+        td {
+
+            padding:
+                10px;
+
+            border:
+                1px solid #dddddd;
+
+            text-align:
+                left;
+
+        }
+
+
+        th {
+
+            background:
+                #f2f2f2;
+
+            font-weight:
+                bold;
+
+        }
+
+
+        /* =====================================================
+           MENSAGENS
+           ===================================================== */
 
         .carregando {
-            color: #666;
-            font-style: italic;
+
+            color:
+                #666666;
+
+            font-style:
+                italic;
+
         }
 
 
         .sucesso {
-            color: green;
-            font-weight: bold;
+
+            color:
+                green;
+
+            font-weight:
+                bold;
+
         }
 
 
         .erro {
-            color: red;
-            font-weight: bold;
+
+            color:
+                red;
+
+            font-weight:
+                bold;
+
         }
+
 
     </style>
 
@@ -73,108 +247,342 @@
 <body>
 
 
+<div class="container">
+
+
+    <!-- =====================================================
+         TÍTULO PRINCIPAL
+         ===================================================== -->
+
     <h1>
-        Teste do Scraping
+        Finanças Online
     </h1>
 
 
-    <div id="resultado-scraping">
+    <!-- =====================================================
+         BOTÕES DAS ABAS
+         ===================================================== -->
 
-        <p class="carregando">
-            Carregando aplicação...
-        </p>
+    <div class="abas">
+
+
+        <button
+            class="aba-botao ativa"
+            data-aba="graficos"
+            type="button"
+        >
+            Gráficos e Visuais
+        </button>
+
+
+        <button
+            class="aba-botao"
+            data-aba="carteira"
+            type="button"
+        >
+            Carteira Consolidada
+        </button>
+
+
+        <button
+            class="aba-botao"
+            data-aba="mercado"
+            type="button"
+        >
+            Dados Mercado
+        </button>
+
 
     </div>
 
 
     <!-- =====================================================
-         APP.JS É O PONTO DE ENTRADA
+         ABA 1
+         GRÁFICOS E VISUAIS
          ===================================================== -->
 
-    <script>
+    <section
+        id="aba-graficos"
+        class="aba-conteudo ativa"
+    >
 
-        const versao =
-            Date.now();
+        <h2>
+            Gráficos e Visuais
+        </h2>
 
 
-        console.log(
-            "========================================"
+        <p>
+            Ainda vai ser implementado.
+        </p>
+
+    </section>
+
+
+    <!-- =====================================================
+         ABA 2
+         CARTEIRA CONSOLIDADA
+         ===================================================== -->
+
+    <section
+        id="aba-carteira"
+        class="aba-conteudo"
+    >
+
+        <h2>
+            Carteira Consolidada
+        </h2>
+
+
+        <div
+            id="resultado-carteira"
+        >
+
+            <p class="carregando">
+                Carregando carteira...
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         ABA 3
+         DADOS MERCADO
+         ===================================================== -->
+
+    <section
+        id="aba-mercado"
+        class="aba-conteudo"
+    >
+
+        <h2>
+            Dados Mercado
+        </h2>
+
+
+        <div
+            id="resultado-mercado"
+        >
+
+            <p class="carregando">
+                Carregando dados de mercado...
+            </p>
+
+        </div>
+
+    </section>
+
+
+</div>
+
+
+<!-- =========================================================
+     CONTROLE DAS ABAS
+     ========================================================= -->
+
+<script>
+
+    document
+        .querySelectorAll(
+            ".aba-botao"
+        )
+        .forEach(
+
+            botao => {
+
+                botao.addEventListener(
+
+                    "click",
+
+                    function () {
+
+
+                        /*
+                         * Remover aba ativa
+                         */
+
+                        document
+                            .querySelectorAll(
+                                ".aba-botao"
+                            )
+                            .forEach(
+
+                                item => {
+
+                                    item.classList
+                                        .remove(
+                                            "ativa"
+                                        );
+
+                                }
+
+                            );
+
+
+                        /*
+                         * Remover conteúdo ativo
+                         */
+
+                        document
+                            .querySelectorAll(
+                                ".aba-conteudo"
+                            )
+                            .forEach(
+
+                                item => {
+
+                                    item.classList
+                                        .remove(
+                                            "ativa"
+                                        );
+
+                                }
+
+                            );
+
+
+                        /*
+                         * Ativar botão clicado
+                         */
+
+                        this.classList.add(
+                            "ativa"
+                        );
+
+
+                        /*
+                         * Identificar aba
+                         */
+
+                        const nomeAba =
+                            this.dataset.aba;
+
+
+                        /*
+                         * Ativar conteúdo
+                         */
+
+                        const conteudo =
+                            document.querySelector(
+
+                                "#aba-" +
+                                nomeAba
+
+                            );
+
+
+                        if (conteudo) {
+
+                            conteudo.classList.add(
+                                "ativa"
+                            );
+
+                        }
+
+                    }
+
+                );
+
+            }
+
+        );
+
+</script>
+
+
+<!-- =========================================================
+     APP.JS
+     ========================================================= -->
+
+<script>
+
+    const versaoApp =
+        Date.now();
+
+
+    console.log(
+        "========================================"
+    );
+
+
+    console.log(
+        "FINANÇAS ONLINE"
+    );
+
+
+    console.log(
+        "Carregando app.js..."
+    );
+
+
+    console.log(
+        "Versão:",
+        versaoApp
+    );
+
+
+    const scriptApp =
+        document.createElement(
+            "script"
         );
 
 
-        console.log(
-            "INDEX.HTML"
-        );
+    scriptApp.src =
+        "app.js?v=" +
+        versaoApp;
 
 
-        console.log(
-            "Carregando app.js..."
-        );
+    scriptApp.onload =
+        function () {
+
+            console.log(
+                "app.js carregado."
+            );
+
+        };
 
 
-        console.log(
-            "Versão:",
-            versao
-        );
+    scriptApp.onerror =
+        function () {
 
-
-        const scriptApp =
-            document.createElement(
-                "script"
+            console.error(
+                "ERRO ao carregar app.js."
             );
 
 
-        scriptApp.src =
-            "app.js?v=" +
-            versao;
-
-
-        scriptApp.onload =
-            function () {
-
-                console.log(
-                    "app.js carregado."
-                );
-
-            };
-
-
-        scriptApp.onerror =
-            function () {
-
-                console.error(
-                    "ERRO ao carregar app.js."
+            const mercado =
+                document.querySelector(
+                    "#resultado-mercado"
                 );
 
 
-                const resultado =
-                    document.querySelector(
-                        "#resultado-scraping"
-                    );
+            if (mercado) {
+
+                mercado.innerHTML = `
+
+                    <p class="erro">
+
+                        Erro ao carregar
+                        a aplicação.
+
+                    </p>
+
+                `;
+
+            }
+
+        };
 
 
-                if (resultado) {
+    document.body.appendChild(
+        scriptApp
+    );
 
-                    resultado.innerHTML = `
-
-                        <p class="erro">
-                            ERRO ao carregar app.js.
-                        </p>
-
-                    `;
-
-                }
-
-            };
-
-
-        document.body.appendChild(
-            scriptApp
-        );
-
-    </script>
+</script>
 
 
 </body>
 
 </html>
+```
