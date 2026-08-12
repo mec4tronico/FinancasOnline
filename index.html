@@ -97,11 +97,72 @@
         </section>
 
         <section id="tab-carteira-consolidada" class="tab-content" role="tabpanel" hidden>
-            <div class="placeholder-card">
-                <div class="placeholder-icon"><i class="fa-solid fa-chart-pie"></i></div>
-                <span class="badge">Em desenvolvimento</span>
-                <h2>Carteira Consolidada</h2>
-                <p>Gráficos, KPIs e indicadores visuais desta seção serão implementados em breve.</p>
+            <div class="page-heading">
+                <div>
+                    <span class="eyebrow"><i class="fa-solid fa-chart-pie"></i> Visão estratégica</span>
+                    <h1>Carteira Consolidada</h1>
+                    <p>Distribuição, desempenho e principais números do seu patrimônio.</p>
+                </div>
+            </div>
+
+            <div id="kpisCarteira" class="kpi-grid" aria-live="polite">
+                <article class="kpi-card">
+                    <span class="kpi-icon kpi-green"><i class="fa-solid fa-wallet"></i></span>
+                    <span class="kpi-label">Patrimônio atual</span>
+                    <strong id="kpiPatrimonio">R$ —</strong>
+                </article>
+                <article class="kpi-card">
+                    <span class="kpi-icon kpi-blue"><i class="fa-solid fa-landmark"></i></span>
+                    <span class="kpi-label">Total investido</span>
+                    <strong id="kpiInvestido">R$ —</strong>
+                </article>
+                <article class="kpi-card">
+                    <span id="kpiLucroIcone" class="kpi-icon kpi-green"><i class="fa-solid fa-arrow-trend-up"></i></span>
+                    <span class="kpi-label">Lucro / prejuízo</span>
+                    <strong id="kpiLucro">R$ —</strong>
+                </article>
+                <article class="kpi-card">
+                    <span class="kpi-icon kpi-purple"><i class="fa-solid fa-percent"></i></span>
+                    <span class="kpi-label">Rentabilidade</span>
+                    <strong id="kpiRentabilidade">—</strong>
+                </article>
+                <article class="kpi-card">
+                    <span class="kpi-icon kpi-gold"><i class="fa-solid fa-coins"></i></span>
+                    <span class="kpi-label">Renda mensal estimada</span>
+                    <strong id="kpiRendaMensal">R$ —</strong>
+                </article>
+            </div>
+
+            <div class="charts-grid">
+                <article class="chart-card">
+                    <div class="chart-heading">
+                        <h2><i class="fa-solid fa-chart-pie"></i> Distribuição por ativo</h2>
+                        <p>Concentração do patrimônio atual.</p>
+                    </div>
+                    <div class="chart-area chart-area-pie">
+                        <canvas id="graficoDistribuicaoAtivos"></canvas>
+                    </div>
+                </article>
+
+                <article class="chart-card">
+                    <div class="chart-heading">
+                        <h2><i class="fa-solid fa-chart-column"></i> Patrimônio por classe</h2>
+                        <p>Comparativo entre tipos de ativos.</p>
+                    </div>
+                    <div class="chart-area">
+                        <canvas id="graficoPatrimonioClasses"></canvas>
+                    </div>
+                </article>
+
+                <article class="chart-card chart-card-wide">
+                    <div class="chart-heading">
+                        <h2><i class="fa-solid fa-arrow-trend-up"></i> Lucro / prejuízo por posição</h2>
+                        <p>Resultado financeiro em reais por ativo.</p>
+                    </div>
+                    <div class="chart-area chart-area-wide">
+                        <canvas id="graficoLucroPrejuizo"></canvas>
+                    </div>
+                </article>
             </div>
         </section>
 
@@ -142,6 +203,7 @@
         </section>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <script type="module" src="./app.js"></script>
 </body>
 

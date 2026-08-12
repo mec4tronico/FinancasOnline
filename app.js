@@ -47,6 +47,11 @@ const COLUNAS = [
 // ============================================================
 
 let patrimonio = [];
+const graficosCarteira = {
+    distribuicao: null,
+    classes: null,
+    lucroPrejuizo: null
+};
 
 
 // ============================================================
@@ -105,6 +110,10 @@ function ativarAba(idAba) {
 
         conteudo.classList.toggle("active", estaAtiva);
         conteudo.hidden = !estaAtiva;
+    }
+
+    if (idAba === "tab-carteira-consolidada") {
+        requestAnimationFrame(atualizarVisualizacoesCarteira);
     }
 }
 
@@ -587,6 +596,270 @@ function mostrarPatrimonio() {
 
     tabela.appendChild(thead);
     tabela.appendChild(tbody);
+
+    atualizarVisualizacoesCarteira();
+}
+
+
+// ============================================================
+// CARTEIRA CONSOLIDADA: KPIs E GRÁFICOS
+// ============================================================
+
+function converterNumeroParaGrafico(valor) {
+
+    if (typeof valor === "number") {
+        return Number.isFinite(valor) ? valor : 0;
+    }
+
+    let texto = String(valor ?? "")
+        .trim()
+        .replace(/\s/g, "")
+        .replace(/R\$/gi, "")
+        .replace(/%/g, "");
+
+    if (texto.includes(",")) {
+        texto = texto.replace(/\./g, "").replace(",", ".");
+    }
+
+    const numero = Number(texto);
+
+    return Number.isFinite(numero) ? numero : 0;
+}
+
+
+function formatarMoeda(valor) {
+
+    return new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+    }).format(valor);
+}
+
+
+function formatarPercentual(valor) {
+
+    return new Intl.NumberFormat("pt-BR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(valor) + "%";
+}
+
+
+function atualizarTexto(id, texto) {
+
+    const elemento = document.getElementById(id);
+
+    if (elemento) {
+        elemento.textContent = texto;
+    }
+}
+
+
+function normalizarClasse(tipo) {
+
+    const texto = String(tipo ?? "").trim().toLowerCase();
+
+    if (texto === "acoes" || texto === "ações") {
+        return "Ações";
+    }
+
+    if (texto === "fii" || texto === "fiis") {
+        return "FIIs";
+    }
+
+    return texto ? texto.charAt(0).toUpperCase() + texto.slice(1) : "Outros";
+}
+
+
+function destruirGraficosCarteira() {
+
+    for (const nome of Object.keys(graficosCarteira)) {
+
+        if (graficosCarteira[nome]) {
+            graficosCarteira[nome].destroy();
+            graficosCarteira[nome] = null;
+        }
+    }
+}
+
+
+function atualizarVisualizacoesCarteira() {
+
+    if (!window.Chart) {
+        return;
+    }
+
+    const posicoes = patrimonio.map(registro => ({
+        ativo: registro.Ativo,
+        classe: normalizarClasse(registro.Tipo),
+        valorAtualPosicao: converterNumeroParaGrafico(
+            registro.ValorAtualPosicao
+        ),
+        totalInvestido: converterNumeroParaGrafico(
+            registro.TotalInvestido
+        ),
+        lucroPrejuizo: converterNumeroParaGrafico(
+            registro.LucroPrejuizo
+        ),
+        rendaMensal: converterNumeroParaGrafico(
+            registro.RendaMensalEstimada
+        )
+    }));
+
+    const patrimonioAtual = posicoes.reduce(
+        (total, posicao) => total + posicao.valorAtualPosicao,
+        0
+    );
+    const totalInvestido = posicoes.reduce(
+        (total, posicao) => total + posicao.totalInvestido,
+        0
+    );
+    const lucroPrejuizo = posicoes.reduce(
+        (total, posicao) => total + posicao.lucroPrejuizo,
+        0
+    );
+    const rendaMensal = posicoes.reduce(
+        (total, posicao) => total + posicao.rendaMensal,
+        0
+    );
+    const rentabilidade = totalInvestido === 0
+        ? 0
+        : lucroPrejuizo / totalInvestido * 100;
+
+    atualizarTexto("kpiPatrimonio", formatarMoeda(patrimonioAtual));
+    atualizarTexto("kpiInvestido", formatarMoeda(totalInvestido));
+    atualizarTexto("kpiLucro", formatarMoeda(lucroPrejuizo));
+    atualizarTexto("kpiRentabilidade", formatarPercentual(rentabilidade));
+    atualizarTexto("kpiRendaMensal", formatarMoeda(rendaMensal));
+
+    const iconeLucro = document.getElementById("kpiLucroIcone");
+
+    if (iconeLucro) {
+        iconeLucro.classList.toggle("kpi-red", lucroPrejuizo < 0);
+        iconeLucro.classList.toggle("kpi-green", lucroPrejuizo >= 0);
+        iconeLucro.innerHTML = lucroPrejuizo < 0
+            ? '<i class="fa-solid fa-arrow-trend-down"></i>'
+            : '<i class="fa-solid fa-arrow-trend-up"></i>';
+    }
+
+    destruirGraficosCarteira();
+
+    if (posicoes.length === 0) {
+        return;
+    }
+
+    const cores = [
+        "#059669", "#2563eb", "#8b5cf6", "#f59e0b", "#ec4899",
+        "#06b6d4", "#84cc16", "#f97316", "#6366f1", "#14b8a6"
+    ];
+    const opcoesMoeda = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                labels: {
+                    boxWidth: 11,
+                    usePointStyle: true,
+                    pointStyle: "circle",
+                    font: { family: "Inter" }
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: contexto =>
+                        `${contexto.dataset.label || contexto.label}: ` +
+                        formatarMoeda(contexto.parsed.y ?? contexto.parsed)
+                }
+            }
+        }
+    };
+
+    const canvasDistribuicao = document.getElementById(
+        "graficoDistribuicaoAtivos"
+    );
+    const canvasClasses = document.getElementById("graficoPatrimonioClasses");
+    const canvasLucro = document.getElementById("graficoLucroPrejuizo");
+
+    if (canvasDistribuicao) {
+        graficosCarteira.distribuicao = new Chart(canvasDistribuicao, {
+            type: "doughnut",
+            data: {
+                labels: posicoes.map(posicao => posicao.ativo),
+                datasets: [{
+                    data: posicoes.map(posicao => posicao.valorAtualPosicao),
+                    backgroundColor: posicoes.map(
+                        (_, indice) => cores[indice % cores.length]
+                    ),
+                    borderWidth: 2,
+                    borderColor: "#ffffff"
+                }]
+            },
+            options: {
+                ...opcoesMoeda,
+                cutout: "62%"
+            }
+        });
+    }
+
+    const totaisPorClasse = {};
+
+    for (const posicao of posicoes) {
+        totaisPorClasse[posicao.classe] =
+            (totaisPorClasse[posicao.classe] || 0) + posicao.valorAtualPosicao;
+    }
+
+    if (canvasClasses) {
+        graficosCarteira.classes = new Chart(canvasClasses, {
+            type: "bar",
+            data: {
+                labels: Object.keys(totaisPorClasse),
+                datasets: [{
+                    label: "Patrimônio",
+                    data: Object.values(totaisPorClasse),
+                    backgroundColor: "#2563eb",
+                    borderRadius: 7,
+                    maxBarThickness: 56
+                }]
+            },
+            options: {
+                ...opcoesMoeda,
+                scales: {
+                    x: { grid: { display: false } },
+                    y: {
+                        ticks: { callback: valor => formatarMoeda(valor) },
+                        border: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    if (canvasLucro) {
+        graficosCarteira.lucroPrejuizo = new Chart(canvasLucro, {
+            type: "bar",
+            data: {
+                labels: posicoes.map(posicao => posicao.ativo),
+                datasets: [{
+                    label: "Lucro / prejuízo",
+                    data: posicoes.map(posicao => posicao.lucroPrejuizo),
+                    backgroundColor: posicoes.map(posicao =>
+                        posicao.lucroPrejuizo >= 0 ? "#10b981" : "#ef4444"
+                    ),
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                ...opcoesMoeda,
+                scales: {
+                    x: { grid: { display: false } },
+                    y: {
+                        ticks: { callback: valor => formatarMoeda(valor) },
+                        border: { display: false }
+                    }
+                }
+            }
+        });
+    }
 }
 
 
