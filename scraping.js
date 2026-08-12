@@ -6,7 +6,6 @@
 const PROXY_CLOUDFLARE =
     "https://financasonline.augusto-gouveia2000.workers.dev/";
 
-
 const TIMEOUT_30_SEGUNDOS = 30000;
 
 
@@ -285,8 +284,15 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
 
 
         // ====================================================
-        // 8. FUNÇÃO DE EXTRAÇÃO
-        // Mesma lógica que funcionou no Python
+        // 8. FUNÇÃO DE EXTRAÇÃO PADRÃO
+        //
+        // Usada para:
+        // - Valor Atual
+        // - Mín. 52 semanas
+        // - Máx. 52 semanas
+        // - Valorização 12M
+        //
+        // Também continua sendo usada para DY dos FIIs.
         // ====================================================
 
         function obterValorPorTitulo(titulo) {
@@ -314,26 +320,45 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
                     )
                 ) {
 
-                    const pai =
+                    let pai =
                         elemento.closest("div");
 
 
-                    if (!pai) {
-                        continue;
-                    }
+                    let tentativas = 0;
 
 
-                    const valor =
-                        pai.querySelector(
-                            "strong.value"
-                        );
+                    while (
+                        pai &&
+                        tentativas < 6
+                    ) {
+
+                        const valor =
+                            pai.querySelector(
+                                "strong.value"
+                            );
 
 
-                    if (valor) {
+                        if (valor) {
 
-                        return valor
-                            .textContent
-                            .trim();
+                            const textoValor =
+                                valor.textContent
+                                    .trim();
+
+
+                            if (textoValor) {
+
+                                return textoValor;
+
+                            }
+
+                        }
+
+
+                        pai =
+                            pai.parentElement;
+
+
+                        tentativas++;
 
                     }
 
@@ -347,7 +372,275 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
 
 
         // ====================================================
-        // 9. EXTRAIR OS CINCO DADOS
+        // 9. FUNÇÃO ESPECÍFICA PARA DY DAS AÇÕES
+        //
+        // No StatusInvest, para ações, o Dividend Yield
+        // aparece na seção principal como:
+        //
+        // Dividend Yield
+        // 6,34 %
+        // Últimos 12 meses
+        //
+        // A estrutura HTML dessa seção é diferente da
+        // estrutura que encontramos nos FIIs.
+        //
+        // Por isso as ações possuem uma busca própria.
+        // ====================================================
+
+        function obterDY12MAcao() {
+
+            console.log(
+                `[${ticker}] Procurando DY 12M específico de ação...`
+            );
+
+
+            // ------------------------------------------------
+            // PRIMEIRA TENTATIVA
+            // Procurar o texto "DIVIDEND YIELD" e subir
+            // pela árvore procurando strong.value.
+            // ------------------------------------------------
+
+            const elementos =
+                documento.querySelectorAll(
+                    "h1, h2, h3, h4, h5, div, span, small, p, label"
+                );
+
+
+            for (
+                const elemento
+                of elementos
+            ) {
+
+                const texto =
+                    elemento.textContent
+                        .trim()
+                        .toUpperCase();
+
+
+                if (
+                    texto ===
+                    "DIVIDEND YIELD"
+                ) {
+
+                    let pai =
+                        elemento.parentElement;
+
+
+                    let tentativas = 0;
+
+
+                    while (
+                        pai &&
+                        tentativas < 8
+                    ) {
+
+                        const valores =
+                            pai.querySelectorAll(
+                                "strong.value"
+                            );
+
+
+                        for (
+                            const valor
+                            of valores
+                        ) {
+
+                            const textoValor =
+                                valor.textContent
+                                    .trim();
+
+
+                            if (
+                                /\d+[,.]\d+\s*%/.test(
+                                    textoValor
+                                )
+                            ) {
+
+                                console.log(
+                                    `[${ticker}] DY 12M encontrado via strong.value:`,
+                                    textoValor
+                                );
+
+
+                                return textoValor
+                                    .replace("%", "")
+                                    .trim();
+
+                            }
+
+                        }
+
+
+                        pai =
+                            pai.parentElement;
+
+
+                        tentativas++;
+
+                    }
+
+                }
+
+            }
+
+
+            // ------------------------------------------------
+            // SEGUNDA TENTATIVA
+            //
+            // Procurar no texto de blocos próximos ao título
+            // uma porcentagem associada ao Dividend Yield.
+            // ------------------------------------------------
+
+            for (
+                const elemento
+                of elementos
+            ) {
+
+                const textoElemento =
+                    elemento.textContent
+                        .trim();
+
+
+                if (
+                    !/Dividend\s+Yield/i.test(
+                        textoElemento
+                    )
+                ) {
+
+                    continue;
+                }
+
+
+                const textoNormalizado =
+                    textoElemento
+                        .replace(/\s+/g, " ")
+                        .trim();
+
+
+                const correspondencia =
+                    textoNormalizado.match(
+                        /Dividend\s+Yield[\s\S]{0,500}?(\d+[,.]\d+)\s*%/i
+                    );
+
+
+                if (correspondencia) {
+
+                    const dyEncontrado =
+                        correspondencia[1]
+                            .trim();
+
+
+                    console.log(
+                        `[${ticker}] DY 12M encontrado por texto:`,
+                        dyEncontrado
+                    );
+
+
+                    return dyEncontrado;
+
+                }
+
+            }
+
+
+            // ------------------------------------------------
+            // TERCEIRA TENTATIVA
+            //
+            // Procurar diretamente por elementos que
+            // contenham uma porcentagem e estejam próximos
+            // da expressão Dividend Yield.
+            // ------------------------------------------------
+
+            const todosElementos =
+                documento.querySelectorAll(
+                    "div, span, strong"
+                );
+
+
+            for (
+                const elemento
+                of todosElementos
+            ) {
+
+                const texto =
+                    elemento.textContent
+                        .trim();
+
+
+                if (
+                    !/Dividend\s+Yield/i.test(
+                        texto
+                    )
+                ) {
+
+                    continue;
+                }
+
+
+                const pai =
+                    elemento.parentElement;
+
+
+                if (!pai) {
+                    continue;
+                }
+
+
+                const valores =
+                    pai.querySelectorAll(
+                        "strong, span"
+                    );
+
+
+                for (
+                    const valor
+                    of valores
+                ) {
+
+                    const textoValor =
+                        valor.textContent
+                            .trim();
+
+
+                    const correspondencia =
+                        textoValor.match(
+                            /^(\d+[,.]\d+)\s*%$/
+                        );
+
+
+                    if (correspondencia) {
+
+                        const dyEncontrado =
+                            correspondencia[1]
+                                .trim();
+
+
+                        console.log(
+                            `[${ticker}] DY 12M encontrado diretamente:`,
+                            dyEncontrado
+                        );
+
+
+                        return dyEncontrado;
+
+                    }
+
+                }
+
+            }
+
+
+            console.error(
+                `[${ticker}] DY 12M de ação não encontrado.`
+            );
+
+
+            return null;
+        }
+
+
+        // ====================================================
+        // 10. EXTRAIR OS CINCO DADOS
         // ====================================================
 
         console.log(
@@ -373,10 +666,35 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
             );
 
 
-        const dy =
-            obterValorPorTitulo(
-                "DIVIDEND YIELD"
-            );
+        // ----------------------------------------------------
+        // DY
+        //
+        // AÇÕES:
+        // usar busca específica do Dividend Yield 12M.
+        //
+        // FII:
+        // manter a lógica anterior.
+        // ----------------------------------------------------
+
+        let dy;
+
+
+        if (
+            tipo === "acoes"
+        ) {
+
+            dy =
+                obterDY12MAcao();
+
+        }
+        else {
+
+            dy =
+                obterValorPorTitulo(
+                    "DIVIDEND YIELD"
+                );
+
+        }
 
 
         const valorizacao =
@@ -384,6 +702,10 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
                 "VALORIZAÇÃO (12M)"
             );
 
+
+        // ====================================================
+        // 11. LOG DOS RESULTADOS
+        // ====================================================
 
         console.log(
             `[${ticker}] Valor Atual:`,
@@ -416,7 +738,7 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
 
 
         // ====================================================
-        // 10. VALIDAR VALOR PRINCIPAL
+        // 12. VALIDAR VALOR PRINCIPAL
         // ====================================================
 
         if (!valorAtual) {
@@ -432,7 +754,7 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
 
 
         // ====================================================
-        // 11. RETORNAR OBJETO
+        // 13. RETORNAR OBJETO
         // ====================================================
 
         const resultado = {
@@ -474,8 +796,8 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
 
         return resultado;
 
-
     }
+
     catch (erro) {
 
         console.error(
