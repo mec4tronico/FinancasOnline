@@ -3,19 +3,30 @@
 // ============================================================
 //
 // Responsabilidades:
-// 1. Ler PatrimonioConsolidado.csv
+// 1. Ler patrimonio_consolidado.csv
 // 2. Converter o CSV para registros
 // 3. Validar as 21 colunas oficiais
 // 4. Montar a tabela da aba Patrimônio Consolidado
+// 5. Controlar o botão "Atualizar Mercado"
+// 6. Chamar atualizarMercado()
+// 7. Recarregar a tabela após a atualização
 //
 // NÃO faz:
-// - scraping
-// - cálculos
-// - gravação do CSV
-// - atualização de mercado
+// - scraping diretamente
+// - cálculos diretamente
+// - gravação do CSV diretamente
 //
-// Essas funções serão executadas por outros módulos.
+// Essas funções são executadas por outros módulos.
 // ============================================================
+
+
+// ============================================================
+// IMPORTA ATUALIZADOR DE MERCADO
+// ============================================================
+
+import {
+  atualizarMercado
+} from "./atualizar.js";
 
 
 // ============================================================
@@ -64,6 +75,13 @@ let patrimonio = [];
 
 
 // ============================================================
+// ESTADO DO BOTÃO
+// ============================================================
+
+let botaoAtualizar = null;
+
+
+// ============================================================
 // STATUS
 // ============================================================
 
@@ -81,6 +99,244 @@ function mostrarStatus(mensagem) {
 
 
 // ============================================================
+// CRIAR BOTÃO ATUALIZAR MERCADO
+// ============================================================
+
+function criarBotaoAtualizarMercado() {
+
+  // ----------------------------------------------------------
+  // Se o botão já existe, não cria outro
+  // ----------------------------------------------------------
+
+  if (
+    document.getElementById(
+      "btnAtualizarMercado"
+    )
+  ) {
+
+    botaoAtualizar =
+      document.getElementById(
+        "btnAtualizarMercado"
+      );
+
+    return;
+  }
+
+
+  // ----------------------------------------------------------
+  // Criar botão
+  // ----------------------------------------------------------
+
+  botaoAtualizar =
+    document.createElement("button");
+
+  botaoAtualizar.id =
+    "btnAtualizarMercado";
+
+  botaoAtualizar.type =
+    "button";
+
+  botaoAtualizar.textContent =
+    "Atualizar Mercado";
+
+
+  // ----------------------------------------------------------
+  // Estilo básico
+  // ----------------------------------------------------------
+
+  botaoAtualizar.style.padding =
+    "10px 18px";
+
+  botaoAtualizar.style.marginBottom =
+    "15px";
+
+  botaoAtualizar.style.cursor =
+    "pointer";
+
+
+  // ----------------------------------------------------------
+  // Evento do botão
+  // ----------------------------------------------------------
+
+  botaoAtualizar.addEventListener(
+    "click",
+    atualizarMercadoDaAba
+  );
+
+
+  // ----------------------------------------------------------
+  // Inserir antes da tabela
+  // ----------------------------------------------------------
+
+  const tabela =
+    document.getElementById("tabela");
+
+
+  if (tabela) {
+
+    tabela.parentNode.insertBefore(
+      botaoAtualizar,
+      tabela
+    );
+
+  } else {
+
+    document.body.appendChild(
+      botaoAtualizar
+    );
+
+  }
+}
+
+
+// ============================================================
+// BOTÃO → ATUALIZAR MERCADO
+// ============================================================
+//
+// Fluxo:
+//
+// [ Atualizar Mercado ]
+//          ↓
+// atualizarMercado()
+//          ↓
+// carregarPatrimonio()
+// ============================================================
+
+async function atualizarMercadoDaAba() {
+
+  if (!botaoAtualizar) {
+
+    botaoAtualizar =
+      document.getElementById(
+        "btnAtualizarMercado"
+      );
+
+  }
+
+
+  // ----------------------------------------------------------
+  // Desabilitar botão durante atualização
+  // ----------------------------------------------------------
+
+  if (botaoAtualizar) {
+
+    botaoAtualizar.disabled =
+      true;
+
+    botaoAtualizar.textContent =
+      "Atualizando Mercado...";
+
+    botaoAtualizar.style.cursor =
+      "wait";
+  }
+
+
+  try {
+
+    mostrarStatus(
+      "========================================\n" +
+      "ATUALIZAÇÃO DE MERCADO\n" +
+      "========================================\n" +
+      "\n" +
+      "Iniciando atualização..."
+    );
+
+
+    // ========================================================
+    // 1. CHAMA atualizar.js
+    // ========================================================
+
+    const resultado =
+      await atualizarMercado({
+
+        onProgress: mensagem => {
+
+          mostrarStatus(
+            mensagem
+          );
+
+        }
+
+      });
+
+
+    // ========================================================
+    // 2. MOSTRA RESULTADO
+    // ========================================================
+
+    console.log(
+      "Resultado da atualização:",
+      resultado
+    );
+
+
+    mostrarStatus(
+      "========================================\n" +
+      "ATUALIZAÇÃO DE MERCADO CONCLUÍDA\n" +
+      "========================================\n" +
+      "\n" +
+      `Total de ativos: ${resultado?.total ?? patrimonio.length}\n` +
+      `Atualizados: ${resultado?.atualizados ?? 0}\n` +
+      `Erros: ${resultado?.erros ?? 0}\n` +
+      `Mantidos: ${resultado?.mantidos ?? 0}\n` +
+      "\n" +
+      "Recarregando patrimônio..."
+    );
+
+
+    // ========================================================
+    // 3. RECARREGA O CSV
+    // ========================================================
+
+    await carregarPatrimonio();
+
+
+    // ========================================================
+    // 4. CONFIRMA RECARREGAMENTO
+    // ========================================================
+
+    mostrarStatus(
+      `${patrimonio.length} ativos carregados após atualização.`
+    );
+
+
+  } catch (erro) {
+
+    console.error(
+      "Erro ao atualizar mercado:",
+      erro
+    );
+
+
+    mostrarStatus(
+      "ERRO AO ATUALIZAR MERCADO:\n" +
+      erro.message
+    );
+
+
+  } finally {
+
+    // --------------------------------------------------------
+    // Liberar botão
+    // --------------------------------------------------------
+
+    if (botaoAtualizar) {
+
+      botaoAtualizar.disabled =
+        false;
+
+      botaoAtualizar.textContent =
+        "Atualizar Mercado";
+
+      botaoAtualizar.style.cursor =
+        "pointer";
+    }
+
+  }
+}
+
+
+// ============================================================
 // LER CSV
 // ============================================================
 
@@ -90,6 +346,7 @@ async function carregarPatrimonio() {
     "Carregando PatrimonioConsolidado.csv..."
   );
 
+
   // ----------------------------------------------------------
   // Cache busting:
   // garante que a leitura procure o arquivo atualizado.
@@ -98,10 +355,15 @@ async function carregarPatrimonio() {
   const urlCSV =
     `${ARQUIVO_CSV}?atualizadoEm=${Date.now()}`;
 
+
   const resposta =
-    await fetch(urlCSV, {
-      cache: "no-store"
-    });
+    await fetch(
+      urlCSV,
+      {
+        cache: "no-store"
+      }
+    );
+
 
   if (!resposta.ok) {
 
@@ -110,17 +372,24 @@ async function carregarPatrimonio() {
       `PatrimonioConsolidado.csv ` +
       `(HTTP ${resposta.status}).`
     );
+
   }
+
 
   const texto =
     await resposta.text();
 
+
   patrimonio =
-    converterCSVParaPatrimonio(texto);
+    converterCSVParaPatrimonio(
+      texto
+    );
+
 
   mostrarStatus(
     `${patrimonio.length} ativos carregados.`
   );
+
 
   montarTabela();
 
@@ -139,11 +408,13 @@ function converterCSVParaPatrimonio(texto) {
       .trim()
       .split(/\r?\n/);
 
+
   if (linhas.length === 0) {
 
     throw new Error(
       "PatrimonioConsolidado.csv está vazio."
     );
+
   }
 
 
@@ -152,8 +423,12 @@ function converterCSVParaPatrimonio(texto) {
   // ----------------------------------------------------------
 
   const cabecalho =
-    separarLinhaCSV(linhas[0])
-      .map(valor => valor.trim());
+    separarLinhaCSV(
+      linhas[0]
+    )
+      .map(
+        valor => valor.trim()
+      );
 
 
   // ----------------------------------------------------------
@@ -167,6 +442,7 @@ function converterCSVParaPatrimonio(texto) {
       `${cabecalho.length} colunas. ` +
       `Esperadas: 21.`
     );
+
   }
 
 
@@ -190,7 +466,9 @@ function converterCSVParaPatrimonio(texto) {
         `Esperada: ${COLUNAS[indice]}\n` +
         `Encontrada: ${cabecalho[indice]}`
       );
+
     }
+
   }
 
 
@@ -199,6 +477,7 @@ function converterCSVParaPatrimonio(texto) {
   // ----------------------------------------------------------
 
   const dados = [];
+
 
   for (
     let indice = 1;
@@ -210,8 +489,11 @@ function converterCSVParaPatrimonio(texto) {
       continue;
     }
 
+
     const valores =
-      separarLinhaCSV(linhas[indice]);
+      separarLinhaCSV(
+        linhas[indice]
+      );
 
 
     // --------------------------------------------------------
@@ -225,6 +507,7 @@ function converterCSVParaPatrimonio(texto) {
         `${valores.length} colunas. ` +
         `Esperadas: 21.`
       );
+
     }
 
 
@@ -234,6 +517,7 @@ function converterCSVParaPatrimonio(texto) {
 
     const registro = {};
 
+
     for (
       let coluna = 0;
       coluna < COLUNAS.length;
@@ -242,10 +526,16 @@ function converterCSVParaPatrimonio(texto) {
 
       registro[COLUNAS[coluna]] =
         valores[coluna];
+
     }
 
-    dados.push(registro);
+
+    dados.push(
+      registro
+    );
+
   }
+
 
   return dados;
 }
@@ -266,6 +556,7 @@ function separarLinhaCSV(linha) {
   const valores = [];
 
   let valorAtual = "";
+
   let dentroDeAspas = false;
 
 
@@ -286,6 +577,7 @@ function separarLinhaCSV(linha) {
     if (caractere === '"') {
 
       // Aspas duplas dentro de um campo
+
       if (
         dentroDeAspas &&
         linha[indice + 1] === '"'
@@ -299,6 +591,7 @@ function separarLinhaCSV(linha) {
 
         dentroDeAspas =
           !dentroDeAspas;
+
       }
 
 
@@ -311,7 +604,9 @@ function separarLinhaCSV(linha) {
       !dentroDeAspas
     ) {
 
-      valores.push(valorAtual);
+      valores.push(
+        valorAtual
+      );
 
       valorAtual = "";
 
@@ -322,8 +617,11 @@ function separarLinhaCSV(linha) {
 
     } else {
 
-      valorAtual += caractere;
+      valorAtual +=
+        caractere;
+
     }
+
   }
 
 
@@ -336,6 +634,7 @@ function separarLinhaCSV(linha) {
     throw new Error(
       "CSV possui aspas não fechadas."
     );
+
   }
 
 
@@ -343,7 +642,10 @@ function separarLinhaCSV(linha) {
   // ÚLTIMO VALOR
   // ----------------------------------------------------------
 
-  valores.push(valorAtual);
+  valores.push(
+    valorAtual
+  );
+
 
   return valores;
 }
@@ -356,7 +658,10 @@ function separarLinhaCSV(linha) {
 function montarTabela() {
 
   const tabela =
-    document.getElementById("tabela");
+    document.getElementById(
+      "tabela"
+    );
+
 
   if (!tabela) {
 
@@ -380,21 +685,33 @@ function montarTabela() {
   // ==========================================================
 
   const thead =
-    document.createElement("thead");
+    document.createElement(
+      "thead"
+    );
+
 
   const linhaCabecalho =
-    document.createElement("tr");
+    document.createElement(
+      "tr"
+    );
 
 
   for (const coluna of COLUNAS) {
 
     const th =
-      document.createElement("th");
+      document.createElement(
+        "th"
+      );
+
 
     th.textContent =
       coluna;
 
-    linhaCabecalho.appendChild(th);
+
+    linhaCabecalho.appendChild(
+      th
+    );
+
   }
 
 
@@ -408,28 +725,42 @@ function montarTabela() {
   // ==========================================================
 
   const tbody =
-    document.createElement("tbody");
+    document.createElement(
+      "tbody"
+    );
 
 
   for (const registro of patrimonio) {
 
     const tr =
-      document.createElement("tr");
+      document.createElement(
+        "tr"
+      );
 
 
     for (const coluna of COLUNAS) {
 
       const td =
-        document.createElement("td");
+        document.createElement(
+          "td"
+        );
+
 
       td.textContent =
         registro[coluna];
 
-      tr.appendChild(td);
+
+      tr.appendChild(
+        td
+      );
+
     }
 
 
-    tbody.appendChild(tr);
+    tbody.appendChild(
+      tr
+    );
+
   }
 
 
@@ -437,9 +768,14 @@ function montarTabela() {
   // INSERIR NA TABELA
   // ==========================================================
 
-  tabela.appendChild(thead);
+  tabela.appendChild(
+    thead
+  );
 
-  tabela.appendChild(tbody);
+
+  tabela.appendChild(
+    tbody
+  );
 }
 
 
@@ -456,7 +792,19 @@ async function iniciarAbaPatrimonio() {
 
   try {
 
+    // --------------------------------------------------------
+    // Criar botão
+    // --------------------------------------------------------
+
+    criarBotaoAtualizarMercado();
+
+
+    // --------------------------------------------------------
+    // Carregar patrimônio
+    // --------------------------------------------------------
+
     await carregarPatrimonio();
+
 
   } catch (erro) {
 
@@ -465,9 +813,11 @@ async function iniciarAbaPatrimonio() {
       erro
     );
 
+
     mostrarStatus(
       `ERRO: ${erro.message}`
     );
+
 
     throw erro;
   }
