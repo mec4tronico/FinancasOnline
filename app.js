@@ -169,6 +169,10 @@ async function carregarCSV(forcarAtualizacao = false) {
     }
 
     const texto = await resposta.text();
+    
+    console.log("=== TESTE CSV RECEBIDO ===");
+    console.log("DataAtualizacao recebida:", texto.split("\n")[1]);
+    console.log("=== FIM TESTE ===");
 
     patrimonio = converterCSVParaPatrimonio(texto);
 
