@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Teste Patrimônio</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+
+        h1 {
+            margin-bottom: 15px;
+        }
+
+        button {
+            padding: 10px 18px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        #status {
+            background: #111;
+            color: #00ff66;
+            padding: 15px;
+            margin-bottom: 20px;
+            min-height: 120px;
+            white-space: pre-wrap;
+            font-family: Consolas, monospace;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+
+        .tabela-container {
+            overflow-x: auto;
+            background: white;
+            border: 1px solid #ccc;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 2200px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ccc;
+            padding: 7px;
+            white-space: nowrap;
+            text-align: left;
+        }
+
+        th {
+            background: #ddd;
+            position: sticky;
+            top: 0;
+        }
+
+        #quantidade {
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Teste Patrimônio Consolidado</h1>
+
+    <button id="btnAtualizar">
+        Atualizar Mercado
+    </button>
+
+    <div id="quantidade">
+        Carregando...
+    </div>
+
+    <div id="status">
+        Aguardando...
+    </div>
+
+    <div class="tabela-container">
+
+        <table id="tabela">
+            <thead></thead>
+            <tbody></tbody>
+        </table>
+
+    </div>
+
+
+    <script type="module">
+
+        import { atualizarMercado }
+            from "./atualizar.js";
+
+
+        const URL_CSV =
+            "patrimonio_consolidado.csv";
+
+
+        const btnAtualizar =
+            document.getElementById("btnAtualizar");
+
+
+        const status =
+            document.getElementById("status");
+
+
+        const quantidade =
+            document.getElementById("quantidade");
+
+
+        const tabela =
+            document.getElementById("tabela");
+
+
+        function escreverStatus(mensagem) {
+
+            status.textContent +=
+                mensagem + "\n";
+
+            status.scrollTop =
+                status.scrollHeight;
+        }
+
+
+        function limparStatus() {
+
+            status.textContent = "";
+
+        }
+
+
+        function separarCSV(linha) {
+
+            const valores = [];
+
+            let valorAtual = "";
+
+            let dentroAspas = false;
+
+
+            for (
+                let i = 0;
+                i < linha.length;
+                i++
+            ) {
+
+                const caractere =
+                    linha[i];
+
+
+                if (caractere === '"') {
+
+                    if (
+                        dentroAspas &&
+                        linha[i + 1] === '"'
+                    ) {
+
+                        valorAtual += '"';
+
+                        i++;
+
+                    } else {
+
+                        dentroAspas =
+                            !dentroAspas;
+
+                    }
+
+                }
+
+                else if (
+                    caractere === "," &&
+                    !dentroAspas
+                ) {
+
+                    valores.push(
+                        valorAtual
+                    );
+
+                    valorAtual = "";
+
+                }
+
+                else {
+
+                    valorAtual +=
+                        caractere;
+
+                }
+
+            }
+
+
+            valores.push(
+                valorAtual
+            );
+
+
+            return valores;
+
+        }
+
+
+        function escaparHTML(valor) {
+
+            return String(valor ?? "")
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
+
+        }
+
+
+        async function carregarCSV() {
+
+            try {
+
+                escreverStatus(
+                    "Carregando patrimonio_consolidado.csv..."
+                );
+
+
+                const resposta =
+                    await fetch(
+                        URL_CSV +
+                        "?t=" +
+                        Date.now(),
+                        {
+                            cache: "no-store"
+                        }
+                    );
+
+
+                if (!resposta.ok) {
+
+                    throw new Error(
+                        "HTTP " +
+                        resposta.status
+                    );
+
+                }
+
+
+                const texto =
+                    await resposta.text();
+
+
+                const linhas =
+                    texto
+                        .trim()
+                        .split(/\r?\n/);
+
+
+                if (!linhas.length) {
+
+                    throw new Error(
+                        "CSV vazio."
+                    );
+
+                }
+
+
+                const cabecalho =
+                    separarCSV(
+                        linhas[0]
+                    );
+
+
+                const tbody =
+                    tabela.querySelector(
+                        "tbody"
+                    );
+
+
+                const thead =
+                    tabela.querySelector(
+                        "thead"
+                    );
+
+
+                thead.innerHTML = "";
+
+                tbody.innerHTML = "";
+
+
+                const trCabecalho =
+                    document.createElement(
+                        "tr"
+                    );
+
+
+                cabecalho.forEach(
+                    coluna => {
+
+                        const th =
+                            document.createElement(
+                                "th"
+                            );
+
+                        th.textContent =
+                            coluna;
+
+                        trCabecalho.appendChild(
+                            th
+                        );
+
+                    }
+                );
+
+
+                thead.appendChild(
+                    trCabecalho
+                );
+
+
+                let totalRegistros = 0;
+
+
+                for (
+                    let i = 1;
+                    i < linhas.length;
+                    i++
+                ) {
+
+                    if (
+                        !linhas[i].trim()
+                    ) {
+
+                        continue;
+
+                    }
+
+
+                    const valores =
+                        separarCSV(
+                            linhas[i]
+                        );
+
+
+                    const tr =
+                        document.createElement(
+                            "tr"
+                        );
+
+
+                    valores.forEach(
+                        valor => {
+
+                            const td =
+                                document.createElement(
+                                    "td"
+                                );
+
+                            td.textContent =
+                                valor;
+
+                            tr.appendChild(
+                                td
+                            );
+
+                        }
+                    );
+
+
+                    tbody.appendChild(
+                        tr
+                    );
+
+
+                    totalRegistros++;
+
+                }
+
+
+                quantidade.textContent =
+                    "Ativos carregados: " +
+                    totalRegistros;
+
+
+                escreverStatus(
+                    "CSV carregado com sucesso."
+                );
+
+            }
+
+            catch (erro) {
+
+                escreverStatus(
+                    "ERRO AO CARREGAR CSV: " +
+                    erro.message
+                );
+
+            }
+
+        }
+
+
+        btnAtualizar.addEventListener(
+            "click",
+            async () => {
+
+                btnAtualizar.disabled =
+                    true;
+
+
+                limparStatus();
+
+
+                escreverStatus(
+                    "========================================"
+                );
+
+                escreverStatus(
+                    "ATUALIZAR MERCADO"
+                );
+
+                escreverStatus(
+                    "========================================"
+                );
+
+                escreverStatus("");
+
+
+                try {
+
+                    const resultado =
+                        await atualizarMercado({
+
+                            onProgress:
+                                mensagem => {
+
+                                    escreverStatus(
+                                        mensagem
+                                    );
+
+                                }
+
+                        });
+
+
+                    escreverStatus("");
+
+                    escreverStatus(
+                        "========================================"
+                    );
+
+                    escreverStatus(
+                        "ATUALIZAÇÃO FINALIZADA"
+                    );
+
+                    escreverStatus(
+                        "========================================"
+                    );
+
+                    escreverStatus("");
+
+                    escreverStatus(
+                        JSON.stringify(
+                            resultado,
+                            null,
+                            2
+                        )
+                    );
+
+
+                    escreverStatus("");
+
+                    escreverStatus(
+                        "Recarregando tabela..."
+                    );
+
+
+                    await carregarCSV();
+
+                }
+
+                catch (erro) {
+
+                    console.error(
+                        erro
+                    );
+
+
+                    escreverStatus("");
+
+                    escreverStatus(
+                        "========================================"
+                    );
+
+                    escreverStatus(
+                        "ERRO NA ATUALIZAÇÃO"
+                    );
+
+                    escreverStatus(
+                        "========================================"
+                    );
+
+                    escreverStatus(
+                        erro.message
+                    );
+
+                }
+
+                finally {
+
+                    btnAtualizar.disabled =
+                        false;
+
+                }
+
+            }
+        );
+
+
+        carregarCSV();
+
+    </script>
+
+</body>
+
+</html>
