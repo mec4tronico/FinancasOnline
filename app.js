@@ -785,75 +785,75 @@ function atualizarVisualizacoesCarteira() {
     const canvasLucro = document.getElementById("graficoLucroPrejuizo");
 
     if (canvasDistribuicao) {
-  const posicoesOrdenadas = [...posicoes]
-    .filter(posicao => Number(posicao.valorAtualPosicao) > 0)
-    .sort(
-      (a, b) =>
-        Number(b.valorAtualPosicao) - Number(a.valorAtualPosicao)
-    );
-
-  const patrimonioTotal = posicoesOrdenadas.reduce(
-    (total, posicao) =>
-      total + Number(posicao.valorAtualPosicao),
-    0
-  );
-
-  graficosCarteira.distribuicao = new Chart(canvasDistribuicao, {
-    type: "doughnut",
-
-    data: {
-      labels: posicoesOrdenadas.map(posicao => posicao.ativo),
-
-      datasets: [{
-        data: posicoesOrdenadas.map(
-          posicao => Number(posicao.valorAtualPosicao)
-        ),
-
-        backgroundColor: posicoesOrdenadas.map(
-          (_, indice) => cores[indice % cores.length]
-        ),
-
-        borderWidth: 2,
-        borderColor: "#ffffff"
-      }]
-    },
-
-    options: {
-      ...opcoesMoeda,
-
-      cutout: "62%",
-
-      plugins: {
-        legend: {
-          position: "right",
-
-          labels: {
-            generateLabels: function(chart) {
-              const dataset = chart.data.datasets[0];
-
-              return chart.data.labels.map((label, indice) => {
-                const valor = Number(dataset.data[indice]);
-                const percentual =
-                  patrimonioTotal > 0
-                    ? (valor / patrimonioTotal) * 100
-                    : 0;
-
-                return {
-                  text: `${label} — ${percentual.toFixed(3)}%`,
-                  fillStyle: dataset.backgroundColor[indice],
-                  strokeStyle: dataset.borderColor,
-                  lineWidth: dataset.borderWidth,
-                  hidden: false,
-                  index: indice
-                };
-              });
+      const posicoesOrdenadas = [...posicoes]
+        .filter(posicao => Number(posicao.valorAtualPosicao) > 0)
+        .sort(
+          (a, b) =>
+            Number(b.valorAtualPosicao) - Number(a.valorAtualPosicao)
+        );
+    
+      const patrimonioTotal = posicoesOrdenadas.reduce(
+        (total, posicao) =>
+          total + Number(posicao.valorAtualPosicao),
+        0
+      );
+    
+      graficosCarteira.distribuicao = new Chart(canvasDistribuicao, {
+        type: "doughnut",
+    
+        data: {
+          labels: posicoesOrdenadas.map(posicao => posicao.ativo),
+    
+          datasets: [{
+            data: posicoesOrdenadas.map(
+              posicao => Number(posicao.valorAtualPosicao)
+            ),
+    
+            backgroundColor: posicoesOrdenadas.map(
+              (_, indice) => cores[indice % cores.length]
+            ),
+    
+            borderWidth: 2,
+            borderColor: "#ffffff"
+          }]
+        },
+    
+        options: {
+          ...opcoesMoeda,
+    
+          cutout: "62%",
+    
+          plugins: {
+            legend: {
+              position: "right",
+    
+              labels: {
+                generateLabels: function(chart) {
+                  const dataset = chart.data.datasets[0];
+    
+                  return chart.data.labels.map((label, indice) => {
+                    const valor = Number(dataset.data[indice]);
+                    const percentual =
+                      patrimonioTotal > 0
+                        ? (valor / patrimonioTotal) * 100
+                        : 0;
+    
+                    return {
+                      text: `${label} — ${percentual.toFixed(3)}%`,
+                      fillStyle: dataset.backgroundColor[indice],
+                      strokeStyle: dataset.borderColor,
+                      lineWidth: dataset.borderWidth,
+                      hidden: false,
+                      index: indice
+                    };
+                  });
+                }
+              }
             }
           }
         }
-      }
+      });
     }
-  });
-}
 
     const totaisPorClasse = {};
 
