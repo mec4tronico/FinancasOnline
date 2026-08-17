@@ -1,341 +1,322 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinançasOnline - Teste Patrimônio Consolidado</title>
-    <style>
-        :root {
-            --bg-primary: #0f172a;
-            --bg-secondary: #1e293b;
-            --bg-card: #334155;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent-color: #2563eb;
-            --accent-hover: #1d4ed8;
-            --border-color: #475569;
-            --success-color: #10b981;
-            --danger-color: #ef4444;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finanças Online — teste3</title>
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+  rel="stylesheet">
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-        body {
-            background-color: var(--bg-primary);
-            color: var(--text-main);
-            display: flex;
-            min-height: 100vh;
-        }
+<style>
+  :root {
+    --bg: #f4f6fb;
+    --sidebar-bg: #161c2d;
+    --sidebar-text: #c4cad9;
+    --sidebar-text-active: #ffffff;
+    --accent: #3b6df0;
+    --accent-dark: #2a52c9;
+    --card-bg: #ffffff;
+    --border: #e4e8f1;
+    --text: #1c2233;
+    --text-muted: #6b7280;
+    --radius: 12px;
+  }
 
-        /* Sidebar / Menu Lateral */
-        aside {
-            width: 260px;
-            background-color: var(--bg-secondary);
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            padding: 20px 0;
-            flex-shrink: 0;
-        }
+  * { box-sizing: border-box; }
 
-        aside .brand {
-            font-size: 1.4rem;
-            font-weight: bold;
-            padding: 0 20px 20px 20px;
-            color: #38bdf8;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 15px;
-        }
+  body {
+    margin: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
 
-        aside nav ul {
-            list-style: none;
-        }
+  .app-shell {
+    display: flex;
+    min-height: 100vh;
+  }
 
-        aside nav ul li a {
-            display: flex;
-            align-items: center;
-            padding: 12px 20px;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 0.95rem;
-            transition: all 0.2s;
-        }
+  /* ---------------- SIDEBAR ---------------- */
 
-        aside nav ul li a:hover {
-            background-color: rgba(255, 255, 255, 0.05);
-            color: var(--text-main);
-        }
+  .sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background: var(--sidebar-bg);
+    color: var(--sidebar-text);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 0;
+  }
 
-        aside nav ul li.active a {
-            background-color: var(--accent-color);
-            color: #ffffff;
-            font-weight: 600;
-        }
+  .sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 24px 24px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    margin-bottom: 16px;
+  }
 
-        /* Main Content */
-        main {
-            flex-grow: 1;
-            padding: 30px;
-            overflow-x: hidden;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
+  .sidebar-brand i {
+    font-size: 22px;
+    color: var(--accent);
+  }
 
-        .header-section {
-            margin-bottom: 10px;
-        }
+  .sidebar-brand span {
+    font-weight: 800;
+    font-size: 18px;
+    color: #fff;
+  }
 
-        .header-section h1 {
-            font-size: 1.8rem;
-            margin-bottom: 5px;
-        }
+  .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0 12px;
+  }
 
-        .header-section p {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-        }
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+    color: var(--sidebar-text);
+  }
 
-        /* Card Container */
-        .card {
-            background-color: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
+  .sidebar-item .icon {
+    width: 20px;
+    text-align: center;
+  }
 
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
+  .sidebar-item.active {
+    background: var(--accent);
+    color: var(--sidebar-text-active);
+    font-weight: 600;
+  }
 
-        .card-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
+  .sidebar-item:not(.active):hover {
+    background: rgba(255,255,255,0.06);
+  }
 
-        /* Botão Atualizar */
-        .btn-update {
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: background-color 0.2s;
-        }
+  /* ---------------- MAIN ---------------- */
 
-        .btn-update:hover {
-            background-color: var(--accent-hover);
-        }
+  .app-main {
+    flex: 1;
+    padding: 32px 40px;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
 
-        .btn-update:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
+  .page-heading h1 {
+    margin: 0 0 4px 0;
+    font-size: 26px;
+    font-weight: 800;
+  }
 
-        /* Feedback Status */
-        #status-mensagem {
-            margin-top: 10px;
-            padding: 10px 14px;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            display: none;
-        }
+  .page-heading p {
+    margin: 0 0 28px 0;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
 
-        #status-mensagem.sucesso {
-            display: block;
-            background-color: rgba(16, 185, 129, 0.15);
-            color: #34d399;
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
+  .content-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  }
 
-        #status-mensagem.erro {
-            display: block;
-            background-color: rgba(239, 68, 68, 0.15);
-            color: #f87171;
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
+  .card-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
 
-        #status-mensagem.info {
-            display: block;
-            background-color: rgba(37, 99, 235, 0.15);
-            color: #60a5fa;
-            border: 1px solid rgba(37, 99, 235, 0.3);
-        }
+  .card-toolbar h2 {
+    margin: 0 0 4px 0;
+    font-size: 17px;
+    font-weight: 700;
+  }
 
-        /* Tabela Responsiva */
-        .table-container {
-            width: 100%;
-            overflow-x: auto;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-        }
+  .card-toolbar p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            white-space: nowrap;
-            font-size: 0.875rem;
-            text-align: left;
-        }
+  /* Botão "Atualizar Mercado" é criado dinamicamente por
+     aba_patrimonio.js (id="btnAtualizarMercado"). Estilizamos
+     aqui só pelo id — sem tocar no JS original. O ícone ↻ é
+     puramente visual (::before), não substitui o textContent
+     real que o script controla ("Atualizar Mercado" /
+     "Atualizando Mercado..."). */
+  #btnAtualizarMercado {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+  }
 
-        thead {
-            background-color: var(--bg-card);
-            color: var(--text-main);
-        }
+  #btnAtualizarMercado::before {
+    content: "↻";
+    font-size: 15px;
+  }
 
-        th, td {
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--border-color);
-        }
+  #btnAtualizarMercado:hover:not(:disabled) {
+    background: var(--accent-dark);
+  }
 
-        th {
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.05em;
-        }
+  #btnAtualizarMercado:disabled {
+    opacity: 0.7;
+  }
 
-        tbody tr:hover {
-            background-color: rgba(255, 255, 255, 0.02);
-        }
+  #status {
+    white-space: pre-wrap;
+    font-size: 13px;
+    color: var(--text-muted);
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin: 16px 0;
+    max-height: 260px;
+    overflow-y: auto;
+  }
 
-        tbody tr:last-child td {
-            border-bottom: none;
-        }
-    </style>
+  /* Wrapper que vira o parentNode de #tabela — o botão é
+     inserido pelo próprio aba_patrimonio.js logo antes da
+     tabela dentro deste elemento. */
+  .table-wrapper {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+
+  #tabela {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 1600px;
+    font-size: 13px;
+  }
+
+  #tabela th {
+    background: #f1f4fa;
+    text-align: left;
+    padding: 10px 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+  }
+
+  #tabela td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  #tabela tbody tr:hover {
+    background: #f8fafc;
+  }
+</style>
 </head>
+
 <body>
 
-    <!-- Menu Lateral -->
-    <aside>
-        <div class="brand">FinançasOnline</div>
-        <nav>
-            <ul>
-                <li class="active"><a href="#">📋 Patrimônio Consolidado</a></li>
-                <li><a href="#">📊 Indicadores</a></li>
-                <li><a href="#">📈 Evolução Patrimonial</a></li>
-                <li><a href="#">💰 Proventos</a></li>
-                <li><a href="#">📉 Análises</a></li>
-                <li><a href="#">⚙️ Configurações</a></li>
-            </ul>
-        </nav>
+  <div class="app-shell">
+
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <i class="fa-solid fa-chart-line"></i>
+        <span>FinançasOnline</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="sidebar-item active">
+          <span class="icon">📋</span> Patrimônio Consolidado
+        </div>
+        <div class="sidebar-item">
+          <span class="icon">📊</span> Indicadores
+        </div>
+        <div class="sidebar-item">
+          <span class="icon">📈</span> Evolução Patrimonial
+        </div>
+        <div class="sidebar-item">
+          <span class="icon">💰</span> Proventos
+        </div>
+        <div class="sidebar-item">
+          <span class="icon">📉</span> Análises
+        </div>
+        <div class="sidebar-item">
+          <span class="icon">⚙️</span> Configurações
+        </div>
+      </nav>
     </aside>
 
-    <!-- Conteúdo Principal -->
-    <main>
-        <div class="header-section">
-            <h1>Patrimônio Consolidado</h1>
-            <p>Acompanhamento detalhado do valor atualizado dos ativos, lucros e proventos estimados.</p>
+    <main class="app-main">
+      <div class="page-heading">
+        <h1>Patrimônio Consolidado</h1>
+        <p>Visualização de teste da aba Patrimônio Consolidado, usando exclusivamente aba_patrimonio.js e atualizar.js.</p>
+      </div>
+
+      <div class="content-card">
+        <div class="card-toolbar">
+          <div>
+            <h2>Seus ativos</h2>
+            <p>Carregamento automático a partir de patrimonio_consolidado.csv.</p>
+          </div>
+          <!-- O botão "Atualizar Mercado" NÃO é criado aqui.
+               Ele é criado por criarBotaoAtualizarMercado() em
+               aba_patrimonio.js e inserido automaticamente antes
+               de #tabela. -->
         </div>
 
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">Seus ativos</div>
-                <button id="btn-atualizar-mercado" class="btn-update" onclick="handleAtualizarMercado()">
-                    ↻ Atualizar Mercado
-                </button>
-            </div>
+        <div id="status" aria-live="polite">Inicializando...</div>
 
-            <div id="status-mensagem"></div>
-
-            <div class="table-container">
-                <table id="tabela-patrimonio">
-                    <thead>
-                        <tr>
-                            <th>Ativo</th>
-                            <th>Tipo</th>
-                            <th>Quantidade</th>
-                            <th>Total Investido</th>
-                            <th>Data 1ª Compra</th>
-                            <th>Data Atualização</th>
-                            <th>Valor Atual</th>
-                            <th>Mín 52</th>
-                            <th>Máx 52</th>
-                            <th>DY</th>
-                            <th>Valorização</th>
-                            <th>Valor Atual Posição</th>
-                            <th>Lucro / Prejuízo</th>
-                            <th>Rentabilidade</th>
-                            <th>Peso Carteira</th>
-                            <th>Renda Anual Estimada</th>
-                            <th>Renda Mensal Estimada</th>
-                            <th>Valor Posição Máx 52</th>
-                            <th>Valor Posição Mín 52</th>
-                            <th>Potencial Fin. Máx 52</th>
-                            <th>Risco Fin. Mín 52</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabela-patrimonio-body">
-                        <!-- Os dados de patrimonio_consolidado.csv serão renderizados aqui automaticamente -->
-                    </tbody>
-                </table>
-            </div>
+        <div class="table-wrapper">
+          <table id="tabela"></table>
         </div>
+      </div>
     </main>
 
-    <!-- Scripts Oficiais na ordem de dependência correta -->
-    <script src="atualizar.js"></script>
-    <script src="aba_patrimonio.js"></script>
+  </div>
 
-    <script>
-        // Carregamento automático ao abrir a página
-        document.addEventListener('DOMContentLoaded', () => {
-            if (typeof carregarAbaPatrimonio === 'function') {
-                carregarAbaPatrimonio();
-            } else {
-                exibirStatus('Erro: A função carregarAbaPatrimonio() não foi encontrada em aba_patrimonio.js.', 'erro');
-            }
-        });
+  <!-- ============================================================
+       Carregamento automático da aba, usando as funções REAIS
+       de aba_patrimonio.js (que por sua vez importa atualizar.js).
+       Nenhum dos três arquivos abaixo é modificado por este teste.
+       ============================================================ -->
+  <script type="module">
+    import { iniciarAbaPatrimonio } from "./aba_patrimonio.js";
 
-        // Handler do botão Atualizar Mercado respeitando o fluxo dos arquivos oficiais
-        async function handleAtualizarMercado() {
-            const btn = document.getElementById('btn-atualizar-mercado');
-            btn.disabled = true;
-            exibirStatus('Atualizando dados de mercado... Por favor, aguarde.', 'info');
+    iniciarAbaPatrimonio().catch((erro) => {
+      console.error("Falha ao iniciar a aba Patrimônio Consolidado:", erro);
+    });
+  </script>
 
-            try {
-                if (typeof executarAtualizacaoMercado === 'function') {
-                    await executarAtualizacaoMercado();
-                    exibirStatus('Mercado e patrimonio_consolidado.csv atualizados com sucesso!', 'sucesso');
-                } else if (typeof atualizarDadosMercado === 'function') {
-                    await atualizarDadosMercado();
-                    if (typeof carregarAbaPatrimonio === 'function') {
-                        await carregarAbaPatrimonio();
-                    }
-                    exibirStatus('Mercado e patrimonio_consolidado.csv atualizados com sucesso!', 'sucesso');
-                } else {
-                    throw new Error('Função oficial de atualização de mercado não encontrada.');
-                }
-            } catch (error) {
-                console.error(error);
-                exibirStatus('Erro ao atualizar dados de mercado: ' + error.message, 'erro');
-            } finally {
-                btn.disabled = false;
-            }
-        }
-
-        function exibirStatus(texto, tipo) {
-            const msgEl = document.getElementById('status-mensagem');
-            msgEl.className = tipo;
-            msgEl.innerText = texto;
-        }
-    </script>
 </body>
 </html>
