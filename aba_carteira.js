@@ -1030,4 +1030,3 @@ async function atualizarAbaCarteira() {
 export {
   atualizarAbaCarteira
 };
-```
