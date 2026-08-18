@@ -5,15 +5,14 @@ document.addEventListener("DOMContentLoaded", () => {
     // ===================================================================
     // 1. INICIALIZAÇÃO DA CARTEIRA (REGRA PRINCIPAL)
     // ===================================================================
-    // A aba Carteira é atualizada automaticamente e de forma independente
-    // na inicialização do site.
+    // Executa imediatamente para carregar os gráficos da Carteira sem depender de cliques
     try {
         atualizarAbaCarteira();
     } catch (e) {
-        console.error("Erro ao atualizar a aba carteira:", e);
+        console.error("Erro ao inicializar a aba carteira:", e);
     }
 
-    // Inicializa a aba de configuração (para preparar listeners de botões internos, se houver)
+    // Inicializa a aba de configuração (listeners internos, se houver)
     try {
         if (typeof iniciarAbaConfiguracao === "function") {
             iniciarAbaConfiguracao();
@@ -23,76 +22,78 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ===================================================================
-    // 2. ESTRUTURA OFICIAL DAS 7 ABAS
+    // 2. NAVEGAÇÃO DINÂMICA BASEADA NO HTML (.tab-button e data-tab)
     // ===================================================================
-    // IDs baseados na estrutura do index.html
-    const abasOficiais = [
-        "carteira",
-        "tabela-carteira",
-        "rentabilidade",
-        "tabela-rentabilidade",
-        "mercado",
-        "tabela-mercado",
-        "configuracao"
-    ];
+    const botoesAbas = document.querySelectorAll(".tab-button");
 
-    // Lógica central de navegação visual
-    function navegarPara(abaAlvo) {
-        abasOficiais.forEach(aba => {
-            // Suporte aos IDs mais comuns utilizados no index.html
-            const section = document.getElementById(aba) || document.getElementById(`aba-${aba}`);
-            const btn = document.getElementById(`btn-${aba}`) || document.getElementById(`nav-${aba}`);
+    function navegarPara(idAbaAlvo) {
+        botoesAbas.forEach(botao => {
+            const dataTabBotao = botao.dataset.tab;
+            const sectionReal = document.getElementById(dataTabBotao);
 
-            // Controle de visibilidade dos sections
-            if (section) {
-                if (aba === abaAlvo) {
-                    section.style.display = "block"; // Mostra o section correspondente
-                    section.classList.add("active");
-                } else {
-                    section.style.display = "none";  // Esconde os demais
-                    section.classList.remove("active");
+            if (dataTabBotao === idAbaAlvo) {
+                // Ativa o botão correspondente
+                botao.classList.add("active");
+                botao.setAttribute("aria-selected", "true");
+
+                // Mostra a section correspondente
+                if (sectionReal) {
+                    sectionReal.removeAttribute("hidden");
+                    sectionReal.style.display = "block";
+                    sectionReal.classList.add("active");
                 }
-            }
+            } else {
+                // Desativa os demais botões
+                botao.classList.remove("active");
+                botao.setAttribute("aria-selected", "false");
 
-            // Controle visual dos botões
-            if (btn) {
-                if (aba === abaAlvo) {
-                    btn.classList.add("active");     // Ativa o botão correspondente
-                } else {
-                    btn.classList.remove("active");
+                // Esconde as outras sections
+                if (sectionReal) {
+                    sectionReal.setAttribute("hidden", "");
+                    sectionReal.style.display = "none";
+                    sectionReal.classList.remove("active");
                 }
             }
         });
 
         // ===================================================================
-        // 3. EXECUÇÃO DE LÓGICA ESPECÍFICA AO ABRIR ABA
+        // 3. LÓGICA DE EXECUÇÃO DA ABA CONFIGURAÇÃO
         // ===================================================================
-        if (abaAlvo === "configuracao") {
+        if (idAbaAlvo && idAbaAlvo.toLowerCase().includes("configuracao")) {
             try {
                 carregarAbaConfiguracao();
             } catch (e) {
                 console.error("Erro ao carregar os dados da aba de Configuração:", e);
             }
         }
-        
-        // NOTA: As abas sem módulo (como Tabela Carteira, Mercado, etc)
-        // passam apenas pelo controle visual do loop e não chamam funções inexistentes.
     }
 
     // ===================================================================
-    // 4. REGISTRAR EVENTOS DE NAVEGAÇÃO
+    // 4. REGISTRAR EVENTOS DE CLIQUE NOS BOTÕES
     // ===================================================================
-    abasOficiais.forEach(aba => {
-        const btn = document.getElementById(`btn-${aba}`) || document.getElementById(`nav-${aba}`);
-        if (btn) {
-            btn.addEventListener("click", () => {
-                navegarPara(aba);
+    let primeiraAbaCarteira = null;
+
+    botoesAbas.forEach(botao => {
+        const idAlvo = botao.dataset.tab;
+
+        // Identifica qual data-tab pertence à Carteira principal
+        if (idAlvo && idAlvo.toLowerCase().includes("carteira") && !idAlvo.toLowerCase().includes("tabela")) {
+            primeiraAbaCarteira = idAlvo;
+        }
+
+        if (idAlvo) {
+            botao.addEventListener("click", () => {
+                navegarPara(idAlvo);
             });
         }
     });
 
     // ===================================================================
-    // 5. ABRIR SITE AUTOMATICAMENTE NA PRIMEIRA ABA: CARTEIRA
+    // 5. ABRIR SITE AUTOMATICAMENTE NA PRIMEIRA ABA (CARTEIRA)
     // ===================================================================
-    navegarPara("carteira");
+    if (primeiraAbaCarteira) {
+        navegarPara(primeiraAbaCarteira);
+    } else if (botoesAbas.length > 0) {
+        navegarPara(botoesAbas[0].dataset.tab);
+    }
 });
