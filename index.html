@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -8,20 +9,27 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
+
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
     <link rel="stylesheet" href="./styles.css">
 </head>
 
 <body>
 
     <header class="app-header">
+
         <div class="brand">
-            <span class="brand-icon"><i class="fa-solid fa-chart-line"></i></span>
+            <span class="brand-icon">
+                <i class="fa-solid fa-chart-line"></i>
+            </span>
+
             <div>
                 <span class="brand-name">FinançasOnline</span>
                 <span class="brand-subtitle">Seu patrimônio em movimento</span>
@@ -29,182 +37,585 @@
         </div>
 
         <nav class="tab-navigation" aria-label="Navegação principal" role="tablist">
+
+            <!-- 1. CARTEIRA -->
             <button
                 class="tab-button active"
                 type="button"
                 role="tab"
                 aria-selected="true"
-                aria-controls="tab-patrimonio-consolidado"
-                data-tab="tab-patrimonio-consolidado">
-                <i class="fa-solid fa-clipboard-list"></i>
-                <span>Patrimônio Consolidado</span>
-            </button>
-            <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="tab-carteira-consolidada" data-tab="tab-carteira-consolidada">
+                aria-controls="tab-carteira"
+                data-tab="tab-carteira">
+
                 <i class="fa-solid fa-chart-pie"></i>
-                <span>Carteira Consolidada</span>
+                <span>CARTEIRA</span>
             </button>
-            <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="tab-rentabilidade" data-tab="tab-rentabilidade">
-                <i class="fa-solid fa-arrow-trend-up"></i>
-                <span>Rentabilidade</span>
-            </button>
-            <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="tab-patrimonio" data-tab="tab-patrimonio">
-                <i class="fa-solid fa-wallet"></i>
-                <span>Patrimônio</span>
-            </button>
-            <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="tab-tabela-carteira" data-tab="tab-tabela-carteira">
+
+            <!-- 2. TABELA CARTEIRA -->
+            <button
+                class="tab-button"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="tab-tabela-carteira"
+                data-tab="tab-tabela-carteira">
+
                 <i class="fa-solid fa-table-list"></i>
-                <span>Tabela Carteira</span>
+                <span>TABELA CARTEIRA</span>
             </button>
-            <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="tab-tabela-rentabilidade" data-tab="tab-tabela-rentabilidade">
+
+            <!-- 3. RENTABILIDADE -->
+            <button
+                class="tab-button"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="tab-rentabilidade"
+                data-tab="tab-rentabilidade">
+
+                <i class="fa-solid fa-arrow-trend-up"></i>
+                <span>RENTABILIDADE</span>
+            </button>
+
+            <!-- 4. TABELA RENTABILIDADE -->
+            <button
+                class="tab-button"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="tab-tabela-rentabilidade"
+                data-tab="tab-tabela-rentabilidade">
+
                 <i class="fa-solid fa-chart-column"></i>
-                <span>Tabela Rentabilidade</span>
+                <span>TABELA RENTABILIDADE</span>
             </button>
+
+            <!-- 5. MERCADO -->
+            <button
+                class="tab-button"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="tab-mercado"
+                data-tab="tab-mercado">
+
+                <i class="fa-solid fa-chart-line"></i>
+                <span>MERCADO</span>
+            </button>
+
+            <!-- 6. TABELA MERCADO -->
+            <button
+                class="tab-button"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="tab-tabela-mercado"
+                data-tab="tab-tabela-mercado">
+
+                <i class="fa-solid fa-table"></i>
+                <span>TABELA MERCADO</span>
+            </button>
+
+            <!-- 7. CONFIGURAÇÃO -->
+            <button
+                class="tab-button"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="tab-configuracao"
+                data-tab="tab-configuracao">
+
+                <i class="fa-solid fa-gear"></i>
+                <span>CONFIGURAÇÃO</span>
+            </button>
+
         </nav>
+
     </header>
 
+
     <main class="app-main">
-        <section id="tab-patrimonio-consolidado" class="tab-content active" role="tabpanel">
+
+        <!-- =========================================================
+             1. CARTEIRA
+             ========================================================= -->
+
+        <section
+            id="tab-carteira"
+            class="tab-content active"
+            role="tabpanel">
+
             <div class="page-heading">
+
                 <div>
-                    <span class="eyebrow"><i class="fa-solid fa-sparkles"></i> Visão geral</span>
-                    <h1>Patrimônio Consolidado</h1>
-                    <p>Atualize suas cotações e acompanhe sua carteira em um só lugar.</p>
-                </div>
-            </div>
 
-            <div class="content-card portfolio-card">
-                <div class="card-toolbar">
-                    <div>
-                        <h2><i class="fa-solid fa-wallet"></i> Seus ativos</h2>
-                        <p>Consulte e atualize os indicadores de mercado da sua carteira.</p>
-                    </div>
-                    <div class="action-buttons">
-                        <button id="btnCarregar" class="button button-secondary" type="button">
-                            <i class="fa-solid fa-rotate"></i>
-                            Carregar patrimônio
-                        </button>
-                    </div>
+                    <span class="eyebrow">
+                        <i class="fa-solid fa-chart-pie"></i>
+                        Visão estratégica
+                    </span>
+
+                    <h1>Carteira</h1>
+
+                    <p>
+                        Distribuição, desempenho e principais números
+                        do seu patrimônio.
+                    </p>
+
                 </div>
 
-                <div id="status" class="status-message" aria-live="polite">Inicializando...</div>
-
-                <div class="table-wrapper">
-                    <table id="tabela"></table>
-                </div>
-
-                <pre id="resultado" class="progress-output" aria-live="polite"></pre>
-            </div>
-        </section>
-
-        <section id="tab-carteira-consolidada" class="tab-content" role="tabpanel" hidden>
-            <div class="page-heading">
-                <div>
-                    <span class="eyebrow"><i class="fa-solid fa-chart-pie"></i> Visão estratégica</span>
-                    <h1>Carteira Consolidada</h1>
-                    <p>Distribuição, desempenho e principais números do seu patrimônio.</p>
-                </div>
             </div>
 
-            <div id="kpisCarteira" class="kpi-grid" aria-live="polite">
+
+            <div
+                id="kpisCarteira"
+                class="kpi-grid"
+                aria-live="polite">
+
                 <article class="kpi-card">
-                    <span class="kpi-icon kpi-green"><i class="fa-solid fa-wallet"></i></span>
-                    <span class="kpi-label">Patrimônio atual</span>
-                    <strong id="kpiPatrimonio">R$ —</strong>
+
+                    <span class="kpi-icon kpi-green">
+                        <i class="fa-solid fa-wallet"></i>
+                    </span>
+
+                    <span class="kpi-label">
+                        Patrimônio atual
+                    </span>
+
+                    <strong id="kpiPatrimonio">
+                        R$ —
+                    </strong>
+
                 </article>
+
+
                 <article class="kpi-card">
-                    <span class="kpi-icon kpi-blue"><i class="fa-solid fa-landmark"></i></span>
-                    <span class="kpi-label">Total investido</span>
-                    <strong id="kpiInvestido">R$ —</strong>
+
+                    <span class="kpi-icon kpi-blue">
+                        <i class="fa-solid fa-landmark"></i>
+                    </span>
+
+                    <span class="kpi-label">
+                        Total investido
+                    </span>
+
+                    <strong id="kpiInvestido">
+                        R$ —
+                    </strong>
+
                 </article>
+
+
                 <article class="kpi-card">
-                    <span id="kpiLucroIcone" class="kpi-icon kpi-green"><i class="fa-solid fa-arrow-trend-up"></i></span>
-                    <span class="kpi-label">Lucro / prejuízo</span>
-                    <strong id="kpiLucro">R$ —</strong>
+
+                    <span
+                        id="kpiLucroIcone"
+                        class="kpi-icon kpi-green">
+
+                        <i class="fa-solid fa-arrow-trend-up"></i>
+
+                    </span>
+
+                    <span class="kpi-label">
+                        Lucro / prejuízo
+                    </span>
+
+                    <strong id="kpiLucro">
+                        R$ —
+                    </strong>
+
                 </article>
+
+
                 <article class="kpi-card">
-                    <span class="kpi-icon kpi-purple"><i class="fa-solid fa-percent"></i></span>
-                    <span class="kpi-label">Rentabilidade</span>
-                    <strong id="kpiRentabilidade">—</strong>
+
+                    <span class="kpi-icon kpi-purple">
+                        <i class="fa-solid fa-percent"></i>
+                    </span>
+
+                    <span class="kpi-label">
+                        Rentabilidade
+                    </span>
+
+                    <strong id="kpiRentabilidade">
+                        —
+                    </strong>
+
                 </article>
+
+
                 <article class="kpi-card">
-                    <span class="kpi-icon kpi-gold"><i class="fa-solid fa-coins"></i></span>
-                    <span class="kpi-label">Renda mensal estimada</span>
-                    <strong id="kpiRendaMensal">R$ —</strong>
+
+                    <span class="kpi-icon kpi-gold">
+                        <i class="fa-solid fa-coins"></i>
+                    </span>
+
+                    <span class="kpi-label">
+                        Renda mensal estimada
+                    </span>
+
+                    <strong id="kpiRendaMensal">
+                        R$ —
+                    </strong>
+
                 </article>
+
             </div>
+
 
             <div class="charts-grid">
-                <article class="chart-card">
-                    <div class="chart-heading">
-                        <h2><i class="fa-solid fa-chart-pie"></i> Distribuição por ativo</h2>
-                        <p>Concentração do patrimônio atual.</p>
-                    </div>
-                    <div class="chart-area chart-area-pie">
-                        <canvas id="graficoDistribuicaoAtivos"></canvas>
-                    </div>
-                </article>
 
                 <article class="chart-card">
+
                     <div class="chart-heading">
-                        <h2><i class="fa-solid fa-chart-column"></i> Patrimônio por classe</h2>
-                        <p>Comparativo entre tipos de ativos.</p>
+
+                        <h2>
+                            <i class="fa-solid fa-chart-pie"></i>
+                            Distribuição por ativo
+                        </h2>
+
+                        <p>
+                            Concentração do patrimônio atual.
+                        </p>
+
                     </div>
-                    <div class="chart-area">
-                        <canvas id="graficoPatrimonioClasses"></canvas>
+
+                    <div class="chart-area chart-area-pie">
+
+                        <canvas id="graficoDistribuicaoAtivos"></canvas>
+
                     </div>
+
                 </article>
+
+
+                <article class="chart-card">
+
+                    <div class="chart-heading">
+
+                        <h2>
+                            <i class="fa-solid fa-chart-column"></i>
+                            Patrimônio por classe
+                        </h2>
+
+                        <p>
+                            Comparativo entre tipos de ativos.
+                        </p>
+
+                    </div>
+
+                    <div class="chart-area">
+
+                        <canvas id="graficoPatrimonioClasses"></canvas>
+
+                    </div>
+
+                </article>
+
 
                 <article class="chart-card chart-card-wide">
+
                     <div class="chart-heading">
-                        <h2><i class="fa-solid fa-arrow-trend-up"></i> Lucro / prejuízo por posição</h2>
-                        <p>Resultado financeiro em reais por ativo.</p>
+
+                        <h2>
+                            <i class="fa-solid fa-arrow-trend-up"></i>
+                            Lucro / prejuízo por posição
+                        </h2>
+
+                        <p>
+                            Resultado financeiro em reais por ativo.
+                        </p>
+
                     </div>
+
                     <div class="chart-area chart-area-wide">
+
                         <canvas id="graficoLucroPrejuizo"></canvas>
+
                     </div>
+
                 </article>
+
             </div>
+
         </section>
 
-        <section id="tab-rentabilidade" class="tab-content" role="tabpanel" hidden>
-            <div class="placeholder-card">
-                <div class="placeholder-icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
-                <span class="badge">Em desenvolvimento</span>
-                <h2>Rentabilidade</h2>
-                <p>Gráficos, KPIs e indicadores visuais desta seção serão implementados em breve.</p>
+
+        <!-- =========================================================
+             2. TABELA CARTEIRA
+             ========================================================= -->
+
+        <section
+            id="tab-tabela-carteira"
+            class="tab-content"
+            role="tabpanel"
+            hidden>
+
+            <div class="page-heading">
+
+                <div>
+
+                    <span class="eyebrow">
+                        <i class="fa-solid fa-table-list"></i>
+                        Dados da carteira
+                    </span>
+
+                    <h1>Tabela Carteira</h1>
+
+                    <p>
+                        Dados patrimoniais e indicadores básicos dos ativos.
+                    </p>
+
+                </div>
+
             </div>
+
+            <div id="conteudoTabelaCarteira"></div>
+
         </section>
 
-        <section id="tab-patrimonio" class="tab-content" role="tabpanel" hidden>
-            <div class="placeholder-card">
-                <div class="placeholder-icon"><i class="fa-solid fa-coins"></i></div>
-                <span class="badge">Em desenvolvimento</span>
-                <h2>Patrimônio</h2>
-                <p>Gráficos, KPIs e indicadores visuais desta seção serão implementados em breve.</p>
+
+        <!-- =========================================================
+             3. RENTABILIDADE
+             ========================================================= -->
+
+        <section
+            id="tab-rentabilidade"
+            class="tab-content"
+            role="tabpanel"
+            hidden>
+
+            <div class="page-heading">
+
+                <div>
+
+                    <span class="eyebrow">
+                        <i class="fa-solid fa-arrow-trend-up"></i>
+                        Desempenho
+                    </span>
+
+                    <h1>Rentabilidade</h1>
+
+                    <p>
+                        Evolução, resultado e geração de renda da carteira.
+                    </p>
+
+                </div>
+
             </div>
+
+            <div id="conteudoRentabilidade"></div>
+
         </section>
 
-        <section id="tab-tabela-carteira" class="tab-content" role="tabpanel" hidden>
-            <div class="placeholder-card">
-                <div class="placeholder-icon"><i class="fa-solid fa-table-list"></i></div>
-                <span class="badge">Em desenvolvimento</span>
-                <h2>Tabela Carteira</h2>
-                <p>Gráficos, KPIs e indicadores visuais desta seção serão implementados em breve.</p>
+
+        <!-- =========================================================
+             4. TABELA RENTABILIDADE
+             ========================================================= -->
+
+        <section
+            id="tab-tabela-rentabilidade"
+            class="tab-content"
+            role="tabpanel"
+            hidden>
+
+            <div class="page-heading">
+
+                <div>
+
+                    <span class="eyebrow">
+                        <i class="fa-solid fa-chart-column"></i>
+                        Dados de rentabilidade
+                    </span>
+
+                    <h1>Tabela Rentabilidade</h1>
+
+                    <p>
+                        Rentabilidade, renda, peso e potencial financeiro.
+                    </p>
+
+                </div>
+
             </div>
+
+            <div id="conteudoTabelaRentabilidade"></div>
+
         </section>
 
-        <section id="tab-tabela-rentabilidade" class="tab-content" role="tabpanel" hidden>
-            <div class="placeholder-card">
-                <div class="placeholder-icon"><i class="fa-solid fa-chart-column"></i></div>
-                <span class="badge">Em desenvolvimento</span>
-                <h2>Tabela Rentabilidade</h2>
-                <p>Gráficos, KPIs e indicadores visuais desta seção serão implementados em breve.</p>
+
+        <!-- =========================================================
+             5. MERCADO
+             ========================================================= -->
+
+        <section
+            id="tab-mercado"
+            class="tab-content"
+            role="tabpanel"
+            hidden>
+
+            <div class="page-heading">
+
+                <div>
+
+                    <span class="eyebrow">
+                        <i class="fa-solid fa-chart-line"></i>
+                        Indicadores de mercado
+                    </span>
+
+                    <h1>Mercado</h1>
+
+                    <p>
+                        Indicadores fundamentalistas e características
+                        dos ativos da carteira.
+                    </p>
+
+                </div>
+
             </div>
+
+            <div id="conteudoMercado"></div>
+
         </section>
+
+
+        <!-- =========================================================
+             6. TABELA MERCADO
+             ========================================================= -->
+
+        <section
+            id="tab-tabela-mercado"
+            class="tab-content"
+            role="tabpanel"
+            hidden>
+
+            <div class="page-heading">
+
+                <div>
+
+                    <span class="eyebrow">
+                        <i class="fa-solid fa-table"></i>
+                        Dados de mercado
+                    </span>
+
+                    <h1>Tabela Mercado</h1>
+
+                    <p>
+                        Indicadores fundamentalistas e dados de mercado
+                        dos ativos.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div id="conteudoTabelaMercado"></div>
+
+        </section>
+
+
+        <!-- =========================================================
+             7. CONFIGURAÇÃO
+             ========================================================= -->
+
+        <section
+            id="tab-configuracao"
+            class="tab-content"
+            role="tabpanel"
+            hidden>
+
+            <div class="page-heading">
+
+                <div>
+
+                    <span class="eyebrow">
+                        <i class="fa-solid fa-gear"></i>
+                        Administração dos dados
+                    </span>
+
+                    <h1>Configuração</h1>
+
+                    <p>
+                        Consulte a base completa e atualize os indicadores
+                        de mercado da carteira.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="content-card portfolio-card">
+
+                <div class="card-toolbar">
+
+                    <div>
+
+                        <h2>
+                            <i class="fa-solid fa-database"></i>
+                            Patrimônio Consolidado
+                        </h2>
+
+                        <p>
+                            Visualização completa das colunas do
+                            patrimonio_consolidado.csv.
+                        </p>
+
+                    </div>
+
+
+                    <div class="action-buttons">
+
+                        <button
+                            id="btnAtualizarMercado"
+                            class="button button-primary"
+                            type="button">
+
+                            <i class="fa-solid fa-rotate"></i>
+                            Atualizar Mercado
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    id="status"
+                    class="status-message"
+                    aria-live="polite">
+
+                    Inicializando...
+
+                </div>
+
+
+                <div class="table-wrapper">
+
+                    <table id="tabela"></table>
+
+                </div>
+
+
+                <pre
+                    id="resultado"
+                    class="progress-output"
+                    aria-live="polite"></pre>
+
+            </div>
+
+        </section>
+
     </main>
 
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-    <script type="module" src="./app.js"></script>
+
+    <script
+        type="module"
+        src="./app.js">
+    </script>
+
 </body>
 
 </html>
+```
