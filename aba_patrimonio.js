@@ -68,6 +68,416 @@ const COLUNAS = [
 
 
 // ============================================================
+// APRESENTAÇÃO DA TABELA (SOMENTE VISUAL)
+// ============================================================
+//
+// Nada nesta seção altera dados, ordem ou cálculos.
+// Serve apenas para formatar o que já existe em `patrimonio`
+// no momento de desenhar a tabela em tela.
+// ============================================================
+
+// ------------------------------------------------------------
+// Nomes amigáveis das colunas (exibição apenas)
+// ------------------------------------------------------------
+
+const NOMES_COLUNAS = {
+  Ativo: "Ativo",
+  Tipo: "Tipo",
+  Quantidade: "Quantidade",
+  TotalInvestido: "Total Investido",
+  DataPrimeiraCompra: "1ª Compra",
+  DataAtualizacao: "Atualização",
+  ValorAtual: "Valor Atual",
+  Min52: "Mín. 52 semanas",
+  Max52: "Máx. 52 semanas",
+  DY: "DY",
+  Valorizacao: "Valorização",
+  ValorAtualPosicao: "Posição Atual",
+  LucroPrejuizo: "Lucro / Prejuízo",
+  Rentabilidade: "Rentabilidade",
+  PesoCarteira: "Peso na Carteira",
+  RendaAnualEstimada: "Renda Anual Estimada",
+  RendaMensalEstimada: "Renda Mensal Estimada",
+  ValorPosicaoMax52: "Posição Máx. 52s",
+  ValorPosicaoMin52: "Posição Mín. 52s",
+  PotencialFinanceiroMax52: "Potencial Máx. 52s",
+  RiscoFinanceiroMin52: "Risco Mín. 52s"
+};
+
+
+// ------------------------------------------------------------
+// Alinhamento de cada coluna
+// ------------------------------------------------------------
+
+const ALINHAMENTO_COLUNAS = {
+  Ativo: "esquerda",
+  Tipo: "esquerda",
+  Quantidade: "direita",
+  TotalInvestido: "direita",
+  DataPrimeiraCompra: "centro",
+  DataAtualizacao: "centro",
+  ValorAtual: "direita",
+  Min52: "direita",
+  Max52: "direita",
+  DY: "direita",
+  Valorizacao: "direita",
+  ValorAtualPosicao: "direita",
+  LucroPrejuizo: "direita",
+  Rentabilidade: "direita",
+  PesoCarteira: "direita",
+  RendaAnualEstimada: "direita",
+  RendaMensalEstimada: "direita",
+  ValorPosicaoMax52: "direita",
+  ValorPosicaoMin52: "direita",
+  PotencialFinanceiroMax52: "direita",
+  RiscoFinanceiroMin52: "direita"
+};
+
+
+// ------------------------------------------------------------
+// Colunas monetárias e percentuais
+// ------------------------------------------------------------
+
+const COLUNAS_MONETARIAS = [
+  "TotalInvestido",
+  "ValorAtual",
+  "Min52",
+  "Max52",
+  "ValorAtualPosicao",
+  "LucroPrejuizo",
+  "RendaAnualEstimada",
+  "RendaMensalEstimada",
+  "ValorPosicaoMax52",
+  "ValorPosicaoMin52",
+  "PotencialFinanceiroMax52",
+  "RiscoFinanceiroMin52"
+];
+
+const COLUNAS_PERCENTUAIS = [
+  "DY",
+  "Valorizacao",
+  "Rentabilidade",
+  "PesoCarteira"
+];
+
+// Colunas onde o sinal do valor define a cor (verde/vermelho)
+const COLUNAS_COM_COR = [
+  ...COLUNAS_MONETARIAS,
+  ...COLUNAS_PERCENTUAIS
+];
+
+
+// ------------------------------------------------------------
+// Utilitário: transforma um texto do CSV em número,
+// sem alterar o valor original armazenado em `patrimonio`.
+// ------------------------------------------------------------
+
+function converterParaNumero(valorTexto) {
+
+  if (valorTexto === undefined || valorTexto === null) {
+    return NaN;
+  }
+
+  let texto = String(valorTexto).trim();
+
+  if (texto === "") {
+    return NaN;
+  }
+
+  // Remove eventual "R$ " ou "%" apenas para leitura numérica
+  texto = texto
+    .replace(/^R\$\s?/, "")
+    .replace(/%$/, "")
+    .trim();
+
+  // Formato "1.234,56" (pt-BR) → "1234.56"
+  if (/,\d{1,3}$/.test(texto) && texto.includes(".")) {
+    texto = texto.replace(/\./g, "").replace(",", ".");
+  } else if (/,\d{1,3}$/.test(texto)) {
+    texto = texto.replace(",", ".");
+  }
+
+  const numero = parseFloat(texto);
+
+  return numero;
+}
+
+
+// ------------------------------------------------------------
+// Formatação monetária: "R$ 1.234,56" / "-R$ 1.234,56"
+// ------------------------------------------------------------
+
+function formatarMoeda(valorTexto) {
+
+  const numero = converterParaNumero(valorTexto);
+
+  if (isNaN(numero)) {
+    return valorTexto ?? "";
+  }
+
+  const formatado = Math.abs(numero).toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+
+  const sinal = numero < 0 ? "-" : "";
+
+  return `${sinal}R$ ${formatado}`;
+}
+
+
+// ------------------------------------------------------------
+// Formatação percentual: "24,35%"
+// Se já vier com "%" no CSV, não duplica.
+// ------------------------------------------------------------
+
+function formatarPercentual(valorTexto) {
+
+  if (valorTexto === undefined || valorTexto === null) {
+    return "";
+  }
+
+  const textoOriginal = String(valorTexto).trim();
+
+  if (textoOriginal.endsWith("%")) {
+    return textoOriginal;
+  }
+
+  const numero = converterParaNumero(textoOriginal);
+
+  if (isNaN(numero)) {
+    return textoOriginal;
+  }
+
+  const formatado = numero.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+
+  return `${formatado}%`;
+}
+
+
+// ------------------------------------------------------------
+// Formatação de quantidade: sem casas decimais desnecessárias
+// ------------------------------------------------------------
+
+function formatarQuantidade(valorTexto) {
+
+  const numero = converterParaNumero(valorTexto);
+
+  if (isNaN(numero)) {
+    return valorTexto ?? "";
+  }
+
+  if (Number.isInteger(numero)) {
+    return numero.toLocaleString("pt-BR");
+  }
+
+  return numero.toLocaleString("pt-BR", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 4
+  });
+}
+
+
+// ------------------------------------------------------------
+// Formatação de DataAtualizacao:
+// "2026-08-18 18:15:41" → "18/08/2026 18:15"
+// DataPrimeiraCompra é mantida como está (já vem dd/mm/aaaa).
+// ------------------------------------------------------------
+
+function formatarDataAtualizacao(valorTexto) {
+
+  if (!valorTexto) {
+    return valorTexto ?? "";
+  }
+
+  const texto = String(valorTexto).trim();
+
+  const correspondencia = texto.match(
+    /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/
+  );
+
+  if (!correspondencia) {
+    return texto;
+  }
+
+  const [, ano, mes, dia, hora, minuto] = correspondencia;
+
+  return `${dia}/${mes}/${ano} ${hora}:${minuto}`;
+}
+
+
+// ------------------------------------------------------------
+// Classe de cor conforme sinal do valor
+// ------------------------------------------------------------
+
+function classeCorPorSinal(valorTexto) {
+
+  const numero = converterParaNumero(valorTexto);
+
+  if (isNaN(numero) || numero === 0) {
+    return "fo-valor-neutro";
+  }
+
+  return numero > 0 ? "fo-valor-positivo" : "fo-valor-negativo";
+}
+
+
+// ------------------------------------------------------------
+// Formata o valor de exibição de uma célula, de acordo
+// com o tipo da coluna. Não altera `registro[coluna]`.
+// ------------------------------------------------------------
+
+function formatarValorExibicao(coluna, valorOriginal) {
+
+  if (COLUNAS_MONETARIAS.includes(coluna)) {
+    return formatarMoeda(valorOriginal);
+  }
+
+  if (COLUNAS_PERCENTUAIS.includes(coluna)) {
+    return formatarPercentual(valorOriginal);
+  }
+
+  if (coluna === "Quantidade") {
+    return formatarQuantidade(valorOriginal);
+  }
+
+  if (coluna === "DataAtualizacao") {
+    return formatarDataAtualizacao(valorOriginal);
+  }
+
+  return valorOriginal;
+}
+
+
+// ------------------------------------------------------------
+// Injeta o CSS da tabela uma única vez na página
+// ------------------------------------------------------------
+
+let estilosInjetados = false;
+
+function injetarEstilosTabela() {
+
+  if (estilosInjetados) {
+    return;
+  }
+
+  const estilo = document.createElement("style");
+
+  estilo.id = "fo-estilos-tabela-patrimonio";
+
+  estilo.textContent = `
+    .fo-tabela-container {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid #e2e2e2;
+      border-radius: 8px;
+    }
+
+    .fo-tabela-container table {
+      border-collapse: collapse;
+      width: max-content;
+      min-width: 100%;
+      font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 14.5px;
+    }
+
+    .fo-tabela-container thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background-color: #1f2933;
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 10px 14px;
+      white-space: nowrap;
+      text-align: left;
+      border-bottom: 2px solid #0f1620;
+    }
+
+    .fo-tabela-container tbody td {
+      padding: 8px 14px;
+      white-space: nowrap;
+      border-bottom: 1px solid #ececec;
+      color: #2b2b2b;
+    }
+
+    .fo-tabela-container tbody tr:nth-child(even) {
+      background-color: #fafafa;
+    }
+
+    .fo-tabela-container tbody tr:hover {
+      background-color: #f0f4f8;
+    }
+
+    .fo-alinhar-esquerda {
+      text-align: left;
+    }
+
+    .fo-alinhar-direita {
+      text-align: right;
+    }
+
+    .fo-alinhar-centro {
+      text-align: center;
+    }
+
+    .fo-ativo-destaque {
+      font-weight: 700;
+      color: #1f2933;
+    }
+
+    .fo-valor-positivo {
+      color: #1b8a4c;
+    }
+
+    .fo-valor-negativo {
+      color: #c62828;
+    }
+
+    .fo-valor-neutro {
+      color: #2b2b2b;
+    }
+  `;
+
+  document.head.appendChild(estilo);
+
+  estilosInjetados = true;
+}
+
+
+// ------------------------------------------------------------
+// Garante que a tabela esteja dentro de um container
+// com rolagem horizontal, sem alterar o id da tabela.
+// ------------------------------------------------------------
+
+function garantirContainerComRolagem(tabela) {
+
+  const paiAtual = tabela.parentNode;
+
+  if (
+    paiAtual &&
+    paiAtual.classList &&
+    paiAtual.classList.contains("fo-tabela-container")
+  ) {
+    return;
+  }
+
+  const container = document.createElement("div");
+
+  container.className = "fo-tabela-container";
+
+  paiAtual.insertBefore(container, tabela);
+
+  container.appendChild(tabela);
+}
+
+
+// ============================================================
 // ESTADO DA ABA
 // ============================================================
 
@@ -654,6 +1064,14 @@ function separarLinhaCSV(linha) {
 // ============================================================
 // MONTAR TABELA
 // ============================================================
+//
+// IMPORTANTE:
+// - Não reordena `patrimonio`.
+// - Não recalcula nada.
+// - Não altera `registro[coluna]`.
+// - Apenas formata o texto exibido em cada célula
+//   e aplica classes CSS de alinhamento/cor.
+// ============================================================
 
 function montarTabela() {
 
@@ -671,6 +1089,15 @@ function montarTabela() {
 
     return;
   }
+
+
+  // ----------------------------------------------------------
+  // Garantir estilos e container com rolagem horizontal
+  // ----------------------------------------------------------
+
+  injetarEstilosTabela();
+
+  garantirContainerComRolagem(tabela);
 
 
   // ----------------------------------------------------------
@@ -705,7 +1132,7 @@ function montarTabela() {
 
 
     th.textContent =
-      coluna;
+      NOMES_COLUNAS[coluna] ?? coluna;
 
 
     linhaCabecalho.appendChild(
@@ -722,6 +1149,11 @@ function montarTabela() {
 
   // ==========================================================
   // CORPO
+  // ==========================================================
+  //
+  // A ordem percorrida aqui é exatamente a ordem do array
+  // `patrimonio`, que por sua vez é exatamente a ordem das
+  // linhas do CSV. Nenhum sort() é aplicado.
   // ==========================================================
 
   const tbody =
@@ -746,8 +1178,55 @@ function montarTabela() {
         );
 
 
-      td.textContent =
+      const valorOriginal =
         registro[coluna];
+
+
+      // ------------------------------------------------------
+      // Alinhamento
+      // ------------------------------------------------------
+
+      const alinhamento =
+        ALINHAMENTO_COLUNAS[coluna];
+
+      if (alinhamento === "esquerda") {
+        td.classList.add("fo-alinhar-esquerda");
+      } else if (alinhamento === "direita") {
+        td.classList.add("fo-alinhar-direita");
+      } else if (alinhamento === "centro") {
+        td.classList.add("fo-alinhar-centro");
+      }
+
+
+      // ------------------------------------------------------
+      // Texto exibido (formatado) — sem alterar o dado original
+      // ------------------------------------------------------
+
+      td.textContent =
+        formatarValorExibicao(
+          coluna,
+          valorOriginal
+        );
+
+
+      // ------------------------------------------------------
+      // Destaque da coluna Ativo
+      // ------------------------------------------------------
+
+      if (coluna === "Ativo") {
+        td.classList.add("fo-ativo-destaque");
+      }
+
+
+      // ------------------------------------------------------
+      // Cor por sinal (indicadores financeiros/percentuais)
+      // ------------------------------------------------------
+
+      if (COLUNAS_COM_COR.includes(coluna)) {
+        td.classList.add(
+          classeCorPorSinal(valorOriginal)
+        );
+      }
 
 
       tr.appendChild(
