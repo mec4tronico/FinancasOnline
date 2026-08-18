@@ -1,181 +1,408 @@
+```javascript
 /**
  * ============================================================================
  * MÓDULO: CONFIGURAÇÃO (aba_configuracao.js)
  * ============================================================================
  * Responsável por carregar, exibir, gerenciar e salvar os dados da aba Configuração.
- * Este módulo interage EXCLUSIVAMENTE com o arquivo: patrimonio_consolidado.csv
- * 
- * Regras mantidas:
- * - Nenhuma ordenação é aplicada aos dados (preserva a ordem do CSV).
- * - Lógica de cálculos, scraping e gravação mantidas.
- * - Estrutura atual de colunas mantida.
+ *
+ * Arquivo utilizado:
+ * patrimonio_consolidado.csv
+ *
+ * IMPORTANTE:
+ * - CSV separado por vírgula.
+ * - Campos entre aspas podem conter vírgulas.
+ * - Preserva exatamente a ordem das linhas.
+ * - Não aplica ordenação.
+ * - Compatível com as 40 colunas atuais.
  * ============================================================================
  */
 
-// Nome OFICIAL e ÚNICO do arquivo de dados patrimoniais
 const ARQUIVO_CSV = 'patrimonio_consolidado.csv';
 
-// Variável global para armazenar os dados do patrimônio em memória (preservando o nome conceitual)
 let dadosPatrimonio = [];
 let cabecalhosCSV = [];
 
 /**
- * Função principal para carregar a aba Configuração.
- * Realiza o fetch do patrimonio_consolidado.csv, faz o parsing e renderiza a tabela.
+ * Parser CSV compatível com:
+ * - separador por vírgula
+ * - campos entre aspas
+ * - vírgulas dentro de campos
+ * - aspas escapadas como ""
+ */
+function parseCSV(texto) {
+    const linhas = [];
+    let linha = [];
+    let campo = '';
+    let dentroDeAspas = false;
+
+    for (let i = 0; i < texto.length; i++) {
+        const caractere = texto[i];
+        const proximo = texto[i + 1];
+
+        if (caractere === '"') {
+            if (dentroDeAspas && proximo === '"') {
+                campo += '"';
+                i++;
+            } else {
+                dentroDeAspas = !dentroDeAspas;
+            }
+        } else if (caractere === ',' && !dentroDeAspas) {
+            linha.push(campo);
+            campo = '';
+        } else if ((caractere === '\n' || caractere === '\r') && !dentroDeAspas) {
+            if (caractere === '\r' && proximo === '\n') {
+                i++;
+            }
+
+            linha.push(campo);
+            campo = '';
+
+            if (linha.some(valor => valor.trim() !== '')) {
+                linhas.push(linha);
+            }
+
+            linha = [];
+        } else {
+            campo += caractere;
+        }
+    }
+
+    if (campo !== '' || linha.length > 0) {
+        linha.push(campo);
+
+        if (linha.some(valor => valor.trim() !== '')) {
+            linhas.push(linha);
+        }
+    }
+
+    return linhas;
+}
+
+/**
+ * Escapa conteúdo para inserção segura no HTML.
+ */
+function escaparHTML(valor) {
+    return String(valor)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+/**
+ * Escapa um campo para gravação em CSV.
+ */
+function escaparCSV(valor) {
+    const texto = String(valor ?? '');
+
+    if (
+        texto.includes(',') ||
+        texto.includes('"') ||
+        texto.includes('\n') ||
+        texto.includes('\r')
+    ) {
+        return `"${texto.replace(/"/g, '""')}"`;
+    }
+
+    return texto;
+}
+
+/**
+ * ============================================================================
+ * CARREGAMENTO PRINCIPAL
+ * ============================================================================
  */
 async function carregarAbaConfiguracao() {
+    const container =
+        document.getElementById('container-tabela-configuracao') ||
+        document.querySelector('.tabela-container');
+
     try {
-        console.log(`[Módulo Configuração] Carregando dados de ${ARQUIVO_CSV}...`);
-        
-        // Adiciona um timestamp para evitar cache no navegador
-        const timestamp = new Date().getTime();
-        const response = await fetch(`${ARQUIVO_CSV}?t=${timestamp}`);
-        
+        console.log(`[Módulo Configuração] Carregando ${ARQUIVO_CSV}...`);
+
+        if (container) {
+            container.innerHTML = `
+                <div class="status-carregamento">
+                    Carregando Patrimônio Consolidado...
+                </div>
+            `;
+        }
+
+        const timestamp = Date.now();
+
+        const response = await fetch(
+            `${ARQUIVO_CSV}?t=${timestamp}`,
+            {
+                cache: 'no-store'
+            }
+        );
+
         if (!response.ok) {
-            throw new Error(`Erro de rede ao tentar acessar ${ARQUIVO_CSV} (Status: ${response.status})`);
+            throw new Error(
+                `Erro ao acessar ${ARQUIVO_CSV}. Status: ${response.status}`
+            );
         }
 
         const textoCSV = await response.text();
+
+        if (!textoCSV.trim()) {
+            throw new Error('O arquivo CSV está vazio.');
+        }
+
         processarDadosCSV(textoCSV);
         renderizarTabelaConfiguracao();
-        
+
+        console.log(
+            `[Módulo Configuração] CSV carregado: ${dadosPatrimonio.length} ativos, ${cabecalhosCSV.length} colunas.`
+        );
+
     } catch (error) {
-        console.error("[Módulo Configuração] Erro ao carregar os dados:", error);
-        exibirMensagemErro(`Falha ao carregar os dados de configuração. Detalhes: ${error.message}`);
+        console.error(
+            '[Módulo Configuração] Erro ao carregar os dados:',
+            error
+        );
+
+        exibirMensagemErro(
+            `Falha ao carregar os dados de configuração. Detalhes: ${error.message}`
+        );
     }
 }
 
 /**
- * Processa o texto bruto do CSV e o converte para arrays,
- * preservando EXATAMENTE a ordem original das linhas.
- * 
- * @param {string} textoCSV - Conteúdo do arquivo patrimonio_consolidado.csv
+ * ============================================================================
+ * PROCESSAMENTO DO CSV
+ * ============================================================================
  */
 function processarDadosCSV(textoCSV) {
-    // Quebra por linhas e remove linhas totalmente vazias
-    const linhas = textoCSV.split('\n').filter(linha => linha.trim() !== '');
-    
+    const linhas = parseCSV(textoCSV);
+
     if (linhas.length === 0) {
-        console.warn(`[Módulo Configuração] O arquivo ${ARQUIVO_CSV} está vazio.`);
         dadosPatrimonio = [];
         cabecalhosCSV = [];
         return;
     }
 
-    // Assume separador padrão (ponto e vírgula)
-    cabecalhosCSV = linhas[0].split(';').map(cabecalho => cabecalho.trim());
-    
-    // Extrai os dados, preservando a ordem original. 
-    // REGRA CRÍTICA: NÃO APLICAR NENHUM TIPO DE .sort() AQUI OU NA RENDERIZAÇÃO!
+    cabecalhosCSV = linhas[0].map(cabecalho =>
+        cabecalho.trim()
+    );
+
     dadosPatrimonio = linhas.slice(1).map(linha => {
-        return linha.split(';').map(celula => celula.trim());
+        const dados = [...linha];
+
+        // Garante que cada registro tenha exatamente
+        // a mesma quantidade de colunas do cabeçalho.
+        while (dados.length < cabecalhosCSV.length) {
+            dados.push('');
+        }
+
+        if (dados.length > cabecalhosCSV.length) {
+            dados.length = cabecalhosCSV.length;
+        }
+
+        return dados;
     });
+
+    console.log(
+        `[Módulo Configuração] Estrutura detectada: ${cabecalhosCSV.length} colunas x ${dadosPatrimonio.length} ativos.`
+    );
 }
 
 /**
- * Renderiza a tabela na interface com base nos dados processados.
- * Mantém formatação e lógica de exibição original.
+ * ============================================================================
+ * RENDERIZAÇÃO
+ * ============================================================================
  */
 function renderizarTabelaConfiguracao() {
-    const container = document.getElementById('container-tabela-configuracao') || document.querySelector('.tabela-container');
-    
+    const container =
+        document.getElementById('container-tabela-configuracao') ||
+        document.querySelector('.tabela-container');
+
     if (!container) {
-        console.warn("[Módulo Configuração] Container da tabela não encontrado no DOM.");
+        console.warn(
+            '[Módulo Configuração] Container da tabela não encontrado.'
+        );
         return;
     }
 
-    // Constrói a estrutura HTML da tabela
     let html = `
         <div class="cabecalho-aba">
-            <h2>Configuração - Patrimônio Consolidado</h2>
+            <h2>Patrimônio Consolidado</h2>
+
             <div class="acoes-aba">
-                <button id="btn-atualizar-mercado" class="btn-padrao">Atualizar Mercado</button>
-                <button id="btn-salvar-configuracao" class="btn-padrao btn-sucesso">Salvar Alterações</button>
+                <button
+                    id="btn-atualizar-mercado"
+                    class="btn-padrao"
+                >
+                    Atualizar Mercado
+                </button>
+
+                <button
+                    id="btn-salvar-configuracao"
+                    class="btn-padrao btn-sucesso"
+                >
+                    Salvar Alterações
+                </button>
             </div>
         </div>
-        <table id="tabela-configuracao" class="tabela-dados">
-            <thead>
-                <tr>
+
+        <div class="status-tabela">
+            ${dadosPatrimonio.length} ativos · ${cabecalhosCSV.length} colunas
+        </div>
+
+        <div class="tabela-scroll">
+            <table id="tabela-configuracao" class="tabela-dados">
+                <thead>
+                    <tr>
     `;
 
-    // Renderiza cabeçalhos
     cabecalhosCSV.forEach(cabecalho => {
-        html += `<th>${cabecalho}</th>`;
+        html += `<th>${escaparHTML(cabecalho)}</th>`;
     });
-    
+
     html += `
-                </tr>
-            </thead>
-            <tbody>
+                    </tr>
+                </thead>
+
+                <tbody>
     `;
 
-    // Renderiza os dados (preservando a ordem do CSV)
     if (dadosPatrimonio.length > 0) {
+
         dadosPatrimonio.forEach((linhaDados, indexLinha) => {
+
             html += `<tr data-index="${indexLinha}">`;
-            
-            // Loop para as colunas existentes (atualmente 21 colunas)
+
             linhaDados.forEach((celula, indexColuna) => {
-                // Lógica original de formatação condicional (ex: alinhar números à direita)
-                const ehNumero = !isNaN(parseFloat(celula.replace(',', '.'))) && celula !== '';
-                const classeAlinhamento = ehNumero ? 'text-right' : 'text-left';
-                
-                // Células editáveis (lógica original preservada na classe CSS)
-                html += `<td contenteditable="true" class="celula-editavel ${classeAlinhamento}" data-col="${indexColuna}">${celula}</td>`;
+
+                const texto = String(celula ?? '');
+
+                const numeroNormalizado = texto
+                    .replace(/\./g, '')
+                    .replace(',', '.')
+                    .replace('%', '')
+                    .trim();
+
+                const ehNumero =
+                    texto !== '' &&
+                    !isNaN(Number(numeroNormalizado));
+
+                const classeAlinhamento =
+                    ehNumero ? 'text-right' : 'text-left';
+
+                html += `
+                    <td
+                        contenteditable="true"
+                        class="celula-editavel ${classeAlinhamento}"
+                        data-col="${indexColuna}"
+                    >${escaparHTML(texto)}</td>
+                `;
             });
-            
+
             html += `</tr>`;
         });
+
     } else {
-        html += `<tr><td colspan="${cabecalhosCSV.length || 21}" class="text-center">Nenhum dado patrimonial encontrado.</td></tr>`;
+
+        html += `
+            <tr>
+                <td
+                    colspan="${cabecalhosCSV.length || 40}"
+                    class="text-center"
+                >
+                    Nenhum dado patrimonial encontrado.
+                </td>
+            </tr>
+        `;
     }
 
     html += `
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
     `;
 
     container.innerHTML = html;
+
     configurarEventosInterativos();
 }
 
 /**
- * Configura os event listeners para a tabela e botões da aba Configuração.
+ * ============================================================================
+ * EVENTOS
+ * ============================================================================
  */
 function configurarEventosInterativos() {
-    // Botão de Atualizar Mercado (integração com atualizar.js / scraping)
-    const btnAtualizarMercado = document.getElementById('btn-atualizar-mercado');
+
+    const btnAtualizarMercado =
+        document.getElementById('btn-atualizar-mercado');
+
     if (btnAtualizarMercado) {
+
         btnAtualizarMercado.addEventListener('click', () => {
-            console.log("[Módulo Configuração] Iniciando rotina de Atualização de Mercado...");
-            // Verifica se a função global de atualização (do atualizar.js) existe
-            if (typeof window.atualizarCotacoesMercado === 'function') {
+
+            console.log(
+                '[Módulo Configuração] Iniciando atualização de mercado...'
+            );
+
+            if (
+                typeof window.atualizarCotacoesMercado ===
+                'function'
+            ) {
+
                 window.atualizarCotacoesMercado();
+
             } else {
-                console.warn("A função de atualização de mercado não está disponível no contexto global.");
-                alert("Módulo de atualização não encontrado.");
+
+                console.warn(
+                    '[Módulo Configuração] Função atualizarCotacoesMercado não encontrada.'
+                );
+
+                alert(
+                    'Módulo de atualização de mercado não encontrado.'
+                );
             }
         });
     }
 
-    // Botão de Salvar Alterações
-    const btnSalvar = document.getElementById('btn-salvar-configuracao');
+    const btnSalvar =
+        document.getElementById('btn-salvar-configuracao');
+
     if (btnSalvar) {
-        btnSalvar.addEventListener('click', salvarAbaConfiguracao);
+        btnSalvar.addEventListener(
+            'click',
+            salvarAbaConfiguracao
+        );
     }
 
-    // Captura de edições diretas na tabela para atualizar o array dadosPatrimonio
-    const tabela = document.getElementById('tabela-configuracao');
+    const tabela =
+        document.getElementById('tabela-configuracao');
+
     if (tabela) {
-        tabela.addEventListener('input', (event) => {
-            if (event.target.tagName === 'TD' && event.target.hasAttribute('contenteditable')) {
-                const tr = event.target.closest('tr');
-                const indexLinha = tr.getAttribute('data-index');
-                const indexColuna = event.target.getAttribute('data-col');
-                
-                // Atualiza o valor em memória no array
-                if (dadosPatrimonio[indexLinha]) {
-                    dadosPatrimonio[indexLinha][indexColuna] = event.target.innerText.trim();
+
+        tabela.addEventListener('input', event => {
+
+            if (
+                event.target.tagName === 'TD' &&
+                event.target.hasAttribute('contenteditable')
+            ) {
+
+                const tr =
+                    event.target.closest('tr');
+
+                const indexLinha =
+                    Number(tr.getAttribute('data-index'));
+
+                const indexColuna =
+                    Number(event.target.getAttribute('data-col'));
+
+                if (
+                    dadosPatrimonio[indexLinha] &&
+                    !isNaN(indexColuna)
+                ) {
+
+                    dadosPatrimonio[indexLinha][indexColuna] =
+                        event.target.innerText.trim();
                 }
             }
         });
@@ -183,69 +410,119 @@ function configurarEventosInterativos() {
 }
 
 /**
- * Salva as alterações feitas na aba Configuração de volta para o servidor/backend
- * para sobrescrever o arquivo patrimonio_consolidado.csv.
+ * ============================================================================
+ * SALVAR CSV
+ * ============================================================================
  */
 async function salvarAbaConfiguracao() {
+
     try {
-        console.log(`[Módulo Configuração] Preparando para salvar ${ARQUIVO_CSV}...`);
-        
-        // Reconstroi o CSV a partir dos dados em memória
-        let conteudoCSV = cabecalhosCSV.join(';') + '\n';
-        
+
+        console.log(
+            `[Módulo Configuração] Salvando ${ARQUIVO_CSV}...`
+        );
+
+        let conteudoCSV =
+            cabecalhosCSV
+                .map(escaparCSV)
+                .join(',') +
+            '\n';
+
         dadosPatrimonio.forEach(linha => {
-            conteudoCSV += linha.join(';') + '\n';
+
+            conteudoCSV +=
+                linha
+                    .map(escaparCSV)
+                    .join(',') +
+                '\n';
         });
 
-        // Envia para o backend (Endpoint mantido como padrão genérico do projeto)
-        // O backend deve estar preparado para receber e salvar como patrimonio_consolidado.csv
-        const response = await fetch('salvar_csv.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `arquivo=${encodeURIComponent(ARQUIVO_CSV)}&conteudo=${encodeURIComponent(conteudoCSV)}`
-        });
+        const response = await fetch(
+            'salvar_csv.php',
+            {
+                method: 'POST',
 
-        if (response.ok) {
-            alert('Dados da configuração salvos com sucesso!');
-            // Recarrega a aba para garantir que a interface reflita o arquivo gravado
-            await carregarAbaConfiguracao();
-        } else {
-            throw new Error('Falha ao salvar no servidor.');
+                headers: {
+                    'Content-Type':
+                        'application/x-www-form-urlencoded'
+                },
+
+                body:
+                    `arquivo=${encodeURIComponent(ARQUIVO_CSV)}` +
+                    `&conteudo=${encodeURIComponent(conteudoCSV)}`
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                'Falha ao salvar o arquivo no servidor.'
+            );
         }
 
+        alert(
+            'Dados da configuração salvos com sucesso!'
+        );
+
+        await carregarAbaConfiguracao();
+
     } catch (error) {
-        console.error("[Módulo Configuração] Erro ao salvar dados:", error);
-        alert(`Erro ao salvar os dados: ${error.message}`);
+
+        console.error(
+            '[Módulo Configuração] Erro ao salvar:',
+            error
+        );
+
+        alert(
+            `Erro ao salvar os dados: ${error.message}`
+        );
     }
 }
 
 /**
- * Função utilitária para exibir mensagens de erro na interface
- * @param {string} mensagem 
+ * ============================================================================
+ * MENSAGEM DE ERRO
+ * ============================================================================
  */
 function exibirMensagemErro(mensagem) {
-    const container = document.getElementById('container-tabela-configuracao') || document.querySelector('.tabela-container');
+
+    const container =
+        document.getElementById(
+            'container-tabela-configuracao'
+        ) ||
+        document.querySelector('.tabela-container');
+
     if (container) {
-        container.innerHTML = `<div class="alerta-erro"><strong>Erro:</strong> ${mensagem}</div>`;
+
+        container.innerHTML = `
+            <div class="alerta-erro">
+                <strong>Erro:</strong>
+                ${escaparHTML(mensagem)}
+            </div>
+        `;
     }
 }
 
 /**
- * Inicialização da aba Configuração.
- * Esta é a função chamada pelo app.js quando o usuário clica na aba "Configuração".
+ * ============================================================================
+ * INICIALIZAÇÃO
+ * ============================================================================
  */
 function iniciarAbaConfiguracao() {
-    console.log("[Módulo Configuração] Inicializando a aba...");
-    // Aciona o carregamento dos dados patrimoniais do CSV oficial
+
+    console.log(
+        '[Módulo Configuração] Inicializando a aba...'
+    );
+
     carregarAbaConfiguracao();
 }
 
-// ============================================================================
-// EXPORTS DO MÓDULO (Compatível com chamadas do app.js)
-// ============================================================================
+/**
+ * ============================================================================
+ * EXPORTS
+ * ============================================================================
+ */
 export {
     iniciarAbaConfiguracao,
     carregarAbaConfiguracao
 };
+```
