@@ -268,7 +268,7 @@ function converterCSVParaPatrimonio(texto) {
     separarLinhaCSV(linhas[0])
       .map(valor => valor.trim());
 
-  if (cabecalho.length !== 21) {
+  if (cabecalho.length !== 40) {
 
     throw new Error(
       `CSV possui ${cabecalho.length} colunas. ` +
@@ -310,7 +310,7 @@ function converterCSVParaPatrimonio(texto) {
     const valores =
       separarLinhaCSV(linhas[indice]);
 
-    if (valores.length !== 21) {
+    if (valores.length !== 40) {
 
       throw new Error(
         `Linha ${indice + 1} possui ` +
