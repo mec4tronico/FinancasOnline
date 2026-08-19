@@ -1,4 +1,3 @@
-
 /**
  * ============================================================================
  * MÓDULO: CONFIGURAÇÃO (aba_configuracao.js)
@@ -525,4 +524,3 @@ export {
     iniciarAbaConfiguracao,
     carregarAbaConfiguracao
 };
-```
