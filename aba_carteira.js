@@ -560,7 +560,9 @@ function criarGraficoDistribuicao(
 
           legend: {
 
-            ...opcoesBase.plugins.legend,
+              ...opcoesBase.plugins.legend,
+
+              position: "left"
 
             labels: {
 
