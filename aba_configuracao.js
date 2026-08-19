@@ -261,13 +261,6 @@ function renderizarTabelaConfiguracao() {
                 >
                     Atualizar Mercado
                 </button>
-
-                <button
-                    id="btn-salvar-configuracao"
-                    class="btn-padrao btn-sucesso"
-                >
-                    Salvar Alterações
-                </button>
             </div>
         </div>
 
@@ -460,75 +453,6 @@ function configurarEventosInterativos() {
             }
         }
     );
-}
-
-/**
- * ============================================================================
- * SALVAR CSV
- * ============================================================================
- */
-async function salvarAbaConfiguracao() {
-
-    try {
-
-        console.log(
-            `[Módulo Configuração] Salvando ${ARQUIVO_CSV}...`
-        );
-
-        let conteudoCSV =
-            cabecalhosCSV
-                .map(escaparCSV)
-                .join(',') +
-            '\n';
-
-        dadosPatrimonio.forEach(linha => {
-
-            conteudoCSV +=
-                linha
-                    .map(escaparCSV)
-                    .join(',') +
-                '\n';
-        });
-
-        const response = await fetch(
-            'salvar_csv.php',
-            {
-                method: 'POST',
-
-                headers: {
-                    'Content-Type':
-                        'application/x-www-form-urlencoded'
-                },
-
-                body:
-                    `arquivo=${encodeURIComponent(ARQUIVO_CSV)}` +
-                    `&conteudo=${encodeURIComponent(conteudoCSV)}`
-            }
-        );
-
-        if (!response.ok) {
-            throw new Error(
-                'Falha ao salvar o arquivo no servidor.'
-            );
-        }
-
-        alert(
-            'Dados da configuração salvos com sucesso!'
-        );
-
-        await carregarAbaConfiguracao();
-
-    } catch (error) {
-
-        console.error(
-            '[Módulo Configuração] Erro ao salvar:',
-            error
-        );
-
-        alert(
-            `Erro ao salvar os dados: ${error.message}`
-        );
-    }
 }
 
 /**
