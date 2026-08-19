@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Finanças Online</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,6 +19,39 @@
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
     <link rel="stylesheet" href="./styles.css">
+
+    <style>
+        /* =========================================================
+           LOG DA ATUALIZAÇÃO DE MERCADO
+           Aproximadamente 15 linhas visíveis
+           ========================================================= */
+
+        #resultado {
+            height: 15em;
+            min-height: 15em;
+            max-height: 15em;
+            overflow-y: auto;
+            overflow-x: auto;
+
+            margin-top: 16px;
+            padding: 14px;
+
+            white-space: pre-wrap;
+            word-break: break-word;
+
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 13px;
+            line-height: 1.5;
+
+            border: 1px solid #d9d9d9;
+            border-radius: 8px;
+
+            background: #f7f7f7;
+
+            box-sizing: border-box;
+        }
+    </style>
+
 </head>
 
 <body>
@@ -25,19 +59,33 @@
     <header class="app-header">
 
         <div class="brand">
+
             <span class="brand-icon">
                 <i class="fa-solid fa-chart-line"></i>
             </span>
 
             <div>
-                <span class="brand-name">FinançasOnline</span>
-                <span class="brand-subtitle">Seu patrimônio em movimento</span>
+
+                <span class="brand-name">
+                    FinançasOnline
+                </span>
+
+                <span class="brand-subtitle">
+                    Seu patrimônio em movimento
+                </span>
+
             </div>
+
         </div>
 
-        <nav class="tab-navigation" aria-label="Navegação principal" role="tablist">
+
+        <nav
+            class="tab-navigation"
+            aria-label="Navegação principal"
+            role="tablist">
 
             <!-- 1. CARTEIRA -->
+
             <button
                 class="tab-button active"
                 type="button"
@@ -47,10 +95,16 @@
                 data-tab="tab-carteira">
 
                 <i class="fa-solid fa-chart-pie"></i>
-                <span>CARTEIRA</span>
+
+                <span>
+                    CARTEIRA
+                </span>
+
             </button>
 
+
             <!-- 2. TABELA CARTEIRA -->
+
             <button
                 class="tab-button"
                 type="button"
@@ -60,10 +114,16 @@
                 data-tab="tab-tabela-carteira">
 
                 <i class="fa-solid fa-table-list"></i>
-                <span>TABELA CARTEIRA</span>
+
+                <span>
+                    TABELA CARTEIRA
+                </span>
+
             </button>
 
+
             <!-- 3. RENTABILIDADE -->
+
             <button
                 class="tab-button"
                 type="button"
@@ -73,10 +133,16 @@
                 data-tab="tab-rentabilidade">
 
                 <i class="fa-solid fa-arrow-trend-up"></i>
-                <span>RENTABILIDADE</span>
+
+                <span>
+                    RENTABILIDADE
+                </span>
+
             </button>
 
+
             <!-- 4. TABELA RENTABILIDADE -->
+
             <button
                 class="tab-button"
                 type="button"
@@ -86,10 +152,16 @@
                 data-tab="tab-tabela-rentabilidade">
 
                 <i class="fa-solid fa-chart-column"></i>
-                <span>TABELA RENTABILIDADE</span>
+
+                <span>
+                    TABELA RENTABILIDADE
+                </span>
+
             </button>
 
+
             <!-- 5. MERCADO -->
+
             <button
                 class="tab-button"
                 type="button"
@@ -99,10 +171,16 @@
                 data-tab="tab-mercado">
 
                 <i class="fa-solid fa-chart-line"></i>
-                <span>MERCADO</span>
+
+                <span>
+                    MERCADO
+                </span>
+
             </button>
 
+
             <!-- 6. TABELA MERCADO -->
+
             <button
                 class="tab-button"
                 type="button"
@@ -112,10 +190,16 @@
                 data-tab="tab-tabela-mercado">
 
                 <i class="fa-solid fa-table"></i>
-                <span>TABELA MERCADO</span>
+
+                <span>
+                    TABELA MERCADO
+                </span>
+
             </button>
 
+
             <!-- 7. CONFIGURAÇÃO -->
+
             <button
                 class="tab-button"
                 type="button"
@@ -125,7 +209,11 @@
                 data-tab="tab-configuracao">
 
                 <i class="fa-solid fa-gear"></i>
-                <span>CONFIGURAÇÃO</span>
+
+                <span>
+                    CONFIGURAÇÃO
+                </span>
+
             </button>
 
         </nav>
@@ -134,6 +222,7 @@
 
 
     <main class="app-main">
+
 
         <!-- =========================================================
              1. CARTEIRA
@@ -153,7 +242,9 @@
                         Visão estratégica
                     </span>
 
-                    <h1>Carteira</h1>
+                    <h1>
+                        Carteira
+                    </h1>
 
                     <p>
                         Distribuição, desempenho e principais números
@@ -280,7 +371,9 @@
 
                     <div class="chart-area chart-area-pie">
 
-                        <canvas id="graficoDistribuicaoAtivos"></canvas>
+                        <canvas
+                            id="graficoDistribuicaoAtivos">
+                        </canvas>
 
                     </div>
 
@@ -304,7 +397,9 @@
 
                     <div class="chart-area">
 
-                        <canvas id="graficoPatrimonioClasses"></canvas>
+                        <canvas
+                            id="graficoPatrimonioClasses">
+                        </canvas>
 
                     </div>
 
@@ -328,7 +423,9 @@
 
                     <div class="chart-area chart-area-wide">
 
-                        <canvas id="graficoLucroPrejuizo"></canvas>
+                        <canvas
+                            id="graficoLucroPrejuizo">
+                        </canvas>
 
                     </div>
 
@@ -358,7 +455,9 @@
                         Dados da carteira
                     </span>
 
-                    <h1>Tabela Carteira</h1>
+                    <h1>
+                        Tabela Carteira
+                    </h1>
 
                     <p>
                         Dados patrimoniais e indicadores básicos dos ativos.
@@ -392,7 +491,9 @@
                         Desempenho
                     </span>
 
-                    <h1>Rentabilidade</h1>
+                    <h1>
+                        Rentabilidade
+                    </h1>
 
                     <p>
                         Evolução, resultado e geração de renda da carteira.
@@ -426,7 +527,9 @@
                         Dados de rentabilidade
                     </span>
 
-                    <h1>Tabela Rentabilidade</h1>
+                    <h1>
+                        Tabela Rentabilidade
+                    </h1>
 
                     <p>
                         Rentabilidade, renda, peso e potencial financeiro.
@@ -460,7 +563,9 @@
                         Indicadores de mercado
                     </span>
 
-                    <h1>Mercado</h1>
+                    <h1>
+                        Mercado
+                    </h1>
 
                     <p>
                         Indicadores fundamentalistas e características
@@ -495,7 +600,9 @@
                         Dados de mercado
                     </span>
 
-                    <h1>Tabela Mercado</h1>
+                    <h1>
+                        Tabela Mercado
+                    </h1>
 
                     <p>
                         Indicadores fundamentalistas e dados de mercado
@@ -530,7 +637,9 @@
                         Administração dos dados
                     </span>
 
-                    <h1>Configuração</h1>
+                    <h1>
+                        Configuração
+                    </h1>
 
                     <p>
                         Consulte a base completa e atualize os indicadores
@@ -544,39 +653,23 @@
 
             <div class="content-card portfolio-card">
 
-                <div class="card-toolbar">
+                <!--
+                    O módulo aba_configuracao.js monta aqui:
+                    - cabeçalho
+                    - botão Atualizar Mercado
+                    - botão Salvar Alterações
+                    - tabela completa do CSV
+                -->
 
-                    <div>
-
-                        <h2>
-                            <i class="fa-solid fa-database"></i>
-                            Patrimônio Consolidado
-                        </h2>
-
-                        <p>
-                            Visualização completa das colunas do
-                            patrimonio_consolidado.csv.
-                        </p>
-
-                    </div>
-
-
-                    <div class="action-buttons">
-
-                        <button
-                            id="btnAtualizarMercado"
-                            class="button button-primary"
-                            type="button">
-
-                            <i class="fa-solid fa-rotate"></i>
-                            Atualizar Mercado
-
-                        </button>
-
-                    </div>
-
+                <div
+                    id="container-tabela-configuracao"
+                    class="table-wrapper">
                 </div>
 
+
+                <!--
+                    Status geral utilizado pelo sistema.
+                -->
 
                 <div
                     id="status"
@@ -588,12 +681,11 @@
                 </div>
 
 
-                <div class="table-wrapper">
-
-                    <table id="tabela"></table>
-
-                </div>
-
+                <!--
+                    Log da atualização de mercado.
+                    Mantido como elemento único do sistema.
+                    Altura preparada para aproximadamente 15 linhas.
+                -->
 
                 <pre
                     id="resultado"
@@ -607,7 +699,18 @@
     </main>
 
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <!-- =============================================================
+         CHART.JS
+         ============================================================= -->
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
+    </script>
+
+
+    <!-- =============================================================
+         APLICAÇÃO PRINCIPAL
+         ============================================================= -->
 
     <script
         type="module"
@@ -617,4 +720,3 @@
 </body>
 
 </html>
-```
