@@ -472,7 +472,7 @@ tbody tr:hover {
 .tabela-carteira {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.95rem;
+    font-size: 0.110rem;
 }
 
 .tabela-carteira th,
@@ -512,7 +512,7 @@ tbody tr:hover {
 
 .tabela-carteira th {
     background: #f8fafc;
-    font-size: 0.82rem;
+    font-size: 0.130rem;
     font-weight: 700;
     text-align: center;
 }
