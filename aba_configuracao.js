@@ -88,7 +88,60 @@ function escaparHTML(valor) {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
 }
+function converterNumeroParaGrafico(valor) {
 
+  if (typeof valor === "number") {
+
+    return Number.isFinite(valor)
+      ? valor
+      : 0;
+  }
+
+  let texto = String(valor ?? "")
+    .trim()
+    .replace(/\s/g, "")
+    .replace(/R\$/gi, "")
+    .replace(/%/g, "");
+
+  if (texto.includes(",")) {
+
+    texto = texto
+      .replace(/\./g, "")
+      .replace(",", ".");
+  }
+
+  const numero = Number(texto);
+
+  return Number.isFinite(numero)
+    ? numero
+    : 0;
+}
+
+
+// ============================================================
+// FORMATAR MOEDA
+// ============================================================
+
+function formatarMoeda(valor) {
+
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL"
+  }).format(valor);
+}
+
+
+// ============================================================
+// FORMATAR PERCENTUAL
+// ============================================================
+
+function formatarPercentual(valor) {
+
+  return new Intl.NumberFormat("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(valor) + "%";
+}
 /**
  * Escapa um campo para gravação em CSV.
  */
