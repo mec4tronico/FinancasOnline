@@ -4,13 +4,19 @@
 //
 // Responsabilidade:
 //
-// 1. Ler PatrimonioConsolidado.csv
+// 1. Ler patrimonio_consolidado.csv
 // 2. Executar scraping dos ativos
 // 3. Validar os dados de mercado
-// 4. Atualizar as colunas 6–11
+// 4. Atualizar somente as colunas de mercado
 // 5. Manter dados anteriores quando houver erro
-// 6. Executar calculos.js para as colunas 12–21
-// 7. Gravar PatrimonioConsolidado.csv no GitHub
+// 6. Executar calculos.js para as colunas calculadas
+// 7. Gravar patrimonio_consolidado.csv no GitHub
+//
+// IMPORTANTE:
+// - O CSV pode possuir 40 colunas.
+// - A estrutura é obtida diretamente do cabeçalho do CSV.
+// - Nenhuma coluna é removida ou recriada.
+// - Somente as colunas de mercado são alteradas pelo scraping.
 //
 // NÃO é responsabilidade deste arquivo:
 // - criar botões
@@ -18,8 +24,6 @@
 // - montar tabela
 // - criar gráficos
 // - controlar abas
-//
-// A interface será controlada por aba_patrimonio.js.
 // ============================================================
 
 
@@ -47,32 +51,22 @@ const URL_WORKER_CSV =
 
 
 // ============================================================
-// 21 COLUNAS OFICIAIS
+// COLUNAS UTILIZADAS PELO SCRAPING
 // ============================================================
+//
+// IMPORTANTE:
+// Estas são apenas as colunas que o atualizar.js modifica.
+// As demais colunas existentes no CSV são preservadas.
+//
 
-const COLUNAS = [
+const COLUNAS_MERCADO = [
 
-    "Ativo",
-    "Tipo",
-    "Quantidade",
-    "TotalInvestido",
-    "DataPrimeiraCompra",
     "DataAtualizacao",
     "ValorAtual",
     "Min52",
     "Max52",
     "DY",
-    "Valorizacao",
-    "ValorAtualPosicao",
-    "LucroPrejuizo",
-    "Rentabilidade",
-    "PesoCarteira",
-    "RendaAnualEstimada",
-    "RendaMensalEstimada",
-    "ValorPosicaoMax52",
-    "ValorPosicaoMin52",
-    "PotencialFinanceiroMax52",
-    "RiscoFinanceiroMin52"
+    "Valorizacao"
 
 ];
 
@@ -88,16 +82,19 @@ async function carregarPatrimonio() {
 
 
     const resposta =
-        await fetch(urlCSV, {
-            cache: "no-store"
-        });
+        await fetch(
+            urlCSV,
+            {
+                cache: "no-store"
+            }
+        );
 
 
     if (!resposta.ok) {
 
         throw new Error(
             `Não foi possível carregar ` +
-            `PatrimonioConsolidado.csv ` +
+            `patrimonio_consolidado.csv ` +
             `(HTTP ${resposta.status}).`
         );
 
@@ -116,6 +113,17 @@ async function carregarPatrimonio() {
 // ============================================================
 // CONVERTER CSV → OBJETOS
 // ============================================================
+//
+// O cabeçalho do próprio CSV define as colunas.
+//
+// Portanto:
+// 21 colunas → funciona
+// 40 colunas → funciona
+// 50 colunas → também funciona
+//
+// O atualizar.js não precisa conhecer previamente
+// os nomes das colunas adicionais.
+//
 
 function converterCSVParaPatrimonio(texto) {
 
@@ -125,7 +133,10 @@ function converterCSVParaPatrimonio(texto) {
             .split(/\r?\n/);
 
 
-    if (linhas.length === 0) {
+    if (
+        linhas.length === 0 ||
+        !linhas[0].trim()
+    ) {
 
         throw new Error(
             "PatrimonioConsolidado.csv está vazio."
@@ -140,44 +151,50 @@ function converterCSVParaPatrimonio(texto) {
 
     const cabecalho =
         separarLinhaCSV(linhas[0])
-            .map(valor => valor.trim());
+            .map(
+                valor =>
+                    valor.trim()
+            );
 
 
-    // --------------------------------------------------------
-    // VALIDAR 21 COLUNAS
-    // --------------------------------------------------------
-
-    if (cabecalho.length !== 21) {
+    if (
+        cabecalho.length === 0
+    ) {
 
         throw new Error(
-            `CSV possui ${cabecalho.length} colunas. ` +
-            `Esperadas: 21.`
+            "Cabeçalho do CSV está vazio."
         );
 
     }
 
 
     // --------------------------------------------------------
-    // VALIDAR NOME E ORDEM
+    // VALIDAR SE AS COLUNAS NECESSÁRIAS EXISTEM
     // --------------------------------------------------------
 
+    const colunasObrigatorias = [
+
+        "Ativo",
+        "Tipo",
+        ...COLUNAS_MERCADO
+
+    ];
+
+
     for (
-        let indice = 0;
-        indice < COLUNAS.length;
-        indice++
+        const colunaObrigatoria
+        of colunasObrigatorias
     ) {
 
         if (
-            cabecalho[indice] !==
-            COLUNAS[indice]
+            !cabecalho.includes(
+                colunaObrigatoria
+            )
         ) {
 
             throw new Error(
-
-                `Coluna ${indice + 1} incorreta.\n` +
-                `Esperada: ${COLUNAS[indice]}\n` +
-                `Encontrada: ${cabecalho[indice]}`
-
+                `Coluna obrigatória não encontrada no CSV: ` +
+                `${colunaObrigatoria}`
             );
 
         }
@@ -198,8 +215,12 @@ function converterCSVParaPatrimonio(texto) {
         indice++
     ) {
 
-        if (!linhas[indice].trim()) {
+        if (
+            !linhas[indice].trim()
+        ) {
+
             continue;
+
         }
 
 
@@ -209,13 +230,31 @@ function converterCSVParaPatrimonio(texto) {
             );
 
 
-        if (valores.length !== 21) {
+        // ----------------------------------------------------
+        // GARANTIR A MESMA QUANTIDADE DO CABEÇALHO
+        // ----------------------------------------------------
+
+        while (
+            valores.length <
+            cabecalho.length
+        ) {
+
+            valores.push("");
+
+        }
+
+
+        if (
+            valores.length >
+            cabecalho.length
+        ) {
 
             throw new Error(
 
                 `Linha ${indice + 1} possui ` +
-                `${valores.length} colunas. ` +
-                `Esperadas: 21.`
+                `${valores.length} colunas, ` +
+                `mas o cabeçalho possui ` +
+                `${cabecalho.length}.`
 
             );
 
@@ -227,22 +266,30 @@ function converterCSVParaPatrimonio(texto) {
 
         for (
             let coluna = 0;
-            coluna < COLUNAS.length;
+            coluna < cabecalho.length;
             coluna++
         ) {
 
-            registro[COLUNAS[coluna]] =
+            registro[cabecalho[coluna]] =
                 valores[coluna];
 
         }
 
 
-        dados.push(registro);
+        dados.push(
+            registro
+        );
 
     }
 
 
-    return dados;
+    return {
+
+        cabecalho,
+
+        dados
+
+    };
 
 }
 
@@ -270,7 +317,9 @@ function separarLinhaCSV(linha) {
             linha[indice];
 
 
-        if (caractere === '"') {
+        if (
+            caractere === '"'
+        ) {
 
             if (
                 dentroDeAspas &&
@@ -295,7 +344,9 @@ function separarLinhaCSV(linha) {
             !dentroDeAspas
         ) {
 
-            valores.push(valorAtual);
+            valores.push(
+                valorAtual
+            );
 
             valorAtual = "";
 
@@ -303,14 +354,17 @@ function separarLinhaCSV(linha) {
 
         else {
 
-            valorAtual += caractere;
+            valorAtual +=
+                caractere;
 
         }
 
     }
 
 
-    if (dentroDeAspas) {
+    if (
+        dentroDeAspas
+    ) {
 
         throw new Error(
             "CSV possui aspas não fechadas."
@@ -319,7 +373,9 @@ function separarLinhaCSV(linha) {
     }
 
 
-    valores.push(valorAtual);
+    valores.push(
+        valorAtual
+    );
 
 
     return valores;
@@ -329,18 +385,6 @@ function separarLinhaCSV(linha) {
 
 // ============================================================
 // VALIDAR RESULTADO DO SCRAPING
-// ============================================================
-//
-// O scraping fornece:
-//
-// valorAtual
-// min52
-// max52
-// dy
-// valorizacao
-//
-// A DataAtualizacao é gerada pelo próprio atualizar.js
-// somente depois que esses dados foram validados.
 // ============================================================
 
 function dadosScrapingValidos(dados) {
@@ -362,7 +406,8 @@ function dadosScrapingValidos(dados) {
 
 
     for (
-        const campo of camposObrigatorios
+        const campo
+        of camposObrigatorios
     ) {
 
         const valor =
@@ -456,22 +501,36 @@ function formatarDataAtualizacao() {
 // ============================================================
 // GERAR CSV
 // ============================================================
+//
+// Usa exatamente o cabeçalho que foi lido do CSV.
+//
+// Portanto, se o CSV possui 40 colunas,
+// as mesmas 40 colunas serão gravadas.
+//
+// Nenhuma coluna adicional é perdida.
+//
 
-function gerarCSVPatrimonio(patrimonio) {
+function gerarCSVPatrimonio(
+    patrimonio,
+    cabecalho
+) {
 
     const linhas = [
 
-        COLUNAS.join(",")
+        cabecalho
+            .map(escaparValorCSV)
+            .join(",")
 
     ];
 
 
     for (
-        const registro of patrimonio
+        const registro
+        of patrimonio
     ) {
 
         const valores =
-            COLUNAS.map(
+            cabecalho.map(
                 coluna =>
                     escaparValorCSV(
                         registro[coluna]
@@ -542,7 +601,8 @@ function escaparValorCSV(valor) {
 // ============================================================
 
 async function gravarPatrimonioNoWorker(
-    patrimonio
+    patrimonio,
+    cabecalho
 ) {
 
     const resposta =
@@ -561,7 +621,8 @@ async function gravarPatrimonioNoWorker(
 
                 body:
                     gerarCSVPatrimonio(
-                        patrimonio
+                        patrimonio,
+                        cabecalho
                     )
 
             }
@@ -615,19 +676,6 @@ async function gravarPatrimonioNoWorker(
 // ============================================================
 // ATUALIZAR MERCADO
 // ============================================================
-//
-// Esta é a função que será chamada pela
-// aba_patrimonio.js.
-//
-// Exemplo:
-//
-// await atualizarMercado({
-//     onProgress: mensagem => {
-//         console.log(mensagem);
-//     }
-// });
-//
-// ============================================================
 
 async function atualizarMercado(
     opcoes = {}
@@ -650,8 +698,16 @@ async function atualizarMercado(
     );
 
 
-    let patrimonio =
+    const resultadoCSV =
         await carregarPatrimonio();
+
+
+    let patrimonio =
+        resultadoCSV.dados;
+
+
+    const cabecalho =
+        resultadoCSV.cabecalho;
 
 
     if (
@@ -709,6 +765,7 @@ async function atualizarMercado(
 
         onProgress("");
 
+
         onProgress(
             `Processando ${indice + 1}/${total}: ` +
             `${registro.Ativo}`
@@ -741,7 +798,9 @@ async function atualizarMercado(
             // ------------------------------------------------
 
             if (
-                !dadosScrapingValidos(dados)
+                !dadosScrapingValidos(
+                    dados
+                )
             ) {
 
                 erros++;
@@ -798,7 +857,7 @@ async function atualizarMercado(
 
 
             // ------------------------------------------------
-            // ATUALIZAR EXCLUSIVAMENTE COLUNAS 6–11
+            // ATUALIZAR SOMENTE AS 6 COLUNAS DE MERCADO
             // ------------------------------------------------
 
             registro.DataAtualizacao =
@@ -837,16 +896,6 @@ async function atualizarMercado(
 
         catch (erro) {
 
-            // ------------------------------------------------
-            // IMPORTANTE:
-            //
-            // nenhuma coluna 6–11 foi alterada antes da
-            // validação.
-            //
-            // Portanto, em caso de erro, os dados anteriores
-            // permanecem integralmente.
-            // ------------------------------------------------
-
             console.error(
 
                 `Erro no scraping de ` +
@@ -879,6 +928,7 @@ async function atualizarMercado(
     // ========================================================
 
     onProgress("");
+
 
     onProgress(
         "========================================"
@@ -916,13 +966,14 @@ async function atualizarMercado(
 
 
     // ========================================================
-    // 4. CALCULAR COLUNAS 12–21
+    // 4. CALCULAR COLUNAS CALCULADAS
     // ========================================================
 
     onProgress("");
 
+
     onProgress(
-        "Calculando colunas 12–21..."
+        "Calculando colunas calculadas..."
     );
 
 
@@ -943,6 +994,7 @@ async function atualizarMercado(
 
     onProgress("");
 
+
     onProgress(
         "Gravando patrimonio_consolidado.csv..."
     );
@@ -950,7 +1002,8 @@ async function atualizarMercado(
 
     const respostaGravacao =
         await gravarPatrimonioNoWorker(
-            patrimonio
+            patrimonio,
+            cabecalho
         );
 
 
@@ -975,6 +1028,7 @@ async function atualizarMercado(
     // ========================================================
 
     onProgress("");
+
 
     onProgress(
         "Atualização de mercado concluída."
