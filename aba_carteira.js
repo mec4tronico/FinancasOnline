@@ -562,7 +562,7 @@ function criarGraficoDistribuicao(
 
               ...opcoesBase.plugins.legend,
 
-              position: "left"
+              position: "left",
 
             labels: {
 
@@ -647,10 +647,6 @@ function criarGraficoDistribuicao(
     });
 }
 
-
-// ============================================================
-// GRÁFICO PATRIMÔNIO POR CLASSE
-// ============================================================
 // ============================================================
 // GRÁFICO PATRIMÔNIO POR CLASSE
 // ============================================================
