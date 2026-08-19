@@ -16,6 +16,8 @@
  * ============================================================================
  */
 
+import { atualizarMercado } from "./atualizar.js";
+
 const ARQUIVO_CSV = 'patrimonio_consolidado.csv';
 
 let dadosPatrimonio = [];
@@ -396,86 +398,68 @@ function renderizarTabelaConfiguracao() {
 
     configurarEventosInterativos();
 }
+
 /**
  * ============================================================================
  * EVENTOS
  * ============================================================================
  */
+
 function configurarEventosInterativos() {
 
     const btnAtualizarMercado =
         document.getElementById('btn-atualizar-mercado');
 
-    if (btnAtualizarMercado) {
+    if (!btnAtualizarMercado) {
+        return;
+    }
 
-        btnAtualizarMercado.addEventListener('click', () => {
+    btnAtualizarMercado.addEventListener(
+        'click',
+        async () => {
 
-            console.log(
-                '[Módulo Configuração] Iniciando atualização de mercado...'
-            );
+            const resultado =
+                document.getElementById('resultado');
 
-            if (
-                typeof window.atualizarCotacoesMercado ===
-                'function'
-            ) {
-
-                window.atualizarCotacoesMercado();
-
-            } else {
-
-                console.warn(
-                    '[Módulo Configuração] Função atualizarCotacoesMercado não encontrada.'
-                );
-
-                alert(
-                    'Módulo de atualização de mercado não encontrado.'
-                );
+            // Limpa o log anterior
+            if (resultado) {
+                resultado.textContent = '';
             }
-        });
-    }
 
-    const btnSalvar =
-        document.getElementById('btn-salvar-configuracao');
+            try {
 
-    if (btnSalvar) {
-        btnSalvar.addEventListener(
-            'click',
-            salvarAbaConfiguracao
-        );
-    }
+                await atualizarMercado({
 
-    const tabela =
-        document.getElementById('tabela-configuracao');
+                    onProgress: mensagem => {
 
-    if (tabela) {
+                        if (resultado) {
 
-        tabela.addEventListener('input', event => {
+                            resultado.textContent +=
+                                mensagem + '\n';
 
-            if (
-                event.target.tagName === 'TD' &&
-                event.target.hasAttribute('contenteditable')
-            ) {
+                            resultado.scrollTop =
+                                resultado.scrollHeight;
+                        }
 
-                const tr =
-                    event.target.closest('tr');
+                    }
 
-                const indexLinha =
-                    Number(tr.getAttribute('data-index'));
+                });
 
-                const indexColuna =
-                    Number(event.target.getAttribute('data-col'));
+            } catch (erro) {
 
-                if (
-                    dadosPatrimonio[indexLinha] &&
-                    !isNaN(indexColuna)
-                ) {
+                console.error(
+                    '[Módulo Configuração] Erro na atualização:',
+                    erro
+                );
 
-                    dadosPatrimonio[indexLinha][indexColuna] =
-                        event.target.innerText.trim();
+                if (resultado) {
+
+                    resultado.textContent +=
+                        `\nERRO: ${erro.message}\n`;
                 }
             }
-        });
-    }
+        }
+    );
 }
 
 /**
