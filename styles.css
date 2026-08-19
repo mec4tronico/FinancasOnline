@@ -465,7 +465,40 @@ tbody tr:hover {
     background: #fee2e2;
     font-weight: 700;
 }
+/* ============================================================
+   TABELA DA CARTEIRA
+   ============================================================ */
 
+.tabela-carteira {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tabela-carteira th,
+.tabela-carteira td {
+    border: 1px solid var(--border);
+}
+
+/* Todas as linhas com a mesma aparência */
+.tabela-carteira tbody tr {
+    background: var(--surface);
+}
+
+/* Mantém a grade ao passar o mouse */
+.tabela-carteira tbody tr:hover {
+    background: var(--surface);
+}
+
+/* Cabeçalho */
+.tabela-carteira th {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+}
+
+/* Células */
+.tabela-carteira td {
+    border: 1px solid var(--border);
+}
 @media (max-width: 700px) {
     .app-header {
         padding: 16px;
