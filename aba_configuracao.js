@@ -329,15 +329,11 @@ function renderizarTabelaConfiguracao() {
 
                 const texto = String(celula ?? '');
 
-                const numeroNormalizado = texto
-                    .replace(/\s/g, '')
-                    .replace(/R\$/gi, '')
-                    .replace(/%/g, '')
-                    .replace(/\./g, '')
-                    .replace(',', '.')
-                    .trim();
+                const numero = Number(texto);
 
-                const numero = Number(numeroNormalizado);
+                const ehNumero =
+                texto !== '' &&
+                Number.isFinite(numero);
 
                 const ehNumero =
                     texto !== '' &&
