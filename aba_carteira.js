@@ -249,7 +249,6 @@ function separarLinhaCSV(linha) {
 // ============================================================
 // CONVERTER CSV
 // ============================================================
-
 function converterCSVParaPatrimonio(texto) {
 
   const linhas =
@@ -268,31 +267,11 @@ function converterCSVParaPatrimonio(texto) {
     separarLinhaCSV(linhas[0])
       .map(valor => valor.trim());
 
-  if (cabecalho.length !== 40) {
+  if (cabecalho.length === 0) {
 
     throw new Error(
-      `CSV possui ${cabecalho.length} colunas. ` +
-      `Esperadas: 21.`
+      "CSV não possui colunas."
     );
-  }
-
-  for (
-    let indice = 0;
-    indice < COLUNAS.length;
-    indice++
-  ) {
-
-    if (
-      cabecalho[indice] !==
-      COLUNAS[indice]
-    ) {
-
-      throw new Error(
-        `Coluna ${indice + 1} incorreta. ` +
-        `Esperada: ${COLUNAS[indice]}. ` +
-        `Encontrada: ${cabecalho[indice]}.`
-      );
-    }
   }
 
   const dados = [];
@@ -310,12 +289,12 @@ function converterCSVParaPatrimonio(texto) {
     const valores =
       separarLinhaCSV(linhas[indice]);
 
-    if (valores.length !== 40) {
+    if (valores.length !== cabecalho.length) {
 
       throw new Error(
         `Linha ${indice + 1} possui ` +
         `${valores.length} colunas. ` +
-        `Esperadas: 21.`
+        `Esperadas: ${cabecalho.length}.`
       );
     }
 
@@ -323,11 +302,11 @@ function converterCSVParaPatrimonio(texto) {
 
     for (
       let coluna = 0;
-      coluna < COLUNAS.length;
+      coluna < cabecalho.length;
       coluna++
     ) {
 
-      registro[COLUNAS[coluna]] =
+      registro[cabecalho[coluna]] =
         valores[coluna];
     }
 
