@@ -332,10 +332,6 @@ function renderizarTabelaConfiguracao() {
                 const numero = Number(texto);
 
                 const ehNumero =
-                texto !== '' &&
-                Number.isFinite(numero);
-
-                const ehNumero =
                     texto !== '' &&
                     Number.isFinite(numero);
 
