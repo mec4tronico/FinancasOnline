@@ -61,8 +61,8 @@ const graficosCarteira = {
 // ============================================================
 //
 // IMPORTANTE:
-// Os nomes são usados para localizar as colunas no cabeçalho
-// do CSV.
+// Os nomes são usados para localizar as colunas
+// no cabeçalho do CSV.
 //
 // Portanto, a posição física da coluna no CSV não importa.
 //
@@ -1448,9 +1448,46 @@ function renderizarTabelaCarteira(
           }
 
 
+          // ------------------------------------------------
+          // ALINHAMENTO DA CÉLULA
+          // ------------------------------------------------
+          //
+          // Centralizado:
+          // - Ativo
+          // - Tipo
+          // - Quantidade
+          // - PesoCarteira
+          //
+          // Direita:
+          // - ValorAtual
+          // - ValorAtualPosicao
+          // - LucroPrejuizo
+          //
+          // =================================================
+
+          const classeAlinhamento =
+
+            (
+
+              nomeColuna ===
+                "ValorAtual" ||
+
+              nomeColuna ===
+                "ValorAtualPosicao" ||
+
+              nomeColuna ===
+                "LucroPrejuizo"
+
+            )
+
+              ? "text-right"
+
+              : "text-center";
+
+
           html += `
 
-            <td>
+            <td class="${classeAlinhamento}">
 
               ${escaparHTML(
                 valorExibicao
