@@ -459,6 +459,13 @@ tbody tr:hover {
     font-size: 1.1rem;
     letter-spacing: -0.035em;
 }
+
+.valor-negativo {
+    color: #b91c1c;
+    background: #fee2e2;
+    font-weight: 700;
+}
+
 @media (max-width: 700px) {
     .app-header {
         padding: 16px;
