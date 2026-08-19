@@ -303,6 +303,11 @@ function renderizarTabelaConfiguracao() {
 
                 const classeAlinhamento =
                     ehNumero ? 'text-right' : 'text-left';
+                
+                const classeNegativo =
+                    ehNumero && numero < 0
+                        ? 'valor-negativo'
+                        : '';
 
                 let textoExibicao = texto;
 
@@ -358,7 +363,7 @@ function renderizarTabelaConfiguracao() {
                 html += `
                     <td
                         contenteditable="true"
-                        class="celula-editavel ${classeAlinhamento}"
+                        class="celula-editavel ${classeAlinhamento} ${classeNegativo}"
                         data-col="${indexColuna}"
                     >${escaparHTML(textoExibicao)}</td>
                 `;
