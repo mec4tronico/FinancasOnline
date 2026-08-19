@@ -472,32 +472,49 @@ tbody tr:hover {
 .tabela-carteira {
     width: 100%;
     border-collapse: collapse;
+    font-size: 0.95rem;
 }
 
 .tabela-carteira th,
 .tabela-carteira td {
-    border: 1px solid var(--border);
+    border: 2px solid var(--border);
+    padding: 13px 15px;
+    white-space: nowrap;
 }
 
-/* Todas as linhas com a mesma aparência */
+/* ------------------------------------------------------------
+   ALINHAMENTO
+   ------------------------------------------------------------ */
+
+.tabela-carteira .text-center {
+    text-align: center;
+}
+
+.tabela-carteira .text-right {
+    text-align: right;
+}
+
+/* ------------------------------------------------------------
+   LINHAS
+   ------------------------------------------------------------ */
+
 .tabela-carteira tbody tr {
     background: var(--surface);
 }
 
-/* Mantém a grade ao passar o mouse */
 .tabela-carteira tbody tr:hover {
     background: var(--surface);
 }
 
-/* Cabeçalho */
+/* ------------------------------------------------------------
+   CABEÇALHO
+   ------------------------------------------------------------ */
+
 .tabela-carteira th {
     background: #f8fafc;
-    border: 1px solid var(--border);
-}
-
-/* Células */
-.tabela-carteira td {
-    border: 1px solid var(--border);
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-align: center;
 }
 @media (max-width: 700px) {
     .app-header {
