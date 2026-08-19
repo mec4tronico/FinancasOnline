@@ -63,6 +63,25 @@ const COLUNAS = [
   "RiscoFinanceiroMin52"
 ];
 
+const {
+    cabecalhosCSV,
+    dadosPatrimonio
+} = processarDadosCSV(textoCSV);
+
+const COLUNAS_TABELA_CARTEIRA = [
+    "Ativo",
+    "Tipo",
+    "Quantidade",
+    "ValorAtual",
+    "ValorAtualPosicao",
+    "LucroPrejuizo",
+    "PesoCarteira"
+];
+
+const indicesColunas =
+    COLUNAS_TABELA_CARTEIRA.map(
+        nome => cabecalhosCSV.indexOf(nome)
+    );
 
 // ============================================================
 // CONVERTER NÚMERO
@@ -1018,7 +1037,209 @@ async function atualizarAbaCarteira() {
   );
 }
 
+function renderizarTabelaCarteira(
+    cabecalhosCSV,
+    dadosPatrimonio
+) {
 
+    const container =
+        document.getElementById("tabelaCarteira");
+
+    if (!container) {
+        console.warn(
+            "[Carteira] Container da tabela não encontrado."
+        );
+        return;
+    }
+
+    const COLUNAS_TABELA_CARTEIRA = [
+        "Ativo",
+        "Tipo",
+        "Quantidade",
+        "ValorAtual",
+        "ValorAtualPosicao",
+        "LucroPrejuizo",
+        "PesoCarteira"
+    ];
+
+    const indicesColunas =
+        COLUNAS_TABELA_CARTEIRA.map(
+            nome => cabecalhosCSV.indexOf(nome)
+        );
+
+    // --------------------------------------------------------
+    // VALIDAR COLUNAS
+    // --------------------------------------------------------
+
+    const colunasNaoEncontradas =
+        COLUNAS_TABELA_CARTEIRA.filter(
+            (_, indice) =>
+                indicesColunas[indice] === -1
+        );
+
+    if (colunasNaoEncontradas.length > 0) {
+
+        console.error(
+            "[Carteira] Colunas não encontradas:",
+            colunasNaoEncontradas
+        );
+
+        container.innerHTML = `
+            <div class="alerta-erro">
+                Não foi possível montar a tabela da Carteira.
+                Colunas não encontradas:
+                ${colunasNaoEncontradas.join(", ")}
+            </div>
+        `;
+
+        return;
+    }
+
+    // --------------------------------------------------------
+    // CABEÇALHO
+    // --------------------------------------------------------
+
+    let html = `
+        <div class="content-card portfolio-card tabela-carteira-card">
+
+            <div class="cabecalho-aba">
+                <div>
+                    <h2>Carteira</h2>
+                </div>
+            </div>
+
+            <div class="tabela-scroll">
+
+                <table class="tabela-dados tabela-carteira">
+
+                    <thead>
+
+                        <tr>
+    `;
+
+    COLUNAS_TABELA_CARTEIRA.forEach(
+        nomeColuna => {
+
+            html += `
+                <th>
+                    ${nomeColuna}
+                </th>
+            `;
+        }
+    );
+
+    html += `
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+    `;
+
+    // --------------------------------------------------------
+    // LINHAS
+    // --------------------------------------------------------
+
+    dadosPatrimonio.forEach(
+        linha => {
+
+            html += `<tr>`;
+
+            COLUNAS_TABELA_CARTEIRA.forEach(
+                (nomeColuna, indiceTabela) => {
+
+                    const indiceCSV =
+                        indicesColunas[indiceTabela];
+
+                    const valor =
+                        linha[indiceCSV] ?? "";
+
+                    let valorExibicao =
+                        valor;
+
+                    const numero =
+                        Number(valor);
+
+                    const ehNumero =
+                        valor !== "" &&
+                        Number.isFinite(numero);
+
+                    // ----------------------------------------
+                    // FORMATAÇÃO
+                    // ----------------------------------------
+
+                    if (
+                        ehNumero &&
+                        (
+                            nomeColuna === "ValorAtual" ||
+                            nomeColuna === "ValorAtualPosicao" ||
+                            nomeColuna === "LucroPrejuizo"
+                        )
+                    ) {
+
+                        valorExibicao =
+                            new Intl.NumberFormat(
+                                "pt-BR",
+                                {
+                                    style: "currency",
+                                    currency: "BRL"
+                                }
+                            ).format(numero);
+
+                    }
+
+                    else if (
+                        ehNumero &&
+                        nomeColuna === "PesoCarteira"
+                    ) {
+
+                        valorExibicao =
+                            new Intl.NumberFormat(
+                                "pt-BR",
+                                {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                }
+                            ).format(numero) + "%";
+
+                    }
+
+                    else if (
+                        ehNumero &&
+                        nomeColuna === "Quantidade"
+                    ) {
+
+                        valorExibicao =
+                            new Intl.NumberFormat(
+                                "pt-BR"
+                            ).format(numero);
+
+                    }
+
+                    html += `
+                        <td>
+                            ${escaparHTML(valorExibicao)}
+                        </td>
+                    `;
+                }
+            );
+
+            html += `</tr>`;
+        }
+    );
+
+    html += `
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+    `;
+
+    container.innerHTML = html;
+}
 // ============================================================
 // EXPORTAÇÃO
 // ============================================================
