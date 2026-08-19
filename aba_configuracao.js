@@ -235,6 +235,10 @@ function processarDadosCSV(textoCSV) {
     console.log(
         `[Módulo Configuração] Estrutura detectada: ${cabecalhosCSV.length} colunas x ${dadosPatrimonio.length} ativos.`
     );
+    return {
+        cabecalhosCSV,
+        dadosPatrimonio
+    };
 }
 
 /**
