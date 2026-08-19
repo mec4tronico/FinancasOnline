@@ -330,24 +330,79 @@ function renderizarTabelaConfiguracao() {
                 const texto = String(celula ?? '');
 
                 const numeroNormalizado = texto
+                    .replace(/\s/g, '')
+                    .replace(/R\$/gi, '')
+                    .replace(/%/g, '')
                     .replace(/\./g, '')
                     .replace(',', '.')
-                    .replace('%', '')
                     .trim();
+
+                const numero = Number(numeroNormalizado);
 
                 const ehNumero =
                     texto !== '' &&
-                    !isNaN(Number(numeroNormalizado));
+                    Number.isFinite(numero);
 
                 const classeAlinhamento =
                     ehNumero ? 'text-right' : 'text-left';
+
+                let textoExibicao = texto;
+
+                // ====================================================
+                // FORMATAÇÃO VISUAL DAS COLUNAS
+                // ====================================================
+
+                const cabecalho =
+                    cabecalhosCSV[indexColuna];
+
+                // -------------------------------
+                // VALORES MONETÁRIOS
+                // -------------------------------
+
+                if (
+                    ehNumero &&
+                    (
+                        cabecalho === 'TotalInvestido' ||
+                        cabecalho === 'ValorAtual' ||
+                        cabecalho === 'ValorAtualPosicao' ||
+                        cabecalho === 'LucroPrejuizo' ||
+                        cabecalho === 'RendaAnualEstimada' ||
+                        cabecalho === 'RendaMensalEstimada' ||
+                        cabecalho === 'ValorPosicaoMax52' ||
+                        cabecalho === 'ValorPosicaoMin52' ||
+                        cabecalho === 'PotencialFinanceiroMax52' ||
+                        cabecalho === 'RiscoFinanceiroMin52'
+                    )
+                ) {
+
+                    textoExibicao =
+                        formatarMoeda(numero);
+                }
+
+                // -------------------------------
+                // PERCENTUAIS
+                // -------------------------------
+
+                else if (
+                    ehNumero &&
+                    (
+                        cabecalho === 'DY' ||
+                        cabecalho === 'Valorizacao' ||
+                        cabecalho === 'Rentabilidade' ||
+                        cabecalho === 'PesoCarteira'
+                    )
+                ) {
+
+                    textoExibicao =
+                        formatarPercentual(numero);
+                }
 
                 html += `
                     <td
                         contenteditable="true"
                         class="celula-editavel ${classeAlinhamento}"
                         data-col="${indexColuna}"
-                    >${escaparHTML(texto)}</td>
+                    >${escaparHTML(textoExibicao)}</td>
                 `;
             });
 
@@ -378,7 +433,6 @@ function renderizarTabelaConfiguracao() {
 
     configurarEventosInterativos();
 }
-
 /**
  * ============================================================================
  * EVENTOS
