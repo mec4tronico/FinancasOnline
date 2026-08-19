@@ -242,9 +242,9 @@ button {
 }
 
 .chart-area-pie {
-    max-width: 430px;
-    margin-right: auto;
-    margin-left: auto;
+    width: 100%;
+    height: 500px;
+    margin-top: 20px;
 }
 
 .chart-area-wide {
