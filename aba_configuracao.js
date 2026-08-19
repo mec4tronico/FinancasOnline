@@ -181,6 +181,10 @@ async function carregarAbaConfiguracao() {
         console.log(
             `[Módulo Configuração] CSV carregado: ${dadosPatrimonio.length} ativos, ${cabecalhosCSV.length} colunas.`
         );
+        return {
+            cabecalhosCSV,
+            dadosPatrimonio
+        };
 
     } catch (error) {
         console.error(
@@ -505,5 +509,6 @@ function iniciarAbaConfiguracao() {
  */
 export {
     iniciarAbaConfiguracao,
-    carregarAbaConfiguracao
+    carregarAbaConfiguracao,
+    processarDadosCSV
 };
