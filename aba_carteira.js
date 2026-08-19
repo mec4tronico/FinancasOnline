@@ -13,6 +13,7 @@
 // Ele apenas lê e apresenta os dados atuais.
 // ============================================================
 
+import { processarDadosCSV } from "./aba_configuracao.js";
 
 // ============================================================
 // CONFIGURAÇÃO
