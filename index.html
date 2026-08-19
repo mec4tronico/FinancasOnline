@@ -103,26 +103,7 @@
             </button>
 
 
-            <!-- 2. TABELA CARTEIRA -->
-
-            <button
-                class="tab-button"
-                type="button"
-                role="tab"
-                aria-selected="false"
-                aria-controls="tab-tabela-carteira"
-                data-tab="tab-tabela-carteira">
-
-                <i class="fa-solid fa-table-list"></i>
-
-                <span>
-                    TABELA CARTEIRA
-                </span>
-
-            </button>
-
-
-            <!-- 3. RENTABILIDADE -->
+            <!-- 2. RENTABILIDADE -->
 
             <button
                 class="tab-button"
@@ -141,26 +122,7 @@
             </button>
 
 
-            <!-- 4. TABELA RENTABILIDADE -->
-
-            <button
-                class="tab-button"
-                type="button"
-                role="tab"
-                aria-selected="false"
-                aria-controls="tab-tabela-rentabilidade"
-                data-tab="tab-tabela-rentabilidade">
-
-                <i class="fa-solid fa-chart-column"></i>
-
-                <span>
-                    TABELA RENTABILIDADE
-                </span>
-
-            </button>
-
-
-            <!-- 5. MERCADO -->
+            <!-- 3. MERCADO -->
 
             <button
                 class="tab-button"
@@ -179,26 +141,7 @@
             </button>
 
 
-            <!-- 6. TABELA MERCADO -->
-
-            <button
-                class="tab-button"
-                type="button"
-                role="tab"
-                aria-selected="false"
-                aria-controls="tab-tabela-mercado"
-                data-tab="tab-tabela-mercado">
-
-                <i class="fa-solid fa-table"></i>
-
-                <span>
-                    TABELA MERCADO
-                </span>
-
-            </button>
-
-
-            <!-- 7. CONFIGURAÇÃO -->
+            <!-- 4. CONFIGURAÇÃO -->
 
             <button
                 class="tab-button"
@@ -255,6 +198,10 @@
 
             </div>
 
+
+            <!-- =====================================================
+                 KPIs
+                 ===================================================== -->
 
             <div
                 id="kpisCarteira"
@@ -350,134 +297,115 @@
                 </article>
 
             </div>
-<div class="charts-grid">
-
-    <article class="chart-card chart-card-wide">
-
-        <div class="chart-heading">
-
-            <h2>
-                <i class="fa-solid fa-chart-pie"></i>
-                Distribuição por ativo
-            </h2>
-
-            <p>
-                Concentração do patrimônio atual.
-            </p>
-
-        </div>
-
-        <div class="chart-area chart-area-pie">
-
-            <canvas
-                id="graficoDistribuicaoAtivos">
-            </canvas>
-
-        </div>
-
-    </article>
 
 
-    <article class="chart-card chart-card-wide">
+            <!-- =====================================================
+                 GRÁFICOS
+                 ===================================================== -->
 
-        <div class="chart-heading">
-
-            <h2>
-                <i class="fa-solid fa-arrow-trend-up"></i>
-                Lucro / prejuízo por posição
-            </h2>
-
-            <p>
-                Resultado financeiro em reais por ativo.
-            </p>
-
-        </div>
-
-        <div class="chart-area chart-area-wide">
-
-            <canvas
-                id="graficoLucroPrejuizo">
-            </canvas>
-
-        </div>
-
-    </article>
+            <div class="charts-grid">
 
 
-    <article class="chart-card chart-card-wide">
+                <!-- GRÁFICO 1 — ROSCA -->
 
-        <div class="chart-heading">
+                <article class="chart-card chart-card-wide">
 
-            <h2>
-                <i class="fa-solid fa-chart-column"></i>
-                Patrimônio por classe
-            </h2>
+                    <div class="chart-heading">
 
-            <p>
-                Comparativo entre tipos de ativos e renda mensal estimada.
-            </p>
+                        <h2>
+                            <i class="fa-solid fa-chart-pie"></i>
+                            Distribuição por ativo
+                        </h2>
 
-        </div>
+                        <p>
+                            Concentração do patrimônio atual.
+                        </p>
 
-        <div class="chart-area chart-area-wide">
+                    </div>
 
-            <canvas
-                id="graficoPatrimonioClasses">
-            </canvas>
+                    <div class="chart-area chart-area-pie">
 
-        </div>
+                        <canvas
+                            id="graficoDistribuicaoAtivos">
+                        </canvas>
 
-    </article>
+                    </div>
 
-</div>
+                </article>
 
-           
 
-               
+                <!-- GRÁFICO 2 — LUCRO / PREJUÍZO -->
+
+                <article class="chart-card chart-card-wide">
+
+                    <div class="chart-heading">
+
+                        <h2>
+                            <i class="fa-solid fa-arrow-trend-up"></i>
+                            Lucro / prejuízo por posição
+                        </h2>
+
+                        <p>
+                            Resultado financeiro em reais por ativo.
+                        </p>
+
+                    </div>
+
+                    <div class="chart-area chart-area-wide">
+
+                        <canvas
+                            id="graficoLucroPrejuizo">
+                        </canvas>
+
+                    </div>
+
+                </article>
+
+
+                <!-- GRÁFICO 3 — CLASSE -->
+
+                <article class="chart-card chart-card-wide">
+
+                    <div class="chart-heading">
+
+                        <h2>
+                            <i class="fa-solid fa-chart-column"></i>
+                            Patrimônio por classe
+                        </h2>
+
+                        <p>
+                            Comparativo entre tipos de ativos e renda mensal estimada.
+                        </p>
+
+                    </div>
+
+                    <div class="chart-area chart-area-wide">
+
+                        <canvas
+                            id="graficoPatrimonioClasses">
+                        </canvas>
+
+                    </div>
+
+                </article>
 
             </div>
+
+
+            <!-- =====================================================
+                 TABELA DA CARTEIRA
+                 Fica abaixo dos 3 gráficos.
+                 O JavaScript monta a tabela aqui.
+                 ===================================================== -->
+
+            <div id="tabelaCarteira"></div>
+
 
         </section>
 
 
         <!-- =========================================================
-             2. TABELA CARTEIRA
-             ========================================================= -->
-
-        <section
-            id="tab-tabela-carteira"
-            class="tab-content"
-            role="tabpanel"
-            hidden>
-
-            <div class="page-heading">
-
-                <div>
-
-                    <span class="eyebrow">
-                        <i class="fa-solid fa-table-list"></i>
-                        Dados da carteira
-                    </span>
-
-                    <h1>
-                        Tabela Carteira
-                    </h1>
-
-                    <p>
-                        Dados patrimoniais e indicadores básicos dos ativos.
-                    </p>
-
-                </div>
-
-            </div>
-
-            <div id="conteudoTabelaCarteira"></div>
-
-        </section>
-
-
-        <!-- =========================================================
-             3. RENTABILIDADE
+             2. RENTABILIDADE
              ========================================================= -->
 
         <section
@@ -513,43 +441,7 @@
 
 
         <!-- =========================================================
-             4. TABELA RENTABILIDADE
-             ========================================================= -->
-
-        <section
-            id="tab-tabela-rentabilidade"
-            class="tab-content"
-            role="tabpanel"
-            hidden>
-
-            <div class="page-heading">
-
-                <div>
-
-                    <span class="eyebrow">
-                        <i class="fa-solid fa-chart-column"></i>
-                        Dados de rentabilidade
-                    </span>
-
-                    <h1>
-                        Tabela Rentabilidade
-                    </h1>
-
-                    <p>
-                        Rentabilidade, renda, peso e potencial financeiro.
-                    </p>
-
-                </div>
-
-            </div>
-
-            <div id="conteudoTabelaRentabilidade"></div>
-
-        </section>
-
-
-        <!-- =========================================================
-             5. MERCADO
+             3. MERCADO
              ========================================================= -->
 
         <section
@@ -586,44 +478,7 @@
 
 
         <!-- =========================================================
-             6. TABELA MERCADO
-             ========================================================= -->
-
-        <section
-            id="tab-tabela-mercado"
-            class="tab-content"
-            role="tabpanel"
-            hidden>
-
-            <div class="page-heading">
-
-                <div>
-
-                    <span class="eyebrow">
-                        <i class="fa-solid fa-table"></i>
-                        Dados de mercado
-                    </span>
-
-                    <h1>
-                        Tabela Mercado
-                    </h1>
-
-                    <p>
-                        Indicadores fundamentalistas e dados de mercado
-                        dos ativos.
-                    </p>
-
-                </div>
-
-            </div>
-
-            <div id="conteudoTabelaMercado"></div>
-
-        </section>
-
-
-        <!-- =========================================================
-             7. CONFIGURAÇÃO
+             4. CONFIGURAÇÃO
              ========================================================= -->
 
         <section
@@ -661,12 +516,12 @@
                     id="container-tabela-configuracao"
                     class="table-wrapper">
                 </div>
-            
+
                 <pre
                     id="resultado"
                     class="progress-output"
                     aria-live="polite"></pre>
-            
+
             </div>
 
         </section>
