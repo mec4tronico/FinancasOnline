@@ -433,7 +433,32 @@ tbody tr:hover {
 .tab-content:not(.active) {
     display: none;
 }
+/* =========================================================
+   BOTÃO ATUALIZAR MERCADO
+   Alinhado à direita no cabeçalho da Configuração
+   ========================================================= */
 
+.acoes-aba {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    width: 100%;
+}
+
+.cabecalho-aba {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+}
+
+.cabecalho-aba h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    letter-spacing: -0.035em;
+}
 @media (max-width: 700px) {
     .app-header {
         padding: 16px;
@@ -448,13 +473,8 @@ tbody tr:hover {
         flex-direction: column;
     }
 
-    .action-buttons,
-    .action-buttons button {
-        width: 100%;
-    }
-
-    .action-buttons button {
-        justify-content: center;
+    .acoes-aba {
+        justify-content: flex-start;
     }
 
     .status-message {
@@ -481,10 +501,4 @@ tbody tr:hover {
     .chart-card {
         padding: 18px;
     }
-    .acoes-aba {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    width: 100%;
-}
 }
