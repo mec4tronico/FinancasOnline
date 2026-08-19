@@ -649,6 +649,9 @@ function criarGraficoDistribuicao(
 // ============================================================
 // GRÁFICO PATRIMÔNIO POR CLASSE
 // ============================================================
+// ============================================================
+// GRÁFICO PATRIMÔNIO POR CLASSE
+// ============================================================
 
 function criarGraficoClasses(
   posicoes,
@@ -666,6 +669,7 @@ function criarGraficoClasses(
   }
 
   const totaisPorClasse = {};
+  const rendaPorClasse = {};
 
   for (const posicao of posicoes) {
 
@@ -675,7 +679,17 @@ function criarGraficoClasses(
         0
       ) +
       posicao.valorAtualPosicao;
+
+    rendaPorClasse[posicao.classe] =
+      (
+        rendaPorClasse[posicao.classe] ||
+        0
+      ) +
+      posicao.rendaMensal;
   }
+
+  const classes =
+    Object.keys(totaisPorClasse);
 
   graficosCarteira.classes =
     new Chart(canvas, {
@@ -685,8 +699,11 @@ function criarGraficoClasses(
       data: {
 
         labels:
-          Object.keys(
-            totaisPorClasse
+          classes.map(
+            classe =>
+              `${classe} — ${formatarMoeda(
+                rendaPorClasse[classe] || 0
+              )}/mês`
           ),
 
         datasets: [{
@@ -694,8 +711,9 @@ function criarGraficoClasses(
           label: "Patrimônio",
 
           data:
-            Object.values(
-              totaisPorClasse
+            classes.map(
+              classe =>
+                totaisPorClasse[classe]
             ),
 
           backgroundColor:
