@@ -20,30 +20,22 @@ const URL_WORKER_CSV =
 // MAPEAMENTO: Títulos do StatusInvest → Colunas do CSV
 // ============================================================
 
+javascript
 const MAPEAMENTO = {
-    // Indicadores de FIIs (com base na extração)
     "Valor Patrimonial por Cota": "ValorPatrimonialPorCota",
+    "Val. Patrimonial P/Cota": "ValorPatrimonialPorCota",
     "P/VP": "PVP",
     "Valor em Caixa": "ValorEmCaixa",
     "DY CAGR (3 anos)": "DYCAGR3Anos",
     "Nº de Cotistas": "NumeroCotistas",
     "Rendimento Mensal Médio (24M)": "RendimentoMensalMedio24M",
-    "Ano Passado": "AnoPassado",
-    "Ano Atual": "AnoAtual",
+    "Rendimento Mensal Médio": "RendimentoMensalMedio24M",
+    "Ano passado": "AnoPassado",
+    "Ano atual": "AnoAtual",
     "Volume (dia)": "VolumeDia",
+    "Volume": "VolumeDia",
     "Segmento ANBIMA": "SegmentoANBIMA",
-    
-    // Variações que podem aparecer
-    "Val. Patrimonial P/Cota": "ValorPatrimonialPorCota",
-    "Último Rendimento": "RendimentoMensal",
-    "Rendimento 12M": "Rendimento12M",
-    "Vacância Média": "VacanciaMedia",
-    "Vacância Física": "VacanciaFisica",
-    "Vacância Financeira": "VacanciaFinanceira",
-    "Quantidade de Imóveis": "QtdImoveis",
-    "Alavancagem": "Alavancagem",
-    "Prazo Médio dos Contratos": "PrazoContratos",
-    "Rentabilidade Imobiliária": "RentabilidadeImobiliaria"
+    "Segmento": "SegmentoANBIMA"
 };
 
 // ============================================================
