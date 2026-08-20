@@ -1,6 +1,7 @@
 // ============================================================
 // scrapingfiis.js
 // Extrai indicadores fundamentalistas específicos para FIIs
+// COM RELATÓRIO DE ERRO DETALHADO
 // ============================================================
 
 const PROXY_CLOUDFLARE = "https://financasonline.augusto-gouveia2000.workers.dev/";
@@ -15,7 +16,6 @@ async function scrapingFIIs(ticker) {
   // Estrutura de erro com diagnóstico
   const resultadoErro = {
     ticker: ticker,
-    // 10 indicadores exclusivos de FIIs
     capRate: "ERRO",
     rendimentoMensal: "ERRO",
     rendimento12M: "ERRO",
@@ -26,9 +26,10 @@ async function scrapingFIIs(ticker) {
     alavancagem: "ERRO",
     prazoContratos: "ERRO",
     rentabilidadeImobiliaria: "ERRO",
-    // Diagnóstico
     erroDiagnostico: "Sem diagnóstico",
-    etapaFalha: "desconhecida"
+    etapaFalha: "desconhecida",
+    // Relatório detalhado de extração
+    relatorioExtracao: {}
   };
 
   console.log("========================================");
@@ -168,108 +169,119 @@ async function scrapingFIIs(ticker) {
     }
 
     // ====================================================
-    // 8. FUNÇÃO DE EXTRAÇÃO PADRÃO (reutilizada)
+    // 8. FUNÇÃO DE EXTRAÇÃO COM RELATÓRIO
     // ====================================================
 
-    function obterValorPorTitulo(titulo) {
-      const elementos = documento.querySelectorAll("h3, small, span");
-      for (const elemento of elementos) {
-        const texto = elemento.textContent.trim().toUpperCase();
-        if (texto.includes(titulo.toUpperCase())) {
-          let pai = elemento.closest("div");
-          let tentativas = 0;
-          while (pai && tentativas < 6) {
-            const valor = pai.querySelector("strong.value");
-            if (valor) {
-              const textoValor = valor.textContent.trim();
-              if (textoValor) {
-                return textoValor;
+    function obterValorFII(titulo, titulosAlternativos = []) {
+      const relatorio = {
+        tituloBuscado: titulo,
+        titulosAlternativos: titulosAlternativos,
+        encontrouSecao: false,
+        encontrouTitulo: false,
+        encontrouValor: false,
+        valorEncontrado: null,
+        detalhes: []
+      };
+
+      console.log(`[${ticker}] Buscando "${titulo}" para FII...`);
+
+      // Lista de títulos a procurar (principal + alternativos)
+      const titulosBusca = [titulo, ...titulosAlternativos].map(t => t.toUpperCase());
+
+      // 1. Tentar encontrar na seção #indicators (se existir)
+      let secaoIndicators = documento.getElementById("indicators");
+      relatorio.detalhes.push(`#indicators encontrado: ${!!secaoIndicators}`);
+
+      let elementosBusca = secaoIndicators 
+        ? secaoIndicators.querySelectorAll("div.info, .info") 
+        : documento.querySelectorAll("div.info, .info");
+
+      relatorio.detalhes.push(`Blocos .info encontrados: ${elementosBusca.length}`);
+
+      // 2. Se não encontrar, buscar em toda a página
+      if (elementosBusca.length === 0) {
+        console.warn(`[${ticker}] Nenhum bloco .info encontrado. Buscando em toda a página...`);
+        elementosBusca = documento.querySelectorAll("div.info, .info");
+        relatorio.detalhes.push(`Blocos .info após fallback: ${elementosBusca.length}`);
+      }
+
+      // 3. Percorrer todos os blocos .info
+      let contadorBlocos = 0;
+      for (const bloco of elementosBusca) {
+        contadorBlocos++;
+        // Tenta encontrar o título no bloco
+        const tituloElement = bloco.querySelector("h3, .info-title h3, .title, .info-title");
+        if (!tituloElement) continue;
+
+        const textoEncontrado = tituloElement.textContent.trim().toUpperCase();
+        relatorio.detalhes.push(`Bloco ${contadorBlocos}: título encontrado: "${textoEncontrado}"`);
+
+        // Verifica se o texto do título corresponde a algum dos títulos buscados
+        for (const busca of titulosBusca) {
+          if (textoEncontrado.includes(busca)) {
+            relatorio.encontrouTitulo = true;
+            // Encontrou o título, agora busca o valor
+            const valorElement = bloco.querySelector("strong.value, .value, .info-value strong");
+            if (valorElement) {
+              const valor = valorElement.textContent.trim();
+              if (valor) {
+                relatorio.encontrouValor = true;
+                relatorio.valorEncontrado = valor;
+                console.log(`[${ticker}] "${busca}" encontrado: ${valor}`);
+                // Guarda o relatório para diagnóstico
+                resultadoErro.relatorioExtracao[titulo] = relatorio;
+                return valor;
               }
             }
-            pai = pai.parentElement;
-            tentativas++;
+
+            // Se não achou strong.value, tenta o próximo elemento que pode ter o valor
+            const valorFallback = bloco.querySelector(".info-value, .info-value span, .value");
+            if (valorFallback) {
+              const valor = valorFallback.textContent.trim();
+              if (valor) {
+                relatorio.encontrouValor = true;
+                relatorio.valorEncontrado = valor;
+                console.log(`[${ticker}] "${busca}" encontrado (fallback): ${valor}`);
+                resultadoErro.relatorioExtracao[titulo] = relatorio;
+                return valor;
+              }
+            }
+
+            console.warn(`[${ticker}] Título "${busca}" encontrado, mas valor não extraído.`);
+            relatorio.detalhes.push(`Título "${busca}" encontrado, mas valor não extraído.`);
+            break;
           }
         }
       }
+
+      // Se chegou aqui, não encontrou
+      relatorio.detalhes.push(`Total de blocos .info percorridos: ${contadorBlocos}`);
+      console.warn(`[${ticker}] "${titulo}" não encontrado para FII.`);
+      
+      // Guarda o relatório para diagnóstico
+      resultadoErro.relatorioExtracao[titulo] = relatorio;
       return null;
     }
 
     // ====================================================
-    // 9. FUNÇÃO ESPECÍFICA PARA EXTRAIR INDICADORES DE FIIs
-    // Usa a seção #indicators para maior precisão
-    // ====================================================
-
-   function obterValorFII(titulo, titulosAlternativos = []) {
-    console.log(`[${ticker}] Buscando "${titulo}" para FII...`);
-
-    // Seção principal de indicadores
-    const secaoIndicators = documento.getElementById("indicators");
-    if (!secaoIndicators) {
-        console.warn(`[${ticker}] Seção #indicators não encontrada.`);
-        return null;
-    }
-
-    // Lista de títulos a procurar (principal + alternativos)
-    const titulosBusca = [titulo, ...titulosAlternativos];
-
-    // Procura em todos os blocos .info dentro da seção
-    const blocos = secaoIndicators.querySelectorAll("div.info");
-    for (const bloco of blocos) {
-        // Tenta encontrar o título no bloco
-        const tituloElement = bloco.querySelector("h3, .info-title h3, .title");
-        if (!tituloElement) continue;
-
-        const textoEncontrado = tituloElement.textContent.trim();
-        // Verifica se o texto do título corresponde a algum dos títulos buscados
-        for (const busca of titulosBusca) {
-            if (textoEncontrado.toUpperCase().includes(busca.toUpperCase())) {
-                // Encontrou o título, agora busca o valor
-                const valorElement = bloco.querySelector("strong.value, .value");
-                if (valorElement) {
-                    const valor = valorElement.textContent.trim();
-                    if (valor) {
-                        console.log(`[${ticker}] "${busca}" encontrado: ${valor}`);
-                        return valor;
-                    }
-                }
-                // Se não achou strong.value, tenta o próximo elemento que pode ter o valor
-                const valorFallback = bloco.querySelector(".info-value, .info-value span");
-                if (valorFallback) {
-                    const valor = valorFallback.textContent.trim();
-                    if (valor) {
-                        console.log(`[${ticker}] "${busca}" encontrado (fallback): ${valor}`);
-                        return valor;
-                    }
-                }
-                console.warn(`[${ticker}] Título "${busca}" encontrado, mas valor não extraído.`);
-                break;
-            }
-        }
-    }
-
-    console.warn(`[${ticker}] "${titulo}" não encontrado para FII.`);
-    return null;
-}
-
-    // ====================================================
-    // 10. EXTRAIR TODOS OS 10 INDICADORES
+    // 9. EXTRAIR TODOS OS 10 INDICADORES
     // ====================================================
     console.log(`[${ticker}] Extraindo 10 indicadores de FIIs...`);
 
     // Mapeamento dos indicadores com seus títulos exatos no HTML
-    const capRate = obterValorFII("Cap Rate");
+    const capRate = obterValorFII("Cap Rate", ["Cap. Rate"]);
     const rendimentoMensal = obterValorFII("Último Rendimento");
-    const rendimento12M = obterValorFII("Rendimento 12M");
+    const rendimento12M = obterValorFII("Rendimento 12M", ["Rendimento Últimos 12 Meses"]);
     const vacanciaMedia = obterValorFII("Vacância Média");
     const vacanciaFisica = obterValorFII("Vacância Física");
     const vacanciaFinanceira = obterValorFII("Vacância Financeira");
-    const qtdImoveis = obterValorFII("Quantidade de Imóveis");
-    const alavancagem = obterValorFII("Alavancagem") || obterValorFII("Endividamento");
-    const prazoContratos = obterValorFII("Prazo Médio dos Contratos") || obterValorFII("Prazo Médio");
-    const rentabilidadeImobiliaria = obterValorFII("Rentabilidade Imobiliária") || obterValorFII("Rent. Imobiliária");
+    const qtdImoveis = obterValorFII("Quantidade de Imóveis", ["Nº de Imóveis"]);
+    const alavancagem = obterValorFII("Alavancagem", ["Endividamento"]);
+    const prazoContratos = obterValorFII("Prazo Médio dos Contratos", ["Prazo Médio"]);
+    const rentabilidadeImobiliaria = obterValorFII("Rentabilidade Imobiliária", ["Rent. Imobiliária"]);
 
     // ====================================================
-    // 11. DIAGNÓSTICO
+    // 10. DIAGNÓSTICO
     // ====================================================
     const indicadores = [
       { nome: "CapRate", valor: capRate },
@@ -289,7 +301,7 @@ async function scrapingFIIs(ticker) {
       .map(i => i.nome);
 
     // ====================================================
-    // 12. LOG DOS RESULTADOS
+    // 11. LOG DOS RESULTADOS
     // ====================================================
     console.log(`[${ticker}] ========== RESULTADOS FIIs ==========`);
     for (const i of indicadores) {
@@ -300,24 +312,31 @@ async function scrapingFIIs(ticker) {
       console.warn(`[${ticker}] ⚠️ INDICADORES NÃO ENCONTRADOS (${naoEncontrados.length}):`);
       for (const nome of naoEncontrados) {
         console.warn(`  - ${nome}`);
+        // Mostra o relatório detalhado para o indicador não encontrado
+        const relatorio = resultadoErro.relatorioExtracao[nome];
+        if (relatorio) {
+          console.warn(`    Relatório:`, relatorio);
+        }
       }
     } else {
       console.log(`[${ticker}] ✅ TODOS OS 10 INDICADORES ENCONTRADOS!`);
     }
 
     // ====================================================
-    // 13. VALIDAR VALOR PRINCIPAL (CapRate)
+    // 12. VALIDAR VALOR PRINCIPAL (CapRate)
     // ====================================================
     if (!capRate) {
       const erro = "CapRate não encontrado - scraping falhou";
       console.error(`[${ticker}] ERRO: ${erro}`);
       resultadoErro.erroDiagnostico = erro;
       resultadoErro.etapaFalha = "caprate_nao_encontrado";
+      // Adiciona o relatório completo no erro
+      resultadoErro.relatorioCompleto = resultadoErro.relatorioExtracao;
       return resultadoErro;
     }
 
     // ====================================================
-    // 14. RETORNAR OBJETO
+    // 13. RETORNAR OBJETO
     // ====================================================
     const resultado = {
       ticker: ticker,
@@ -336,10 +355,13 @@ async function scrapingFIIs(ticker) {
         indicadoresNaoEncontrados: naoEncontrados,
         totalIndicadores: 10,
         encontrados: 10 - naoEncontrados.length
-      }
+      },
+      // Relatório detalhado
+      relatorioExtracao: resultadoErro.relatorioExtracao
     };
 
     console.log(`[${ticker}] SCRAPING FIIs CONCLUÍDO - ${resultado.diagnostico.encontrados}/10 encontrados`);
+    console.log(`[${ticker}] Relatório de extração:`, resultado.relatorioExtracao);
     console.log("========================================");
 
     return resultado;
