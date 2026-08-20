@@ -750,178 +750,171 @@ async function atualizarMercado(
 
 
     // ========================================================
-    // 2. PROCESSAR TODOS OS ATIVOS
-    // ========================================================
+// 2. PROCESSAR TODOS OS ATIVOS
+// ========================================================
 
-    for (
-        let indice = 0;
-        indice < total;
-        indice++
-    ) {
+for (
+    let indice = 0;
+    indice < total;
+    indice++
+) {
 
-        const registro =
-            patrimonio[indice];
+    const registro =
+        patrimonio[indice];
 
+    onProgress("");
 
-        onProgress("");
+    onProgress(
+        `Processando ${indice + 1}/${total}: ` +
+        `${registro.Ativo}`
+    );
 
+    onProgress(
+        `Tipo: ${registro.Tipo}`
+    );
 
-        onProgress(
-            `Processando ${indice + 1}/${total}: ` +
-            `${registro.Ativo}`
-        );
+    try {
 
+        // ------------------------------------------------
+        // SCRAPING
+        // ------------------------------------------------
 
-        onProgress(
-            `Tipo: ${registro.Tipo}`
-        );
+        const dados =
+            await buscarIndicadoresStatusInvest(
 
+                registro.Ativo,
 
-        try {
-
-            // ------------------------------------------------
-            // SCRAPING
-            // ------------------------------------------------
-
-            const dados =
-                await buscarIndicadoresStatusInvest(
-
-                    registro.Ativo,
-
-                    registro.Tipo
-
-                );
-
-
-            // ------------------------------------------------
-            // VALIDAR ANTES DE ALTERAR
-            // ------------------------------------------------
-
-            if (
-                !dadosScrapingValidos(
-                    dados
-                )
-            ) {
-
-                erros++;
-
-
-                onProgress(
-                    "Resultado: ERRO"
-                );
-
-
-                onProgress(
-                    "Dados anteriores mantidos."
-                );
-
-
-                continue;
-
-            }
-
-
-            // ------------------------------------------------
-            // GERAR DATA SOMENTE APÓS VALIDAÇÃO
-            // ------------------------------------------------
-
-            const dataAtualizacao =
-                formatarDataAtualizacao();
-
-
-            // ------------------------------------------------
-            // VALIDAR DATA
-            // ------------------------------------------------
-
-            if (
-                !dataAtualizacao ||
-                dataAtualizacao.trim() === ""
-            ) {
-
-                erros++;
-
-
-                onProgress(
-                    "Resultado: ERRO"
-                );
-
-
-                onProgress(
-                    "Dados anteriores mantidos."
-                );
-
-
-                continue;
-
-            }
-
-
-            // ------------------------------------------------
-            // ATUALIZAR SOMENTE AS 6 COLUNAS DE MERCADO
-            // ------------------------------------------------
-
-            registro.DataAtualizacao =
-                dataAtualizacao;
-
-
-            registro.ValorAtual =
-                dados.valorAtual;
-
-
-            registro.Min52 =
-                dados.min52;
-
-
-            registro.Max52 =
-                dados.max52;
-
-
-            registro.DY =
-                dados.dy;
-
-
-            registro.Valorizacao =
-                dados.valorizacao;
-
-
-            atualizados++;
-
-
-            onProgress(
-                "Resultado: OK"
-            );
-
-        }
-
-
-        catch (erro) {
-
-            console.error(
-
-                `Erro no scraping de ` +
-                `${registro.Ativo}:`,
-
-                erro
+                registro.Tipo
 
             );
 
+        // ------------------------------------------------
+        // VALIDAR ANTES DE ALTERAR
+        // ------------------------------------------------
+
+        if (
+            !dadosScrapingValidos(
+                dados
+            )
+        ) {
 
             erros++;
-
 
             onProgress(
                 "Resultado: ERRO"
             );
 
+            onProgress(
+                "Dados anteriores mantidos."
+            );
+
+            continue;
+
+        }
+
+        // ------------------------------------------------
+        // GERAR DATA SOMENTE APÓS VALIDAÇÃO
+        // ------------------------------------------------
+
+        const dataAtualizacao =
+            formatarDataAtualizacao();
+
+        // ------------------------------------------------
+        // VALIDAR DATA
+        // ------------------------------------------------
+
+        if (
+            !dataAtualizacao ||
+            dataAtualizacao.trim() === ""
+        ) {
+
+            erros++;
+
+            onProgress(
+                "Resultado: ERRO"
+            );
 
             onProgress(
                 "Dados anteriores mantidos."
             );
 
+            continue;
+
         }
+
+        // ------------------------------------------------
+        // ATUALIZAR AS COLUNAS DE MERCADO (já existentes)
+        // ------------------------------------------------
+
+        registro.DataAtualizacao =
+            dataAtualizacao;
+
+        registro.ValorAtual =
+            dados.valorAtual;
+
+        registro.Min52 =
+            dados.min52;
+
+        registro.Max52 =
+            dados.max52;
+
+        registro.DY =
+            dados.dy;
+
+        registro.Valorizacao =
+            dados.valorizacao;
+
+        // ============================================
+        // NOVO: ATUALIZAR OS 5 INDICADORES COMUNS
+        // ============================================
+        if (dados.setor) {
+            registro.Setor = dados.setor;
+        }
+        if (dados.subsetor) {
+            registro.Subsetor = dados.subsetor;
+        }
+        if (dados.segmento) {
+            registro.Segmento = dados.segmento;
+        }
+        if (dados.participacaoIndices) {
+            registro.ParticipacaoIndices = dados.participacaoIndices;
+        }
+        if (dados.freeFloat) {
+            registro.FreeFloat = dados.freeFloat;
+        }
+
+        atualizados++;
+
+        onProgress(
+            "Resultado: OK"
+        );
 
     }
 
+    catch (erro) {
+
+        console.error(
+
+            `Erro no scraping de ` +
+            `${registro.Ativo}:`,
+
+            erro
+
+        );
+
+        erros++;
+
+        onProgress(
+            "Resultado: ERRO"
+        );
+
+        onProgress(
+            "Dados anteriores mantidos."
+        );
+
+    }
+
+}
 
     // ========================================================
     // 3. SCRAPING TERMINADO
