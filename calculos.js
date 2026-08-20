@@ -72,7 +72,7 @@ function formatarResultado(numero) {
 //
 // Retorna:
 // {
-//     precoMedio52S,
+//     media52S,
 //     valorFicticio,
 //     rendaAnualFicticia,
 //     rendaMensalFicticia
@@ -119,7 +119,7 @@ export function calcularMedia52S(registro) {
     // 1. Preço médio entre mínima e máxima de 52 semanas
     // ------------------------------------------------------------
 
-    const precoMedio52S =
+    const media52S =
         (min52 + max52) / 2;
 
 
@@ -128,7 +128,7 @@ export function calcularMedia52S(registro) {
     // ------------------------------------------------------------
 
     const valorFicticio =
-        quantidade * precoMedio52S;
+        quantidade * media52S;
 
 
     // ------------------------------------------------------------
@@ -148,7 +148,7 @@ export function calcularMedia52S(registro) {
 
 
     return {
-        precoMedio52S,
+        media52S,
         valorFicticio,
         rendaAnualFicticia,
         rendaMensalFicticia
