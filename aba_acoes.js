@@ -1,6 +1,6 @@
 // ============================================================
 // aba_acoes.js
-// Exibe tabela com indicadores exclusivos de AÇÕES
+// Exibe tabela e gráficos com indicadores exclusivos de AÇÕES
 // ============================================================
 
 import { atualizarAcoes } from "./atualizaracoes.js";
@@ -111,6 +111,326 @@ function converterCSVParaObjetos(texto) {
     }
 
     return { cabecalho, dados };
+}
+
+// ============================================================
+// RENDERIZAR GRÁFICOS
+// ============================================================
+
+function renderizarGraficos(acoes) {
+    // =========================================================
+    // GRÁFICO 1: Valuation Heatmap
+    // =========================================================
+    renderizarHeatmap(acoes);
+
+    // =========================================================
+    // GRÁFICO 2: Rentabilidade vs Endividamento (Bolhas)
+    // =========================================================
+    renderizarBolhas(acoes);
+
+    // =========================================================
+    // GRÁFICO 3: Crescimento (Radar)
+    // =========================================================
+    renderizarCrescimento(acoes);
+
+    // =========================================================
+    // GRÁFICO 4: Scorecard de Qualidade
+    // =========================================================
+    renderizarScorecard(acoes);
+}
+
+// ============================================================
+// GRÁFICO 1: Valuation Heatmap
+// ============================================================
+
+function renderizarHeatmap(acoes) {
+    const container = document.getElementById("grafico-heatmap");
+    if (!container) return;
+
+    const labels = acoes.map(a => a.Ativo);
+    const indicadores = ["PL", "PVP", "EVEBITDA", "ValorFirma"];
+
+    // Preparar dados: extrair valores numéricos e calcular cores
+    const dados = acoes.map(acao => {
+        return indicadores.map(ind => {
+            const valor = parseFloat(String(acao[ind] || "0").replace(",", "."));
+            return isNaN(valor) ? null : valor;
+        });
+    });
+
+    // Calcular percentis para cores
+    const todosValores = dados.flat().filter(v => v !== null);
+    if (todosValores.length === 0) return;
+
+    const min = Math.min(...todosValores);
+    const max = Math.max(...todosValores);
+    const range = max - min || 1;
+
+    // Criar matriz de cores (verde = barato, vermelho = caro)
+    const cores = dados.map(linha => {
+        return linha.map(valor => {
+            if (valor === null) return "#e0e0e0";
+            const percentil = (valor - min) / range;
+            // Do verde (baixo) ao vermelho (alto)
+            const r = Math.round(percentil * 255);
+            const g = Math.round((1 - percentil) * 255);
+            const b = 80;
+            return `rgb(${r}, ${g}, ${b})`;
+        });
+    });
+
+    // Construir HTML do heatmap
+    let html = `
+        <div style="overflow-x: auto; font-size: 12px;">
+            <table style="width: 100%; border-collapse: collapse; text-align: center;">
+                <thead>
+                    <tr>
+                        <th style="padding: 6px; background: #f5f5f5; text-align: left;">Ativo</th>
+                        ${indicadores.map(ind => `<th style="padding: 6px; background: #f5f5f5;">${ind}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    for (let i = 0; i < acoes.length; i++) {
+        const acao = acoes[i];
+        html += `<tr>`;
+        html += `<td style="padding: 6px; font-weight: 600; text-align: left; color: #00598a;">${acao.Ativo}</td>`;
+        for (let j = 0; j < indicadores.length; j++) {
+            const cor = cores[i]?.[j] || "#e0e0e0";
+            const valor = dados[i]?.[j] !== null ? dados[i][j] : "-";
+            html += `<td style="padding: 6px; background: ${cor}; color: ${cor === "#e0e0e0" ? "#999" : "#fff"};">${valor}</td>`;
+        }
+        html += `</tr>`;
+    }
+
+    html += `
+                </tbody>
+            </table>
+            <div style="margin-top: 8px; display: flex; justify-content: space-between; font-size: 11px; color: #666;">
+                <span>🟢 Barato (${min.toFixed(1)})</span>
+                <span>🔴 Caro (${max.toFixed(1)})</span>
+            </div>
+        </div>
+    `;
+
+    container.innerHTML = html;
+}
+
+// ============================================================
+// GRÁFICO 2: Rentabilidade vs Endividamento (Bolhas)
+// ============================================================
+
+function renderizarBolhas(acoes) {
+    const container = document.getElementById("grafico-bolhas");
+    if (!container) return;
+
+    // Verificar se Chart.js está disponível
+    if (typeof Chart === "undefined") {
+        container.innerHTML = `<p style="color: #999; font-size: 13px;">📊 Chart.js não carregado. Gráfico de bolhas indisponível.</p>`;
+        return;
+    }
+
+    // Destruir gráfico anterior se existir
+    if (container._chart) {
+        container._chart.destroy();
+    }
+
+    const dados = acoes.map(acao => {
+        const roe = parseFloat(String(acao.ROE || "0").replace(",", "."));
+        const dividaPL = parseFloat(String(acao.DividaLiquidaPL || "0").replace(",", "."));
+        const valorFirma = parseFloat(String(acao.ValorFirma || "0").replace(",", "."));
+        return {
+            x: isNaN(dividaPL) ? 0 : dividaPL,
+            y: isNaN(roe) ? 0 : roe,
+            r: Math.sqrt(Math.abs(valorFirma) / 1000000000) * 5 + 3 || 5,
+            label: acao.Ativo
+        };
+    });
+
+    const ctx = document.createElement("canvas");
+    container.innerHTML = "";
+    container.appendChild(ctx);
+
+    try {
+        container._chart = new Chart(ctx, {
+            type: 'bubble',
+            data: {
+                datasets: [{
+                    label: 'Rentabilidade vs Endividamento',
+                    data: dados,
+                    backgroundColor: dados.map(() => `rgba(33, 150, 243, 0.7)`),
+                    borderColor: dados.map(() => `rgba(33, 150, 243, 1)`),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const d = context.raw;
+                                return `${d.label}: ROE=${d.y.toFixed(1)}%, Dívida/PL=${d.x.toFixed(2)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Dívida Líquida / PL', font: { size: 11 } },
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    },
+                    y: {
+                        title: { display: true, text: 'ROE (%)', font: { size: 11 } },
+                        grid: { color: 'rgba(0,0,0,0.05)' },
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    } catch (e) {
+        console.warn("Erro ao renderizar gráfico de bolhas:", e);
+        container.innerHTML = `<p style="color: #999; font-size: 13px;">⚠️ Erro ao carregar gráfico de bolhas.</p>`;
+    }
+}
+
+// ============================================================
+// GRÁFICO 3: Crescimento (Radar)
+// ============================================================
+
+function renderizarCrescimento(acoes) {
+    const container = document.getElementById("grafico-crescimento");
+    if (!container) return;
+
+    if (typeof Chart === "undefined") {
+        container.innerHTML = `<p style="color: #999; font-size: 13px;">📊 Chart.js não carregado. Gráfico radar indisponível.</p>`;
+        return;
+    }
+
+    if (container._chart) {
+        container._chart.destroy();
+    }
+
+    // Selecionar top 5 por ROE para não poluir
+    const top5 = [...acoes]
+        .sort((a, b) => parseFloat(String(b.ROE || "0").replace(",", ".")) - parseFloat(String(a.ROE || "0").replace(",", ".")))
+        .slice(0, 5);
+
+    const labels = ['Cresc. Receita', 'Cresc. Lucro', 'Margem Líquida', 'Margem Bruta', 'ROE', 'ROIC'];
+    const cores = ['#4caf50', '#2196f3', '#ff9800', '#9c27b0', '#f44336'];
+
+    const datasets = top5.map((acao, i) => {
+        const data = [
+            parseFloat(String(acao.CrescimentoReceita || "0").replace(",", ".")) || 0,
+            parseFloat(String(acao.CrescimentoLucro || "0").replace(",", ".")) || 0,
+            parseFloat(String(acao.MargemLiquida || "0").replace(",", ".")) || 0,
+            parseFloat(String(acao.MargemBruta || "0").replace(",", ".")) || 0,
+            parseFloat(String(acao.ROE || "0").replace(",", ".")) || 0,
+            parseFloat(String(acao.ROIC || "0").replace(",", ".")) || 0
+        ];
+        return {
+            label: acao.Ativo,
+            data: data,
+            backgroundColor: cores[i % cores.length] + '33',
+            borderColor: cores[i % cores.length],
+            borderWidth: 2,
+            pointBackgroundColor: cores[i % cores.length]
+        };
+    });
+
+    const ctx = document.createElement("canvas");
+    container.innerHTML = "";
+    container.appendChild(ctx);
+
+    try {
+        container._chart = new Chart(ctx, {
+            type: 'radar',
+            data: { labels, datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', labels: { font: { size: 10 } } }
+                },
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0,0,0,0.1)' },
+                        pointLabels: { font: { size: 10 } }
+                    }
+                }
+            }
+        });
+    } catch (e) {
+        console.warn("Erro ao renderizar gráfico radar:", e);
+        container.innerHTML = `<p style="color: #999; font-size: 13px;">⚠️ Erro ao carregar gráfico radar.</p>`;
+    }
+}
+
+// ============================================================
+// GRÁFICO 4: Scorecard de Qualidade
+// ============================================================
+
+function renderizarScorecard(acoes) {
+    const container = document.getElementById("grafico-scorecard");
+    if (!container) return;
+
+    let html = `
+        <div style="overflow-x: auto; font-size: 12px;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #f5f5f5; border-bottom: 2px solid #e0e0e0;">
+                        <th style="padding: 8px 10px; text-align: left;">Ativo</th>
+                        <th style="padding: 8px 10px; text-align: center;">Valuation (PL)</th>
+                        <th style="padding: 8px 10px; text-align: center;">Rentab. (ROE)</th>
+                        <th style="padding: 8px 10px; text-align: center;">Endividamento</th>
+                        <th style="padding: 8px 10px; text-align: center;">Cresc. (Lucro)</th>
+                        <th style="padding: 8px 10px; text-align: center;">Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    for (const acao of acoes) {
+        const pl = parseFloat(String(acao.PL || "999").replace(",", "."));
+        const roe = parseFloat(String(acao.ROE || "0").replace(",", "."));
+        const dividaPL = parseFloat(String(acao.DividaLiquidaPL || "999").replace(",", "."));
+        const crescLucro = parseFloat(String(acao.CrescimentoLucro || "0").replace(",", "."));
+
+        // Avaliação individual
+        const valPL = isNaN(pl) ? '⚪' : pl < 10 ? '🟢' : pl < 20 ? '🟡' : '🔴';
+        const valROE = isNaN(roe) ? '⚪' : roe > 20 ? '🟢' : roe > 10 ? '🟡' : '🔴';
+        const valDivida = isNaN(dividaPL) ? '⚪' : dividaPL < 0.5 ? '🟢' : dividaPL < 1 ? '🟡' : '🔴';
+        const valCresc = isNaN(crescLucro) ? '⚪' : crescLucro > 20 ? '🟢' : crescLucro > 5 ? '🟡' : '🔴';
+
+        const verdeCount = [valPL, valROE, valDivida, valCresc].filter(v => v === '🟢').length;
+        const estrelas = '⭐'.repeat(verdeCount) + '☆'.repeat(4 - verdeCount);
+
+        html += `
+            <tr style="border-bottom: 1px solid #f0f0f0;">
+                <td style="padding: 8px 10px; font-weight: 600; color: #00598a;">${acao.Ativo}</td>
+                <td style="padding: 8px 10px; text-align: center;">${valPL} ${isNaN(pl) ? '-' : pl.toFixed(1)}</td>
+                <td style="padding: 8px 10px; text-align: center;">${valROE} ${isNaN(roe) ? '-' : roe.toFixed(1)}%</td>
+                <td style="padding: 8px 10px; text-align: center;">${valDivida} ${isNaN(dividaPL) ? '-' : dividaPL.toFixed(2)}</td>
+                <td style="padding: 8px 10px; text-align: center;">${valCresc} ${isNaN(crescLucro) ? '-' : crescLucro.toFixed(1)}%</td>
+                <td style="padding: 8px 10px; text-align: center; font-size: 14px;">${estrelas}</td>
+            </tr>
+        `;
+    }
+
+    html += `
+                </tbody>
+            </table>
+            <div style="margin-top: 8px; font-size: 11px; color: #999; text-align: center;">
+                🟢 Bom | 🟡 Médio | 🔴 Ruim | ⚪ Sem dado
+            </div>
+        </div>
+    `;
+
+    container.innerHTML = html;
 }
 
 // ============================================================
@@ -238,6 +558,7 @@ function renderizarTabela(acoes) {
 async function atualizarAbaAcoes() {
     const container = document.getElementById("tabela-acoes-container");
     const botao = document.getElementById("botao-atualizar-acoes");
+    const graficosContainer = document.getElementById("graficos-acoes-container");
 
     if (!container) return;
 
@@ -272,10 +593,15 @@ async function atualizarAbaAcoes() {
             reg.Tipo && reg.Tipo.trim().toLowerCase() === "acoes"
         );
 
-        // 3. Renderizar tabela
+        // 3. Renderizar gráficos (se o container existir)
+        if (graficosContainer) {
+            renderizarGraficos(acoes);
+        }
+
+        // 4. Renderizar tabela
         renderizarTabela(acoes);
 
-        // 4. Atualizar status do botão
+        // 5. Atualizar status do botão
         if (botao) {
             botao.disabled = false;
             botao.textContent = "🔄 ATUALIZAR AÇÕES";
@@ -305,7 +631,7 @@ async function executarAtualizacaoAcoes() {
     botao.disabled = true;
     botao.textContent = "⏳ ATUALIZANDO...";
 
-    // Mostrar progresso (já existe)
+    // Mostrar progresso
     const divProgresso = document.createElement("div");
     divProgresso.id = "progresso-acoes";
     divProgresso.style.cssText = `
