@@ -20,7 +20,7 @@
 // IMPORTAÇÕES (ATUALIZADAS)
 // ============================================================
 
-import { atualizarFIIs as atualizarBasico } from "./atualizar.js"; // Script antigo (básico)
+import { atualizarBasico } from "./atualizar.js"; // Script antigo (básico)
 import { atualizarFIIs } from "./atualizarfiis.js"; // Novo (colunas exclusivas de FIIs)
 import { atualizarAcoes } from "./atualizaracoes.js"; // Novo (colunas exclusivas de Ações)
 
