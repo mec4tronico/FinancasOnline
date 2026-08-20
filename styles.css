@@ -517,6 +517,58 @@ tbody tr:hover {
     font-weight: 700;
     text-align: center;
 }
+/* Estilos para a tabela de ações */
+#tabela-acoes-container table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+#tabela-acoes-container th {
+    padding: 12px 10px;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+    white-space: nowrap;
+    border-bottom: 2px solid #e0e0e0;
+    background: #f5f5f5;
+}
+
+#tabela-acoes-container td {
+    padding: 10px 10px;
+    text-align: left;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+#tabela-acoes-container tr:hover {
+    background: #fafafa;
+}
+
+#tabela-acoes-container .ativo-nome {
+    font-weight: 600;
+    color: #00598a;
+}
+
+#tabela-acoes-container .valor-erro {
+    color: #999;
+    font-style: italic;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    #tabela-acoes-container table {
+        font-size: 11px;
+    }
+    #tabela-acoes-container th,
+    #tabela-acoes-container td {
+        padding: 6px 8px;
+    }
+}
+
 @media (max-width: 700px) {
     .app-header {
         padding: 16px;
