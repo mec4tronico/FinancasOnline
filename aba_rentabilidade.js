@@ -46,7 +46,7 @@ import {
 
 const ARQUIVO_CSV = "patrimonio_consolidado.csv";
 
-const ID_CONTAINER_ABA = "tab-Rentabilidade";
+const ID_CONTAINER_ABA = "tab-rentabilidade";
 
 let AtivosRentabilidade = [];
 
