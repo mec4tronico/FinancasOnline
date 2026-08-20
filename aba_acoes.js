@@ -302,11 +302,10 @@ async function executarAtualizacaoAcoes() {
 
     if (!botao) return;
 
-    // Desabilitar botão durante a atualização
     botao.disabled = true;
     botao.textContent = "⏳ ATUALIZANDO...";
 
-    // Mostrar progresso
+    // Mostrar progresso (já existe)
     const divProgresso = document.createElement("div");
     divProgresso.id = "progresso-acoes";
     divProgresso.style.cssText = `
@@ -324,7 +323,6 @@ async function executarAtualizacaoAcoes() {
     `;
     divProgresso.textContent = "Iniciando atualização...\n";
 
-    // Inserir antes do container da tabela
     container.parentNode.insertBefore(divProgresso, container);
 
     try {
@@ -346,14 +344,15 @@ async function executarAtualizacaoAcoes() {
             divProgresso.textContent += `Commit: ${resultado.commit}\n`;
         }
 
-        // Recarregar a tabela após 2 segundos
-        setTimeout(() => {
-            atualizarAbaAcoes();
-            // Remover progresso após recarregar
-            if (divProgresso.parentNode) {
-                divProgresso.remove();
-            }
-        }, 2000);
+        // ============================================================
+        // 🔄 RECARREGAR A TABELA COM OS NOVOS DADOS DO CSV
+        // ============================================================
+        await atualizarAbaAcoes();
+
+        // Remover progresso após recarregar
+        if (divProgresso.parentNode) {
+            divProgresso.remove();
+        }
 
     } catch (erro) {
         console.error("Erro na atualização:", erro);
