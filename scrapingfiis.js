@@ -173,95 +173,192 @@ async function scrapingFIIs(ticker) {
     // ====================================================
 
     function obterValorFII(titulo, titulosAlternativos = []) {
-      const relatorio = {
+    // Relatório detalhado da extração
+    const relatorio = {
         tituloBuscado: titulo,
         titulosAlternativos: titulosAlternativos,
-        encontrouSecao: false,
-        encontrouTitulo: false,
-        encontrouValor: false,
+        timestamp: new Date().toISOString(),
+        etapas: [],
+        sucesso: false,
         valorEncontrado: null,
-        detalhes: []
-      };
+        erro: null
+    };
 
-      console.log(`[${ticker}] Buscando "${titulo}" para FII...`);
-
-      // Lista de títulos a procurar (principal + alternativos)
-      const titulosBusca = [titulo, ...titulosAlternativos].map(t => t.toUpperCase());
-
-      // 1. Tentar encontrar na seção #indicators (se existir)
-      let secaoIndicators = documento.getElementById("indicators");
-      relatorio.detalhes.push(`#indicators encontrado: ${!!secaoIndicators}`);
-
-      let elementosBusca = secaoIndicators 
-        ? secaoIndicators.querySelectorAll("div.info, .info") 
-        : documento.querySelectorAll("div.info, .info");
-
-      relatorio.detalhes.push(`Blocos .info encontrados: ${elementosBusca.length}`);
-
-      // 2. Se não encontrar, buscar em toda a página
-      if (elementosBusca.length === 0) {
-        console.warn(`[${ticker}] Nenhum bloco .info encontrado. Buscando em toda a página...`);
-        elementosBusca = documento.querySelectorAll("div.info, .info");
-        relatorio.detalhes.push(`Blocos .info após fallback: ${elementosBusca.length}`);
-      }
-
-      // 3. Percorrer todos os blocos .info
-      let contadorBlocos = 0;
-      for (const bloco of elementosBusca) {
-        contadorBlocos++;
-        // Tenta encontrar o título no bloco
-        const tituloElement = bloco.querySelector("h3, .info-title h3, .title, .info-title");
-        if (!tituloElement) continue;
-
-        const textoEncontrado = tituloElement.textContent.trim().toUpperCase();
-        relatorio.detalhes.push(`Bloco ${contadorBlocos}: título encontrado: "${textoEncontrado}"`);
-
-        // Verifica se o texto do título corresponde a algum dos títulos buscados
-        for (const busca of titulosBusca) {
-          if (textoEncontrado.includes(busca)) {
-            relatorio.encontrouTitulo = true;
-            // Encontrou o título, agora busca o valor
-            const valorElement = bloco.querySelector("strong.value, .value, .info-value strong");
-            if (valorElement) {
-              const valor = valorElement.textContent.trim();
-              if (valor) {
-                relatorio.encontrouValor = true;
-                relatorio.valorEncontrado = valor;
-                console.log(`[${ticker}] "${busca}" encontrado: ${valor}`);
-                // Guarda o relatório para diagnóstico
-                resultadoErro.relatorioExtracao[titulo] = relatorio;
-                return valor;
-              }
-            }
-
-            // Se não achou strong.value, tenta o próximo elemento que pode ter o valor
-            const valorFallback = bloco.querySelector(".info-value, .info-value span, .value");
-            if (valorFallback) {
-              const valor = valorFallback.textContent.trim();
-              if (valor) {
-                relatorio.encontrouValor = true;
-                relatorio.valorEncontrado = valor;
-                console.log(`[${ticker}] "${busca}" encontrado (fallback): ${valor}`);
-                resultadoErro.relatorioExtracao[titulo] = relatorio;
-                return valor;
-              }
-            }
-
-            console.warn(`[${ticker}] Título "${busca}" encontrado, mas valor não extraído.`);
-            relatorio.detalhes.push(`Título "${busca}" encontrado, mas valor não extraído.`);
-            break;
-          }
-        }
-      }
-
-      // Se chegou aqui, não encontrou
-      relatorio.detalhes.push(`Total de blocos .info percorridos: ${contadorBlocos}`);
-      console.warn(`[${ticker}] "${titulo}" não encontrado para FII.`);
-      
-      // Guarda o relatório para diagnóstico
-      resultadoErro.relatorioExtracao[titulo] = relatorio;
-      return null;
+    function adicionarEtapa(nome, dados) {
+        relatorio.etapas.push({
+            etapa: nome,
+            ...dados,
+            timestamp: new Date().toISOString()
+        });
     }
+
+    console.log(`[${ticker}] ========================================`);
+    console.log(`[${ticker}] 🔍 Buscando "${titulo}" para FII...`);
+    adicionarEtapa("Início", { mensagem: `Buscando "${titulo}"` });
+
+    try {
+        // Lista de títulos a procurar (principal + alternativos)
+        const titulosBusca = [titulo, ...titulosAlternativos].map(t => t.toUpperCase());
+        adicionarEtapa("Títulos para busca", { titulos: titulosBusca });
+
+        // Verifica se o documento está disponível
+        if (!documento || !documento.documentElement) {
+            const erro = "DOM não está disponível";
+            relatorio.erro = erro;
+            adicionarEtapa("Erro", { mensagem: erro });
+            console.error(`[${ticker}] ❌ ${erro}`);
+            return null;
+        }
+        adicionarEtapa("DOM disponível", { status: "OK" });
+
+        // 1. Busca TODOS os blocos .info em toda a página
+        const blocos = documento.querySelectorAll("div.info");
+        adicionarEtapa("Blocos .info encontrados", { quantidade: blocos.length });
+
+        if (blocos.length === 0) {
+            // Tenta buscar outras possíveis classes
+            const outrasClasses = documento.querySelectorAll(".info, .info-item, .indicator-item, .fundamental-item");
+            adicionarEtapa("Blocos com outras classes", { 
+                quantidade: outrasClasses.length,
+                classes: ["info", "info-item", "indicator-item", "fundamental-item"]
+            });
+
+            if (outrasClasses.length === 0) {
+                const erro = "Nenhum bloco de indicador encontrado na página";
+                relatorio.erro = erro;
+                adicionarEtapa("Erro", { mensagem: erro });
+                console.error(`[${ticker}] ❌ ${erro}`);
+                return null;
+            }
+            // Usar os blocos encontrados com outras classes
+            blocos = outrasClasses;
+            adicionarEtapa("Usando blocos com outras classes", { quantidade: blocos.length });
+        }
+
+        // 2. Percorrer todos os blocos
+        let blocosPercorridos = 0;
+        let titulosEncontrados = [];
+        let valoresEncontrados = [];
+
+        for (const bloco of blocos) {
+            blocosPercorridos++;
+            
+            // Tenta encontrar o título no bloco usando diferentes seletores
+            const seletoresTitulo = [
+                ".info-title h3",
+                ".info-title",
+                "h3",
+                ".title",
+                ".label",
+                ".indicator-name"
+            ];
+            
+            let tituloElement = null;
+            let seletorUsado = null;
+            
+            for (const seletor of seletoresTitulo) {
+                const el = bloco.querySelector(seletor);
+                if (el && el.textContent.trim()) {
+                    tituloElement = el;
+                    seletorUsado = seletor;
+                    break;
+                }
+            }
+
+            if (!tituloElement) {
+                continue;
+            }
+
+            const textoEncontrado = tituloElement.textContent.trim().toUpperCase();
+            titulosEncontrados.push(textoEncontrado);
+
+            // Verifica se o texto do título corresponde a algum dos títulos buscados
+            let correspondeu = false;
+            for (const busca of titulosBusca) {
+                if (textoEncontrado.includes(busca)) {
+                    correspondeu = true;
+                    adicionarEtapa("Título correspondente", {
+                        busca: busca,
+                        textoEncontrado: textoEncontrado,
+                        seletor: seletorUsado
+                    });
+
+                    // Busca o valor usando diferentes seletores
+                    const seletoresValor = [
+                        ".info-value strong.value",
+                        ".info-value .value",
+                        "strong.value",
+                        ".value",
+                        ".info-value",
+                        ".value-container"
+                    ];
+
+                    let valorElement = null;
+                    let seletorValorUsado = null;
+
+                    for (const seletor of seletoresValor) {
+                        const el = bloco.querySelector(seletor);
+                        if (el && el.textContent.trim()) {
+                            valorElement = el;
+                            seletorValorUsado = seletor;
+                            break;
+                        }
+                    }
+
+                    if (valorElement) {
+                        const valor = valorElement.textContent.trim();
+                        if (valor) {
+                            relatorio.sucesso = true;
+                            relatorio.valorEncontrado = valor;
+                            adicionarEtapa("Valor encontrado", {
+                                valor: valor,
+                                seletor: seletorValorUsado,
+                                textoCompleto: valorElement.textContent.trim()
+                            });
+                            console.log(`[${ticker}] ✅ "${busca}" encontrado: "${valor}"`);
+                            return valor;
+                        } else {
+                            adicionarEtapa("Valor vazio", {
+                                seletor: seletorValorUsado,
+                                texto: valorElement.textContent
+                            });
+                        }
+                    } else {
+                        adicionarEtapa("Valor não encontrado", {
+                            seletoresTentados: seletoresValor,
+                            htmlDoBloco: bloco.innerHTML.substring(0, 200) + "..."
+                        });
+                    }
+                    break;
+                }
+            }
+        }
+
+        // Se chegou aqui, não encontrou
+        adicionarEtapa("Resultado final", {
+            sucesso: false,
+            blocosPercorridos: blocosPercorridos,
+            titulosEncontrados: titulosEncontrados.slice(0, 10), // limitar para não poluir
+            totalTitulosEncontrados: titulosEncontrados.length
+        });
+
+        console.warn(`[${ticker}] ❌ "${titulo}" não encontrado para FII.`);
+        console.warn(`[${ticker}] 📋 Relatório:`, JSON.stringify(relatorio, null, 2));
+        
+        return null;
+
+    } catch (erro) {
+        relatorio.erro = erro.message || erro.toString();
+        relatorio.sucesso = false;
+        adicionarEtapa("Exceção", {
+            mensagem: erro.message || erro.toString(),
+            stack: erro.stack
+        });
+        console.error(`[${ticker}] ❌ Erro ao buscar "${titulo}":`, erro);
+        console.error(`[${ticker}] 📋 Relatório de erro:`, JSON.stringify(relatorio, null, 2));
+        return null;
+    }
+}
 
     // ====================================================
     // 9. EXTRAIR TODOS OS 10 INDICADORES
