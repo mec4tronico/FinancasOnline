@@ -1,6 +1,6 @@
 // ============================================================
 // aba_FIIs.js
-// Exibe tabela e gráficos com indicadores exclusivos de FIIs
+// Exibe tabela e gráficos com indicadores de FIIs
 // ============================================================
 
 import { atualizarFIIs } from "./atualizarfiis.js";
@@ -14,21 +14,21 @@ const ARQUIVO_CSV =
     "patrimonio_consolidado.csv";
 
 // ============================================================
-// COLUNAS EXCLUSIVAS DE FIIs (10 indicadores)
+// COLUNAS DE FIIs (NOVAS)
 // ============================================================
 
 const COLUNAS_FIIS = [
     "Ativo",
-    "CapRate",
-    "RendimentoMensal",
-    "Rendimento12M",
-    "VacanciaMedia",
-    "VacanciaFisica",
-    "VacanciaFinanceira",
-    "QtdImoveis",
-    "Alavancagem",
-    "PrazoContratos",
-    "RentabilidadeImobiliaria"
+    "ValorPatrimonialPorCota",
+    "PVP",
+    "ValorEmCaixa",
+    "DYCAGR3Anos",
+    "NumeroCotistas",
+    "RendimentoMensalMedio24M",
+    "AnoPassado",
+    "AnoAtual",
+    "VolumeDia",
+    "SegmentoANBIMA"
 ];
 
 // ============================================================
@@ -110,18 +110,33 @@ function converterCSVParaObjetos(texto) {
 // ============================================================
 
 function renderizarGraficos(fiis) {
-    renderizarRendimentos(fiis);
-    renderizarVacancia(fiis);
-    renderizarAlavancagemCapRate(fiis);
+    // =========================================================
+    // GRÁFICO 1: PVP vs Rendimento (Dispersão)
+    // =========================================================
+    renderizarPVPvsRendimento(fiis);
+
+    // =========================================================
+    // GRÁFICO 2: Valor Patrimonial vs PVP (Bolhas)
+    // =========================================================
+    renderizarValorPatrimonialVsPVP(fiis);
+
+    // =========================================================
+    // GRÁFICO 3: Rendimento Mensal Médio (Barras)
+    // =========================================================
+    renderizarRendimentoMensal(fiis);
+
+    // =========================================================
+    // GRÁFICO 4: Scorecard de Qualidade (FIIs)
+    // =========================================================
     renderizarScorecard(fiis);
 }
 
 // ============================================================
-// GRÁFICO 1: Rendimentos (Mensal e 12M)
+// GRÁFICO 1: PVP vs Rendimento (Dispersão)
 // ============================================================
 
-function renderizarRendimentos(fiis) {
-    const container = document.getElementById("grafico-rendimentos");
+function renderizarPVPvsRendimento(fiis) {
+    const container = document.getElementById("grafico-dispersao");
     if (!container) return;
 
     if (typeof Chart === "undefined") {
@@ -133,179 +148,105 @@ function renderizarRendimentos(fiis) {
         container._chart.destroy();
     }
 
-    const labels = fiis.map(f => f.Ativo);
-    const dadosMensal = fiis.map(f => parseFloat(String(f.RendimentoMensal || "0").replace(",", ".")));
-    const dados12M = fiis.map(f => parseFloat(String(f.Rendimento12M || "0").replace(",", ".")));
-
-    const ctx = document.createElement("canvas");
-    container.innerHTML = "";
-    container.appendChild(ctx);
-
-    try {
-        container._chart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Rendimento Mensal (R$)',
-                        data: dadosMensal,
-                        backgroundColor: 'rgba(33, 150, 243, 0.7)',
-                        borderColor: 'rgba(33, 150, 243, 1)',
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'Rendimento 12M (R$)',
-                        data: dados12M,
-                        backgroundColor: 'rgba(76, 175, 80, 0.7)',
-                        borderColor: 'rgba(76, 175, 80, 1)',
-                        borderWidth: 1
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'top', labels: { font: { size: 11 } } },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return `${context.dataset.label}: R$ ${context.raw.toFixed(2)}`;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: { grid: { display: false } },
-                    y: { 
-                        beginAtZero: true,
-                        title: { display: true, text: 'Rendimento (R$)', font: { size: 11 } }
-                    }
-                }
-            }
-        });
-    } catch (e) {
-        console.warn("Erro no gráfico de rendimentos:", e);
-        container.innerHTML = `<p style="color: #999;">⚠️ Erro ao carregar gráfico.</p>`;
-    }
-}
-
-// ============================================================
-// GRÁFICO 2: Vacância (Física, Financeira e Média)
-// ============================================================
-
-function renderizarVacancia(fiis) {
-    const container = document.getElementById("grafico-vacancia");
-    if (!container) return;
-
-    if (typeof Chart === "undefined") {
-        container.innerHTML = `<p style="color: #999; font-size: 13px;">📊 Chart.js não carregado.</p>`;
-        return;
-    }
-
-    if (container._chart) {
-        container._chart.destroy();
-    }
-
-    const labels = fiis.map(f => f.Ativo);
-    const dadosFisica = fiis.map(f => parseFloat(String(f.VacanciaFisica || "0").replace(",", ".")));
-    const dadosFinanceira = fiis.map(f => parseFloat(String(f.VacanciaFinanceira || "0").replace(",", ".")));
-    const dadosMedia = fiis.map(f => parseFloat(String(f.VacanciaMedia || "0").replace(",", ".")));
-
-    const ctx = document.createElement("canvas");
-    container.innerHTML = "";
-    container.appendChild(ctx);
-
-    try {
-        container._chart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Vacância Física (%)',
-                        data: dadosFisica,
-                        backgroundColor: 'rgba(255, 152, 0, 0.7)',
-                        borderColor: 'rgba(255, 152, 0, 1)',
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'Vacância Financeira (%)',
-                        data: dadosFinanceira,
-                        backgroundColor: 'rgba(244, 67, 54, 0.7)',
-                        borderColor: 'rgba(244, 67, 54, 1)',
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'Vacância Média (%)',
-                        data: dadosMedia,
-                        backgroundColor: 'rgba(156, 39, 176, 0.7)',
-                        borderColor: 'rgba(156, 39, 176, 1)',
-                        borderWidth: 1
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'top', labels: { font: { size: 11 } } },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return `${context.dataset.label}: ${context.raw.toFixed(1)}%`;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: { grid: { display: false } },
-                    y: { 
-                        beginAtZero: true,
-                        title: { display: true, text: 'Vacância (%)', font: { size: 11 } }
-                    }
-                }
-            }
-        });
-    } catch (e) {
-        console.warn("Erro no gráfico de vacância:", e);
-        container.innerHTML = `<p style="color: #999;">⚠️ Erro ao carregar gráfico.</p>`;
-    }
-}
-
-// ============================================================
-// GRÁFICO 3: Alavancagem vs CapRate (Bolhas)
-// ============================================================
-
-function renderizarAlavancagemCapRate(fiis) {
-    const container = document.getElementById("grafico-alavancagem-caprate");
-    if (!container) return;
-
-    if (typeof Chart === "undefined") {
-        container.innerHTML = `<p style="color: #999; font-size: 13px;">📊 Chart.js não carregado.</p>`;
-        return;
-    }
-
-    if (container._chart) {
-        container._chart.destroy();
-    }
-
-    const dados = fiis.map(f => {
-        const alavancagem = parseFloat(String(f.Alavancagem || "0").replace(",", "."));
-        const capRate = parseFloat(String(f.CapRate || "0").replace(",", "."));
-        const qtdImoveis = parseFloat(String(f.QtdImoveis || "1").replace(",", "."));
+    const dados = fiis.map(fii => {
+        const pvp = parseFloat(String(fii.PVP || "0").replace(",", "."));
+        const rendimento = parseFloat(String(fii.RendimentoMensalMedio24M || "0").replace(",", "."));
+        const dy = parseFloat(String(fii.DY || "0").replace(",", "."));
         return {
-            x: isNaN(alavancagem) ? 0 : alavancagem,
-            y: isNaN(capRate) ? 0 : capRate,
-            r: Math.sqrt(Math.abs(qtdImoveis)) * 3 + 3 || 5,
-            label: f.Ativo,
-            qtdImoveis: qtdImoveis
+            x: isNaN(pvp) ? 0 : pvp,
+            y: isNaN(rendimento) ? 0 : rendimento,
+            label: fii.Ativo,
+            dy: isNaN(dy) ? 0 : dy
         };
     });
 
-    // Filtrar dados válidos
-    const dadosValidos = dados.filter(d => d.x > 0 || d.y > 0);
+    const ctx = document.createElement("canvas");
+    container.innerHTML = "";
+    container.appendChild(ctx);
+
+    try {
+        container._chart = new Chart(ctx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'P/VP vs Rendimento Mensal',
+                    data: dados,
+                    backgroundColor: 'rgba(33, 150, 243, 0.7)',
+                    borderColor: 'rgba(33, 150, 243, 1)',
+                    borderWidth: 1,
+                    pointRadius: dados.map(d => Math.sqrt(d.dy) * 2 + 2 || 3)
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const d = context.raw;
+                                return [
+                                    `${d.label}`,
+                                    `P/VP: ${d.x.toFixed(2)}`,
+                                    `Rendimento Mensal: R$ ${d.y.toFixed(4)}`,
+                                    `DY: ${d.dy.toFixed(2)}%`
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: { display: true, text: 'P/VP', font: { size: 11 } },
+                        grid: { color: 'rgba(0,0,0,0.05)' },
+                        beginAtZero: true
+                    },
+                    y: {
+                        title: { display: true, text: 'Rendimento Mensal Médio (R$)', font: { size: 11 } },
+                        grid: { color: 'rgba(0,0,0,0.05)' },
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    } catch (e) {
+        console.warn("Erro no gráfico de dispersão:", e);
+        container.innerHTML = `<p style="color: #999;">⚠️ Erro ao carregar gráfico.</p>`;
+    }
+}
+
+// ============================================================
+// GRÁFICO 2: Valor Patrimonial vs PVP (Bolhas)
+// ============================================================
+
+function renderizarValorPatrimonialVsPVP(fiis) {
+    const container = document.getElementById("grafico-bolhas");
+    if (!container) return;
+
+    if (typeof Chart === "undefined") {
+        container.innerHTML = `<p style="color: #999; font-size: 13px;">📊 Chart.js não carregado.</p>`;
+        return;
+    }
+
+    if (container._chart) {
+        container._chart.destroy();
+    }
+
+    const dados = fiis.map(fii => {
+        const valorPatrimonial = parseFloat(String(fii.ValorPatrimonialPorCota || "0").replace(",", "."));
+        const pvp = parseFloat(String(fii.PVP || "0").replace(",", "."));
+        const dy = parseFloat(String(fii.DY || "0").replace(",", "."));
+        return {
+            x: isNaN(pvp) ? 0 : pvp,
+            y: isNaN(valorPatrimonial) ? 0 : valorPatrimonial,
+            r: Math.sqrt(dy) * 2 + 2 || 5,
+            label: fii.Ativo,
+            setor: fii.SegmentoANBIMA || "Outros"
+        };
+    });
+
+    const dadosValidos = dados.filter(d => d.x > 0 && d.y > 0);
     if (dadosValidos.length === 0) {
         container.innerHTML = `<p style="color: #999; font-size: 13px;">Sem dados suficientes.</p>`;
         return;
@@ -320,10 +261,20 @@ function renderizarAlavancagemCapRate(fiis) {
             type: 'bubble',
             data: {
                 datasets: [{
-                    label: 'Alavancagem vs CapRate',
+                    label: 'Valor Patrimonial vs P/VP',
                     data: dadosValidos,
-                    backgroundColor: 'rgba(33, 150, 243, 0.7)',
-                    borderColor: 'rgba(33, 150, 243, 1)',
+                    backgroundColor: dadosValidos.map(d => {
+                        if (d.setor.includes("Logística")) return 'rgba(76, 175, 80, 0.7)';
+                        if (d.setor.includes("Papel")) return 'rgba(33, 150, 243, 0.7)';
+                        if (d.setor.includes("Híbrido")) return 'rgba(255, 152, 0, 0.7)';
+                        return 'rgba(156, 39, 176, 0.7)';
+                    }),
+                    borderColor: dadosValidos.map(d => {
+                        if (d.setor.includes("Logística")) return 'rgba(76, 175, 80, 1)';
+                        if (d.setor.includes("Papel")) return 'rgba(33, 150, 243, 1)';
+                        if (d.setor.includes("Híbrido")) return 'rgba(255, 152, 0, 1)';
+                        return 'rgba(156, 39, 176, 1)';
+                    }),
                     borderWidth: 1
                 }]
             },
@@ -338,9 +289,8 @@ function renderizarAlavancagemCapRate(fiis) {
                                 const d = context.raw;
                                 return [
                                     `${d.label}`,
-                                    `CapRate: ${d.y.toFixed(1)}%`,
-                                    `Alavancagem: ${d.x.toFixed(1)}%`,
-                                    `Imóveis: ${d.qtdImoveis}`
+                                    `P/VP: ${d.x.toFixed(2)}`,
+                                    `Valor Patrimonial: R$ ${d.y.toFixed(2)}`
                                 ];
                             }
                         }
@@ -348,12 +298,12 @@ function renderizarAlavancagemCapRate(fiis) {
                 },
                 scales: {
                     x: {
-                        title: { display: true, text: 'Alavancagem (%)', font: { size: 11 } },
+                        title: { display: true, text: 'P/VP', font: { size: 11 } },
                         grid: { color: 'rgba(0,0,0,0.05)' },
                         beginAtZero: true
                     },
                     y: {
-                        title: { display: true, text: 'CapRate (%)', font: { size: 11 } },
+                        title: { display: true, text: 'Valor Patrimonial por Cota (R$)', font: { size: 11 } },
                         grid: { color: 'rgba(0,0,0,0.05)' },
                         beginAtZero: true
                     }
@@ -361,21 +311,96 @@ function renderizarAlavancagemCapRate(fiis) {
             }
         });
     } catch (e) {
-        console.warn("Erro no gráfico Alavancagem vs CapRate:", e);
+        console.warn("Erro no gráfico de bolhas:", e);
         container.innerHTML = `<p style="color: #999;">⚠️ Erro ao carregar gráfico.</p>`;
     }
 }
 
 // ============================================================
-// GRÁFICO 4: Scorecard de Qualidade do FII
+// GRÁFICO 3: Rendimento Mensal Médio (Barras)
+// ============================================================
+
+function renderizarRendimentoMensal(fiis) {
+    const container = document.getElementById("grafico-rendimento");
+    if (!container) return;
+
+    if (typeof Chart === "undefined") {
+        container.innerHTML = `<p style="color: #999; font-size: 13px;">📊 Chart.js não carregado.</p>`;
+        return;
+    }
+
+    if (container._chart) {
+        container._chart.destroy();
+    }
+
+    // Ordenar por rendimento (decrescente)
+    const sorted = [...fiis].sort((a, b) => {
+        const rendA = parseFloat(String(a.RendimentoMensalMedio24M || "0").replace(",", "."));
+        const rendB = parseFloat(String(b.RendimentoMensalMedio24M || "0").replace(",", "."));
+        return rendB - rendA;
+    });
+
+    const labels = sorted.map(f => f.Ativo);
+    const dadosRendimento = sorted.map(f => {
+        const valor = parseFloat(String(f.RendimentoMensalMedio24M || "0").replace(",", "."));
+        return isNaN(valor) ? 0 : valor;
+    });
+
+    const ctx = document.createElement("canvas");
+    container.innerHTML = "";
+    container.appendChild(ctx);
+
+    try {
+        container._chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Rendimento Mensal Médio (R$)',
+                    data: dadosRendimento,
+                    backgroundColor: 'rgba(76, 175, 80, 0.7)',
+                    borderColor: 'rgba(76, 175, 80, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `R$ ${context.raw.toFixed(4)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { 
+                        beginAtZero: true,
+                        title: { display: true, text: 'Rendimento Mensal (R$)', font: { size: 11 } }
+                    }
+                }
+            }
+        });
+    } catch (e) {
+        console.warn("Erro no gráfico de rendimento:", e);
+        container.innerHTML = `<p style="color: #999;">⚠️ Erro ao carregar gráfico.</p>`;
+    }
+}
+
+// ============================================================
+// GRÁFICO 4: Scorecard de Qualidade (FIIs)
 // ============================================================
 
 function renderizarScorecard(fiis) {
-    const container = document.getElementById("grafico-scorecard-fiis");
+    const container = document.getElementById("grafico-scorecard");
     if (!container) return;
 
     if (fiis.length === 0) {
-        container.innerHTML = `<p style="color: #999; font-size: 13px;">Sem FIIs para avaliar.</p>`;
+        container.innerHTML = `<p style="color: #999; font-size: 13px;">Sem dados para avaliar.</p>`;
         return;
     }
 
@@ -385,10 +410,9 @@ function renderizarScorecard(fiis) {
                 <thead>
                     <tr style="background: #f5f5f5; border-bottom: 2px solid #e0e0e0;">
                         <th style="padding: 8px 10px; text-align: left;">Ativo</th>
-                        <th style="padding: 8px 10px; text-align: center;">CapRate</th>
-                        <th style="padding: 8px 10px; text-align: center;">Vacância Média</th>
-                        <th style="padding: 8px 10px; text-align: center;">Alavancagem</th>
-                        <th style="padding: 8px 10px; text-align: center;">Prazo Contratos</th>
+                        <th style="padding: 8px 10px; text-align: center;">P/VP</th>
+                        <th style="padding: 8px 10px; text-align: center;">Rendimento</th>
+                        <th style="padding: 8px 10px; text-align: center;">DY</th>
                         <th style="padding: 8px 10px; text-align: center;">Score</th>
                     </tr>
                 </thead>
@@ -396,27 +420,23 @@ function renderizarScorecard(fiis) {
     `;
 
     for (const fii of fiis) {
-        const capRate = parseFloat(String(fii.CapRate || "0").replace(",", "."));
-        const vacancia = parseFloat(String(fii.VacanciaMedia || "999").replace(",", "."));
-        const alavancagem = parseFloat(String(fii.Alavancagem || "999").replace(",", "."));
-        const prazo = parseFloat(String(fii.PrazoContratos || "0").replace(",", "."));
+        const pvp = parseFloat(String(fii.PVP || "0").replace(",", "."));
+        const rendimento = parseFloat(String(fii.RendimentoMensalMedio24M || "0").replace(",", "."));
+        const dy = parseFloat(String(fii.DY || "0").replace(",", "."));
 
-        // Avaliação individual
-        const valCapRate = isNaN(capRate) ? '⚪' : capRate > 7 ? '🟢' : capRate > 5 ? '🟡' : '🔴';
-        const valVacancia = isNaN(vacancia) ? '⚪' : vacancia < 5 ? '🟢' : vacancia < 10 ? '🟡' : '🔴';
-        const valAlavancagem = isNaN(alavancagem) ? '⚪' : alavancagem < 30 ? '🟢' : alavancagem < 50 ? '🟡' : '🔴';
-        const valPrazo = isNaN(prazo) ? '⚪' : prazo > 5 ? '🟢' : prazo > 3 ? '🟡' : '🔴';
+        const valPVP = isNaN(pvp) ? '⚪' : pvp < 0.8 ? '🟢' : pvp < 1.2 ? '🟡' : '🔴';
+        const valRendimento = isNaN(rendimento) ? '⚪' : rendimento > 0.5 ? '🟢' : rendimento > 0.2 ? '🟡' : '🔴';
+        const valDY = isNaN(dy) ? '⚪' : dy > 12 ? '🟢' : dy > 8 ? '🟡' : '🔴';
 
-        const verdeCount = [valCapRate, valVacancia, valAlavancagem, valPrazo].filter(v => v === '🟢').length;
-        const estrelas = '⭐'.repeat(verdeCount) + '☆'.repeat(4 - verdeCount);
+        const verdeCount = [valPVP, valRendimento, valDY].filter(v => v === '🟢').length;
+        const estrelas = '⭐'.repeat(verdeCount) + '☆'.repeat(3 - verdeCount);
 
         html += `
             <tr style="border-bottom: 1px solid #f0f0f0;">
                 <td style="padding: 8px 10px; font-weight: 600; color: #00598a;">${fii.Ativo}</td>
-                <td style="padding: 8px 10px; text-align: center;">${valCapRate} ${isNaN(capRate) ? '-' : capRate.toFixed(1)}%</td>
-                <td style="padding: 8px 10px; text-align: center;">${valVacancia} ${isNaN(vacancia) ? '-' : vacancia.toFixed(1)}%</td>
-                <td style="padding: 8px 10px; text-align: center;">${valAlavancagem} ${isNaN(alavancagem) ? '-' : alavancagem.toFixed(1)}%</td>
-                <td style="padding: 8px 10px; text-align: center;">${valPrazo} ${isNaN(prazo) ? '-' : prazo.toFixed(1)} anos</td>
+                <td style="padding: 8px 10px; text-align: center;">${valPVP} ${isNaN(pvp) ? '-' : pvp.toFixed(2)}</td>
+                <td style="padding: 8px 10px; text-align: center;">${valRendimento} ${isNaN(rendimento) ? '-' : rendimento.toFixed(4)}</td>
+                <td style="padding: 8px 10px; text-align: center;">${valDY} ${isNaN(dy) ? '-' : dy.toFixed(2)}%</td>
                 <td style="padding: 8px 10px; text-align: center; font-size: 14px;">${estrelas}</td>
             </tr>
         `;
@@ -451,7 +471,6 @@ function renderizarTabela(fiis) {
         return;
     }
 
-    // Cabeçalho
     let html = `
         <div style="overflow-x: auto; margin-top: 20px;">
             <table style="width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
@@ -469,7 +488,6 @@ function renderizarTabela(fiis) {
 
     html += `</tr></thead><tbody>`;
 
-    // Linhas
     for (const fii of fiis) {
         html += `<tr style="border-bottom: 1px solid #f0f0f0;">`;
         for (const coluna of COLUNAS_FIIS) {
@@ -482,7 +500,6 @@ function renderizarTabela(fiis) {
 
     html += `</tbody></table></div>`;
 
-    // Estatísticas
     const totalFIIs = fiis.length;
     const totalIndicadores = COLUNAS_FIIS.length - 1;
     let celulasPreenchidas = 0;
@@ -518,7 +535,6 @@ async function atualizarAbaFIIs() {
 
     if (!container) return;
 
-    // Mostra loading
     container.innerHTML = `
         <div style="text-align: center; padding: 40px; color: #666;">
             <div style="display: inline-block; width: 30px; height: 30px; border: 3px solid #f3f3f3; border-top: 3px solid #00598a; border-radius: 50%; animation: spin 1s linear infinite;"></div>
@@ -645,8 +661,6 @@ function iniciarAbaFIIs() {
 
 export {
     iniciarAbaFIIs,
+    atualizarAbaFIIs,
     executarAtualizacaoFIIs
 };
-
-// Exportar o alias separadamente
-export { iniciarAbaFIIs as atualizarAbaFIIs };
