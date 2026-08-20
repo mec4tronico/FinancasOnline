@@ -199,38 +199,57 @@ async function scrapingFIIs(ticker) {
     // Usa a seção #indicators para maior precisão
     // ====================================================
 
-    function obterValorFII(titulo) {
-      console.log(`[${ticker}] Buscando "${titulo}" para FII...`);
+   function obterValorFII(titulo, titulosAlternativos = []) {
+    console.log(`[${ticker}] Buscando "${titulo}" para FII...`);
 
-      // Primeiro, tenta encontrar dentro da seção #indicators
-      const secaoIndicators = documento.getElementById("indicators");
-      let alvo = secaoIndicators || documento;
-
-      // Busca o título e o valor
-      const elementos = alvo.querySelectorAll("h3, small, span");
-      for (const elemento of elementos) {
-        const texto = elemento.textContent.trim().toUpperCase();
-        if (texto.includes(titulo.toUpperCase())) {
-          let pai = elemento.closest("div");
-          let tentativas = 0;
-          while (pai && tentativas < 6) {
-            const valor = pai.querySelector("strong.value");
-            if (valor) {
-              const textoValor = valor.textContent.trim();
-              if (textoValor) {
-                console.log(`[${ticker}] "${titulo}" encontrado: ${textoValor}`);
-                return textoValor;
-              }
-            }
-            pai = pai.parentElement;
-            tentativas++;
-          }
-        }
-      }
-
-      console.warn(`[${ticker}] "${titulo}" não encontrado para FII.`);
-      return null;
+    // Seção principal de indicadores
+    const secaoIndicators = documento.getElementById("indicators");
+    if (!secaoIndicators) {
+        console.warn(`[${ticker}] Seção #indicators não encontrada.`);
+        return null;
     }
+
+    // Lista de títulos a procurar (principal + alternativos)
+    const titulosBusca = [titulo, ...titulosAlternativos];
+
+    // Procura em todos os blocos .info dentro da seção
+    const blocos = secaoIndicators.querySelectorAll("div.info");
+    for (const bloco of blocos) {
+        // Tenta encontrar o título no bloco
+        const tituloElement = bloco.querySelector("h3, .info-title h3, .title");
+        if (!tituloElement) continue;
+
+        const textoEncontrado = tituloElement.textContent.trim();
+        // Verifica se o texto do título corresponde a algum dos títulos buscados
+        for (const busca of titulosBusca) {
+            if (textoEncontrado.toUpperCase().includes(busca.toUpperCase())) {
+                // Encontrou o título, agora busca o valor
+                const valorElement = bloco.querySelector("strong.value, .value");
+                if (valorElement) {
+                    const valor = valorElement.textContent.trim();
+                    if (valor) {
+                        console.log(`[${ticker}] "${busca}" encontrado: ${valor}`);
+                        return valor;
+                    }
+                }
+                // Se não achou strong.value, tenta o próximo elemento que pode ter o valor
+                const valorFallback = bloco.querySelector(".info-value, .info-value span");
+                if (valorFallback) {
+                    const valor = valorFallback.textContent.trim();
+                    if (valor) {
+                        console.log(`[${ticker}] "${busca}" encontrado (fallback): ${valor}`);
+                        return valor;
+                    }
+                }
+                console.warn(`[${ticker}] Título "${busca}" encontrado, mas valor não extraído.`);
+                break;
+            }
+        }
+    }
+
+    console.warn(`[${ticker}] "${titulo}" não encontrado para FII.`);
+    return null;
+}
 
     // ====================================================
     // 10. EXTRAIR TODOS OS 10 INDICADORES
