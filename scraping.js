@@ -1,6 +1,7 @@
 // ============================================================
 // scraping.js
 // Consulta StatusInvest através do Cloudflare Worker
+// COM LOGS DETALHADOS DE DIAGNÓSTICO
 // ============================================================
 
 const PROXY_CLOUDFLARE = "https://financasonline.augusto-gouveia2000.workers.dev/";
@@ -8,15 +9,10 @@ const TIMEOUT_30_SEGUNDOS = 30000;
 
 // ============================================================
 // FUNÇÃO PRINCIPAL
-// Recebe:
-// ticker = "AXIA3"
-// tipo = "acoes"
-// ou:
-// ticker = "KNCR11"
-// tipo = "fii"
 // ============================================================
 
 async function buscarIndicadoresStatusInvest(ticker, tipo) {
+  // Estrutura de erro com diagnóstico
   const resultadoErro = {
     ticker: ticker,
     valorAtual: "ERRO",
@@ -24,28 +20,34 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
     max52: "ERRO",
     dy: "ERRO",
     valorizacao: "ERRO",
-    // Novos campos comuns
     setor: "ERRO",
     subsetor: "ERRO",
     segmento: "ERRO",
     participacaoIndices: "ERRO",
-    freeFloat: "ERRO"
+    freeFloat: "ERRO",
+    // Diagnóstico
+    erroDiagnostico: "Sem diagnóstico",
+    etapaFalha: "desconhecida"
   };
 
   console.log("========================================");
   console.log(`INICIANDO SCRAPING: ${ticker} / ${tipo}`);
+  console.log(`TIMESTAMP: ${new Date().toISOString()}`);
 
   try {
     // ====================================================
-    // 1. VALIDAR
+    // 1. VALIDAR PARÂMETROS
     // ====================================================
     ticker = String(ticker).trim().toUpperCase();
     tipo = String(tipo).trim().toLowerCase();
 
-    console.log(`[${ticker}] Parâmetros OK`);
+    console.log(`[${ticker}] Parâmetros validados: ticker=${ticker}, tipo=${tipo}`);
 
     if (!ticker || (tipo !== "acoes" && tipo !== "fii")) {
-      console.error(`[${ticker}] Parâmetros inválidos.`);
+      const erro = `Parâmetros inválidos: ticker="${ticker}", tipo="${tipo}"`;
+      console.error(`[${ticker}] ERRO: ${erro}`);
+      resultadoErro.erroDiagnostico = erro;
+      resultadoErro.etapaFalha = "validacao_parametros";
       return resultadoErro;
     }
 
@@ -53,21 +55,19 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
     // 2. DEFINIR URL DO STATUSINVEST
     // ====================================================
     const categoria = tipo === "fii" ? "fundos-imobiliarios" : "acoes";
-    const urlStatusInvest = `https://statusinvest.com.br/` + `${categoria}/` + `${ticker.toLowerCase()}`;
-
-    console.log(`[${ticker}] StatusInvest:`, urlStatusInvest);
+    const urlStatusInvest = `https://statusinvest.com.br/${categoria}/${ticker.toLowerCase()}`;
+    console.log(`[${ticker}] URL StatusInvest: ${urlStatusInvest}`);
 
     // ====================================================
     // 3. MONTAR URL DO WORKER
     // ====================================================
     const urlWorker = PROXY_CLOUDFLARE + "?url=" + encodeURIComponent(urlStatusInvest);
-
-    console.log(`[${ticker}] Worker:`, urlWorker);
+    console.log(`[${ticker}] URL Worker: ${urlWorker}`);
 
     // ====================================================
     // 4. FETCH COM LIMITE DE 30 SEGUNDOS
     // ====================================================
-    console.log(`[${ticker}] Acessando Worker...`);
+    console.log(`[${ticker}] Iniciando requisição ao Worker...`);
 
     const controlador = new AbortController();
     const timeout = setTimeout(() => {
@@ -75,6 +75,7 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
     }, TIMEOUT_30_SEGUNDOS);
 
     let resposta;
+    let tempoInicio = Date.now();
 
     try {
       resposta = await fetch(urlWorker, {
@@ -84,24 +85,35 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
       });
     } catch (erro) {
       clearTimeout(timeout);
+      const tempoDecorrido = ((Date.now() - tempoInicio) / 1000).toFixed(1);
+      
+      let erroMensagem = "";
       if (erro.name === "AbortError") {
-        console.error(`[${ticker}] ERRO: timeout de 30 segundos.`);
+        erroMensagem = `Timeout de ${TIMEOUT_30_SEGUNDOS/1000} segundos excedido (${tempoDecorrido}s)`;
       } else {
-        console.error(`[${ticker}] ERRO ao acessar Worker.`);
-        console.error(erro);
+        erroMensagem = `Erro no fetch: ${erro.message || erro.toString()}`;
       }
+      
+      console.error(`[${ticker}] ERRO: ${erroMensagem}`);
+      resultadoErro.erroDiagnostico = erroMensagem;
+      resultadoErro.etapaFalha = "fetch_worker";
       return resultadoErro;
     }
 
     clearTimeout(timeout);
+    const tempoDecorrido = ((Date.now() - tempoInicio) / 1000).toFixed(1);
+    console.log(`[${ticker}] Worker respondeu em ${tempoDecorrido}s`);
 
     // ====================================================
     // 5. STATUS HTTP
     // ====================================================
-    console.log(`[${ticker}] HTTP:`, resposta.status);
+    console.log(`[${ticker}] Status HTTP: ${resposta.status} ${resposta.statusText}`);
 
     if (!resposta.ok) {
-      console.error(`[${ticker}] Worker retornou HTTP ${resposta.status}`);
+      const erro = `Worker retornou HTTP ${resposta.status} ${resposta.statusText}`;
+      console.error(`[${ticker}] ERRO: ${erro}`);
+      resultadoErro.erroDiagnostico = erro;
+      resultadoErro.etapaFalha = "http_status";
       return resultadoErro;
     }
 
@@ -110,40 +122,80 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
     // ====================================================
     console.log(`[${ticker}] Lendo HTML...`);
 
-    const html = await resposta.text();
+    let html;
+    try {
+      html = await resposta.text();
+    } catch (erro) {
+      const erroMensagem = `Erro ao ler HTML: ${erro.message || erro.toString()}`;
+      console.error(`[${ticker}] ERRO: ${erroMensagem}`);
+      resultadoErro.erroDiagnostico = erroMensagem;
+      resultadoErro.etapaFalha = "leitura_html";
+      return resultadoErro;
+    }
 
-    console.log(`[${ticker}] HTML recebido:`, html.length, "caracteres");
+    console.log(`[${ticker}] HTML recebido: ${html.length} caracteres`);
 
     if (!html || html.length === 0) {
-      console.error(`[${ticker}] HTML vazio.`);
+      const erro = "HTML vazio (0 caracteres)";
+      console.error(`[${ticker}] ERRO: ${erro}`);
+      resultadoErro.erroDiagnostico = erro;
+      resultadoErro.etapaFalha = "html_vazio";
       return resultadoErro;
+    }
+
+    // Verifica se o HTML parece ser válido (contém tags básicas)
+    if (!html.includes("<html") && !html.includes("<!DOCTYPE")) {
+      console.warn(`[${ticker}] ATENÇÃO: HTML não parece ser uma página válida (sem tags html/doctype)`);
+      // Não falha ainda, pois pode ser HTML parcial
     }
 
     // ====================================================
     // 7. TRANSFORMAR HTML EM DOM
     // ====================================================
-    const parser = new DOMParser();
-    const documento = parser.parseFromString(html, "text/html");
+    console.log(`[${ticker}] Criando DOM...`);
 
-    console.log(`[${ticker}] DOM criado.`);
+    let documento;
+    try {
+      const parser = new DOMParser();
+      documento = parser.parseFromString(html, "text/html");
+    } catch (erro) {
+      const erroMensagem = `Erro ao fazer parse do HTML: ${erro.message || erro.toString()}`;
+      console.error(`[${ticker}] ERRO: ${erroMensagem}`);
+      resultadoErro.erroDiagnostico = erroMensagem;
+      resultadoErro.etapaFalha = "parse_dom";
+      return resultadoErro;
+    }
+
+    // Verifica se o DOM foi criado corretamente
+    if (!documento || !documento.documentElement) {
+      const erro = "DOM não foi criado corretamente (documentElement vazio)";
+      console.error(`[${ticker}] ERRO: ${erro}`);
+      resultadoErro.erroDiagnostico = erro;
+      resultadoErro.etapaFalha = "dom_vazio";
+      return resultadoErro;
+    }
+
+    // Verifica se a página parece ser do StatusInvest (título)
+    const tituloPagina = documento.querySelector("title")?.textContent || "Título não encontrado";
+    console.log(`[${ticker}] Título da página: "${tituloPagina}"`);
+
+    if (!tituloPagina.includes(ticker) && !tituloPagina.includes("StatusInvest")) {
+      console.warn(`[${ticker}] ATENÇÃO: Título da página não contém ticker "${ticker}" nem "StatusInvest"`);
+      // Não falha ainda, mas fica registrado
+    }
 
     // ====================================================
-    // 8. FUNÇÃO DE EXTRAÇÃO PADRÃO
-    // Usada para:
-    // - Valor Atual
-    // - Mín. 52 semanas
-    // - Máx. 52 semanas
-    // - Valorização 12M
-    // - Setor, Subsetor, Segmento
-    // - Free Float
-    // Também continua sendo usada para DY dos FIIs.
+    // 8. FUNÇÃO DE EXTRAÇÃO PADRÃO (COM LOG)
     // ====================================================
 
     function obterValorPorTitulo(titulo) {
       const elementos = documento.querySelectorAll("h3, small, span");
+      let encontrados = 0;
+      
       for (const elemento of elementos) {
         const texto = elemento.textContent.trim().toUpperCase();
         if (texto.includes(titulo.toUpperCase())) {
+          encontrados++;
           let pai = elemento.closest("div");
           let tentativas = 0;
           while (pai && tentativas < 6) {
@@ -159,125 +211,87 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
           }
         }
       }
+      
+      // Se encontrou o título mas não o valor, registra
+      if (encontrados > 0) {
+        console.warn(`[${ticker}] Título "${titulo}" encontrado ${encontrados} vez(es), mas valor não extraído`);
+      }
+      
       return null;
     }
 
     // ====================================================
-    // 9. FUNÇÃO ESPECÍFICA PARA DY DAS AÇÕES - CORRIGIDA
-    // No StatusInvest, para ações, o Dividend Yield
-    // aparece na seção principal como:
-    // Dividend Yield
-    // 6,34 %
-    // Últimos 12 meses
-    // A estrutura HTML dessa seção é diferente da
-    // estrutura que encontramos nos FIIs.
-    // Por isso as ações possuem uma busca própria.
-    // CORREÇÃO: Mantém relação estrutural entre título e valor,
-    // não busca qualquer strong.value em ancestral grande.
+    // 9. FUNÇÃO ESPECÍFICA PARA DY DAS AÇÕES (COM LOG)
     // ====================================================
 
     function obterDY12MAcao() {
+      console.log(`[${ticker}] Buscando DY 12M específico de ação...`);
 
-    console.log(
-        `[${ticker}] Procurando DY 12M específico de ação...`
-    );
+      const elementos = documento.querySelectorAll("h3");
+      let encontrados = 0;
 
-    // ====================================================
-    // Estrutura atual do StatusInvest:
-    //
-    // <div ...>
-    //   <div title="Dividend Yield com base nos últimos 12 meses">
-    //       ...
-    //       <h3>Dividend Yield</h3>
-    //       ...
-    //   </div>
-    //
-    //   <strong class="value">6,33</strong>
-    //   <span>%</span>
-    // </div>
-    //
-    // O percentual NÃO está dentro do strong.value.
-    // ====================================================
-
-    const elementos =
-        documento.querySelectorAll("h3");
-
-    for (const elemento of elementos) {
-
-        const texto =
-            elemento.textContent
-                .trim()
-                .toUpperCase();
-
+      for (const elemento of elementos) {
+        const texto = elemento.textContent.trim().toUpperCase();
         if (texto !== "DIVIDEND YIELD") {
-            continue;
+          continue;
         }
 
-        // Procura o bloco principal do indicador.
-        const bloco =
-            elemento.closest(".info");
-
+        encontrados++;
+        const bloco = elemento.closest(".info");
         if (!bloco) {
-            continue;
+          console.warn(`[${ticker}] Título "DIVIDEND YIELD" encontrado, mas bloco .info não encontrado`);
+          continue;
         }
 
-        const valor =
-            bloco.querySelector("strong.value");
-
+        const valor = bloco.querySelector("strong.value");
         if (!valor) {
-            continue;
+          console.warn(`[${ticker}] Bloco .info encontrado, mas strong.value não encontrado`);
+          continue;
         }
 
-        const dyEncontrado =
-            valor.textContent.trim();
-
-        if (
-            /^\d+[,.]\d+$/.test(
-                dyEncontrado
-            )
-        ) {
-
-            console.log(
-                `[${ticker}] DY 12M encontrado:`,
-                dyEncontrado
-            );
-
-            return dyEncontrado;
+        const dyEncontrado = valor.textContent.trim();
+        if (/^\d+[,.]\d+$/.test(dyEncontrado)) {
+          console.log(`[${ticker}] DY 12M encontrado: ${dyEncontrado}`);
+          return dyEncontrado;
+        } else {
+          console.warn(`[${ticker}] Valor encontrado não parece ser DY: "${dyEncontrado}"`);
         }
+      }
+
+      if (encontrados === 0) {
+        console.warn(`[${ticker}] Título "DIVIDEND YIELD" não encontrado na página`);
+      } else {
+        console.warn(`[${ticker}] Título "DIVIDEND YIELD" encontrado ${encontrados} vez(es), mas não foi possível extrair o valor`);
+      }
+
+      return null;
     }
 
-    console.error(
-        `[${ticker}] DY 12M de ação não encontrado.`
-    );
-
-    return null;
-}
-
     // ====================================================
-    // 9.1 FUNÇÃO ESPECÍFICA PARA PARTICIPAÇÃO EM ÍNDICES
-    // No StatusInvest, os índices aparecem em uma seção
-    // específica com múltiplos valores separados por ponto e vírgula.
+    // 9.1 FUNÇÃO PARA PARTICIPAÇÃO EM ÍNDICES (COM LOG)
     // ====================================================
 
-    function obterParticipacaoIndices(documento) {
-      console.log(`[${ticker}] Procurando Participação em Índices...`);
+    function obterParticipacaoIndices() {
+      console.log(`[${ticker}] Buscando Participação em Índices...`);
 
-      // Primeiro tenta com o método padrão
+      // Método 1: Título padrão
       let resultado = obterValorPorTitulo("PARTICIPAÇÃO EM ÍNDICES");
       if (resultado) {
-        console.log(`[${ticker}] Índices encontrados (método 1):`, resultado);
+        console.log(`[${ticker}] Índices encontrados (método 1): "${resultado}"`);
         return resultado;
       }
 
-      // Tenta buscar por "Índices" ou "Índices de Referência"
+      // Método 2: Título alternativo
       resultado = obterValorPorTitulo("ÍNDICES");
       if (resultado) {
-        console.log(`[${ticker}] Índices encontrados (método 2):`, resultado);
+        console.log(`[${ticker}] Índices encontrados (método 2): "${resultado}"`);
         return resultado;
       }
 
-      // Busca em uma seção específica (se existir)
+      // Método 3: Busca em seções específicas
       const secoes = documento.querySelectorAll("div.info");
+      console.log(`[${ticker}] Verificando ${secoes.length} seções .info para índices...`);
+      
       for (const secao of secoes) {
         const titulo = secao.querySelector("h3, small, span");
         if (titulo) {
@@ -287,7 +301,7 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
             if (valor) {
               const textoValor = valor.textContent.trim();
               if (textoValor) {
-                console.log(`[${ticker}] Índices encontrados (método 3):`, textoValor);
+                console.log(`[${ticker}] Índices encontrados (método 3): "${textoValor}"`);
                 return textoValor;
               }
             }
@@ -295,35 +309,35 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
         }
       }
 
-      console.error(`[${ticker}] Participação em Índices não encontrado.`);
+      console.warn(`[${ticker}] Participação em Índices não encontrado em nenhum método`);
       return null;
     }
 
     // ====================================================
-    // 9.2 FUNÇÃO ESPECÍFICA PARA FREE FLOAT
-    // O Free Float pode aparecer como "Free Float" ou "Free-Float"
-    // e pode ter o símbolo de percentual.
+    // 9.2 FUNÇÃO PARA FREE FLOAT (COM LOG)
     // ====================================================
 
-    function obterFreeFloat(documento) {
-      console.log(`[${ticker}] Procurando Free Float...`);
+    function obterFreeFloat() {
+      console.log(`[${ticker}] Buscando Free Float...`);
 
-      // Tenta com o método padrão
+      // Método 1: "FREE FLOAT"
       let resultado = obterValorPorTitulo("FREE FLOAT");
       if (resultado) {
-        console.log(`[${ticker}] Free Float encontrado (método 1):`, resultado);
+        console.log(`[${ticker}] Free Float encontrado (método 1): "${resultado}"`);
         return resultado;
       }
 
-      // Tenta com "FREE-FLOAT"
+      // Método 2: "FREE-FLOAT"
       resultado = obterValorPorTitulo("FREE-FLOAT");
       if (resultado) {
-        console.log(`[${ticker}] Free Float encontrado (método 2):`, resultado);
+        console.log(`[${ticker}] Free Float encontrado (método 2): "${resultado}"`);
         return resultado;
       }
 
-      // Busca em uma seção específica
+      // Método 3: Busca em seções específicas
       const secoes = documento.querySelectorAll("div.info");
+      console.log(`[${ticker}] Verificando ${secoes.length} seções .info para Free Float...`);
+      
       for (const secao of secoes) {
         const titulo = secao.querySelector("h3, small, span");
         if (titulo) {
@@ -333,7 +347,7 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
             if (valor) {
               const textoValor = valor.textContent.trim();
               if (textoValor) {
-                console.log(`[${ticker}] Free Float encontrado (método 3):`, textoValor);
+                console.log(`[${ticker}] Free Float encontrado (método 3): "${textoValor}"`);
                 return textoValor;
               }
             }
@@ -341,12 +355,12 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
         }
       }
 
-      console.error(`[${ticker}] Free Float não encontrado.`);
+      console.warn(`[${ticker}] Free Float não encontrado em nenhum método`);
       return null;
     }
 
     // ====================================================
-    // 10. EXTRAIR OS 5 INDICADORES ATUAIS
+    // 10. EXTRAIR OS 5 INDICADORES ATUAIS (COM LOG)
     // ====================================================
     console.log(`[${ticker}] Extraindo indicadores básicos...`);
 
@@ -354,7 +368,6 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
     const min52 = obterValorPorTitulo("MIN. 52 SEMANAS");
     const max52 = obterValorPorTitulo("MÁX. 52 SEMANAS");
 
-    // DY com tratamento especial
     let dy;
     if (tipo === "acoes") {
       dy = obterDY12MAcao();
@@ -365,70 +378,102 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
     const valorizacao = obterValorPorTitulo("VALORIZAÇÃO (12M)");
 
     // ====================================================
-    // 10.1 NOVOS INDICADORES COMUNS (adicionados)
+    // 10.1 NOVOS INDICADORES COMUNS (COM LOG)
     // ====================================================
     console.log(`[${ticker}] Extraindo indicadores comuns...`);
 
-    // Usa a função padrão para Setor, Subsetor e Segmento
     const setor = obterValorPorTitulo("SETOR");
     const subsetor = obterValorPorTitulo("SUBSETOR");
     const segmento = obterValorPorTitulo("SEGMENTO");
-
-    // Usa funções específicas para Índices e Free Float
-    const participacaoIndices = obterParticipacaoIndices(documento);
-    const freeFloat = obterFreeFloat(documento);
+    const participacaoIndices = obterParticipacaoIndices();
+    const freeFloat = obterFreeFloat();
 
     // ====================================================
-    // 11. LOG DOS RESULTADOS
+    // 11. DIAGNÓSTICO DETALHADO DOS INDICADORES NÃO ENCONTRADOS
     // ====================================================
-    console.log(`[${ticker}] Resultados da extração:`);
-    console.log(`  Valor Atual:`, valorAtual);
-    console.log(`  Mín. 52 Semanas:`, min52);
-    console.log(`  Máx. 52 Semanas:`, max52);
-    console.log(`  DY 12M:`, dy);
-    console.log(`  Valorização 12M:`, valorizacao);
-    console.log(`  Setor:`, setor);
-    console.log(`  Subsetor:`, subsetor);
-    console.log(`  Segmento:`, segmento);
-    console.log(`  Participação em Índices:`, participacaoIndices);
-    console.log(`  Free Float:`, freeFloat);
+    const indicadoresNaoEncontrados = [];
+    
+    if (!valorAtual) indicadoresNaoEncontrados.push("VALOR ATUAL");
+    if (!min52) indicadoresNaoEncontrados.push("MIN. 52 SEMANAS");
+    if (!max52) indicadoresNaoEncontrados.push("MÁX. 52 SEMANAS");
+    if (!dy) indicadoresNaoEncontrados.push("DY");
+    if (!valorizacao) indicadoresNaoEncontrados.push("VALORIZAÇÃO (12M)");
+    if (!setor) indicadoresNaoEncontrados.push("SETOR");
+    if (!subsetor) indicadoresNaoEncontrados.push("SUBSETOR");
+    if (!segmento) indicadoresNaoEncontrados.push("SEGMENTO");
+    if (!participacaoIndices) indicadoresNaoEncontrados.push("PARTICIPAÇÃO EM ÍNDICES");
+    if (!freeFloat) indicadoresNaoEncontrados.push("FREE FLOAT");
 
     // ====================================================
-    // 12. VALIDAR VALOR PRINCIPAL
+    // 12. LOG DOS RESULTADOS
+    // ====================================================
+    console.log(`[${ticker}] ========== RESULTADOS ==========`);
+    console.log(`  Valor Atual:           ${valorAtual || "❌ NÃO ENCONTRADO"}`);
+    console.log(`  Mín. 52 Semanas:       ${min52 || "❌ NÃO ENCONTRADO"}`);
+    console.log(`  Máx. 52 Semanas:       ${max52 || "❌ NÃO ENCONTRADO"}`);
+    console.log(`  DY 12M:                ${dy || "❌ NÃO ENCONTRADO"}`);
+    console.log(`  Valorização 12M:       ${valorizacao || "❌ NÃO ENCONTRADO"}`);
+    console.log(`  Setor:                 ${setor || "❌ NÃO ENCONTRADO"}`);
+    console.log(`  Subsetor:              ${subsetor || "❌ NÃO ENCONTRADO"}`);
+    console.log(`  Segmento:              ${segmento || "❌ NÃO ENCONTRADO"}`);
+    console.log(`  Participação Índices:  ${participacaoIndices || "❌ NÃO ENCONTRADO"}`);
+    console.log(`  Free Float:            ${freeFloat || "❌ NÃO ENCONTRADO"}`);
+
+    if (indicadoresNaoEncontrados.length > 0) {
+      console.warn(`[${ticker}] ⚠️ INDICADORES NÃO ENCONTRADOS (${indicadoresNaoEncontrados.length}):`);
+      for (const indicador of indicadoresNaoEncontrados) {
+        console.warn(`  - ${indicador}`);
+      }
+    } else {
+      console.log(`[${ticker}] ✅ TODOS OS INDICADORES ENCONTRADOS!`);
+    }
+
+    // ====================================================
+    // 13. VALIDAR VALOR PRINCIPAL
     // ====================================================
     if (!valorAtual) {
-      console.error(`[${ticker}] Valor Atual não encontrado.`);
+      const erro = "Valor Atual não encontrado - scraping falhou";
+      console.error(`[${ticker}] ERRO: ${erro}`);
+      resultadoErro.erroDiagnostico = erro;
+      resultadoErro.etapaFalha = "valor_atual_nao_encontrado";
+      resultadoErro.indicadoresNaoEncontrados = indicadoresNaoEncontrados;
       return resultadoErro;
     }
 
     // ====================================================
-    // 13. RETORNAR OBJETO (ATUALIZADO)
+    // 14. RETORNAR OBJETO (ATUALIZADO COM DIAGNÓSTICO)
     // ====================================================
     const resultado = {
-      // Básicos (já existentes)
       ticker: ticker,
       valorAtual: valorAtual || "ERRO",
       min52: min52 || "ERRO",
       max52: max52 || "ERRO",
       dy: dy || "ERRO",
       valorizacao: valorizacao || "ERRO",
-      
-      // Novos (comuns)
       setor: setor || "ERRO",
       subsetor: subsetor || "ERRO",
       segmento: segmento || "ERRO",
       participacaoIndices: participacaoIndices || "ERRO",
-      freeFloat: freeFloat || "ERRO"
+      freeFloat: freeFloat || "ERRO",
+      // Diagnóstico (não usado pelo atualizar.js, mas útil para debug)
+      diagnostico: {
+        indicadoresNaoEncontrados: indicadoresNaoEncontrados,
+        totalIndicadores: 10,
+        encontrados: 10 - indicadoresNaoEncontrados.length
+      }
     };
 
-    console.log(`[${ticker}] SCRAPING CONCLUÍDO`);
-    console.log(resultado);
+    console.log(`[${ticker}] SCRAPING CONCLUÍDO - ${resultado.diagnostico.encontrados}/10 indicadores encontrados`);
     console.log("========================================");
 
     return resultado;
   } catch (erro) {
-    console.error(`[${ticker}] ERRO INESPERADO`);
-    console.error(erro);
+    const erroMensagem = `Erro inesperado: ${erro.message || erro.toString()}`;
+    console.error(`[${ticker}] ERRO INESPERADO: ${erroMensagem}`);
+    console.error(erro.stack || "Sem stack trace disponível");
+    
+    resultadoErro.erroDiagnostico = erroMensagem;
+    resultadoErro.etapaFalha = "erro_inesperado";
     return resultadoErro;
   }
 }
