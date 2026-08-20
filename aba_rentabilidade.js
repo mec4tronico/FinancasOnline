@@ -40,7 +40,7 @@
 import { processarDadosCSV } from "./aba_configuracao.js";
 
 import {
-    calculo_medio52S
+    calcularMedia52S
 } from "./calculos.js";
 
 
@@ -163,7 +163,7 @@ function linhaParaAtivo(linha, cabecalhos) {
     // Cálculos centralizados em calculos.js
     // --------------------------------------------------------
 
-    const calculo = calculo_medio52S({
+    const calculo = calcularMedia52S({
         quantidade: ativo.quantidade,
         valorAtual: ativo.valorAtual,
         min52: ativo.min52,
