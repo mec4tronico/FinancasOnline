@@ -264,6 +264,8 @@ async function scrapingAcoes(ticker) {
     const liquidezMediaDiaria = obterValorPorTitulo("LIQUIDEZ MÉDIA DIÁRIA") ||
                                 obterValorPorTitulo("LIQUIDEZ MÉDIA");
 
+    const liquidezCorrente = obterValorPorTitulo("LIQUIDEZ CORRENTE");  
+    
     // Dividendos
     const dyPayout = obterDYPayout();
 
