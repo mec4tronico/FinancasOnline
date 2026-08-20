@@ -471,14 +471,15 @@ tbody tr:hover {
 
 .tabela-carteira {
     width: 100%;
+    min-width: 1100px;
     border-collapse: collapse;
-    font-size: 0.110rem;
+    font-size: 1.05rem;
 }
 
 .tabela-carteira th,
 .tabela-carteira td {
-    border: 2px solid var(--border);
-    padding: 13px 15px;
+    border: 1px solid var(--border);
+    padding: 15px 17px;
     white-space: nowrap;
 }
 
@@ -503,7 +504,7 @@ tbody tr:hover {
 }
 
 .tabela-carteira tbody tr:hover {
-    background: var(--surface);
+    background: #f0fdf4;
 }
 
 /* ------------------------------------------------------------
@@ -512,7 +513,7 @@ tbody tr:hover {
 
 .tabela-carteira th {
     background: #f8fafc;
-    font-size: 0.130rem;
+    font-size: 0.90rem;
     font-weight: 700;
     text-align: center;
 }
