@@ -557,6 +557,39 @@ tbody tr:hover {
     color: #999;
     font-style: italic;
 }
+/* Estilos para os gráficos em coluna */
+#graficos-acoes-container .chart-card {
+    transition: transform 0.2s;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+#graficos-acoes-container .chart-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+#graficos-acoes-container canvas {
+    max-height: 300px;
+    width: 100% !important;
+}
+
+/* Responsividade para telas menores */
+@media (max-width: 768px) {
+    #graficos-acoes-container .chart-card {
+        padding: 10px !important;
+    }
+    
+    #graficos-acoes-container canvas {
+        max-height: 250px;
+    }
+    
+    #grafico-heatmap {
+        height: 200px !important;
+        overflow-y: auto !important;
+    }
+}
 
 /* Responsividade */
 @media (max-width: 768px) {
