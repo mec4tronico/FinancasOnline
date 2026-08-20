@@ -1,6 +1,6 @@
 // ============================================================
 // atualizarfiis.js
-// Atualiza APENAS as colunas exclusivas de FIIs (colunas 45-54)
+// Atualiza DINAMICAMENTE as colunas de FIIs
 // ============================================================
 
 import { scrapingFIIs } from "./scrapingfiis.js";
@@ -17,24 +17,37 @@ const URL_WORKER_CSV =
     "https://financasonline-csv.augusto-gouveia2000.workers.dev/";
 
 // ============================================================
-// COLUNAS EXCLUSIVAS DE FIIs (colunas 45 a 54)
+// MAPEAMENTO: Títulos do StatusInvest → Colunas do CSV
 // ============================================================
 
-const COLUNAS_FIIS = [
-    "CapRate",
-    "RendimentoMensal",
-    "Rendimento12M",
-    "VacanciaMedia",
-    "VacanciaFisica",
-    "VacanciaFinanceira",
-    "QtdImoveis",
-    "Alavancagem",
-    "PrazoContratos",
-    "RentabilidadeImobiliaria"
-];
+const MAPEAMENTO = {
+    // Indicadores de FIIs (com base na extração)
+    "Valor Patrimonial por Cota": "ValorPatrimonialPorCota",
+    "P/VP": "PVP",
+    "Valor em Caixa": "ValorEmCaixa",
+    "DY CAGR (3 anos)": "DYCAGR3Anos",
+    "Nº de Cotistas": "NumeroCotistas",
+    "Rendimento Mensal Médio (24M)": "RendimentoMensalMedio24M",
+    "Ano Passado": "AnoPassado",
+    "Ano Atual": "AnoAtual",
+    "Volume (dia)": "VolumeDia",
+    "Segmento ANBIMA": "SegmentoANBIMA",
+    
+    // Variações que podem aparecer
+    "Val. Patrimonial P/Cota": "ValorPatrimonialPorCota",
+    "Último Rendimento": "RendimentoMensal",
+    "Rendimento 12M": "Rendimento12M",
+    "Vacância Média": "VacanciaMedia",
+    "Vacância Física": "VacanciaFisica",
+    "Vacância Financeira": "VacanciaFinanceira",
+    "Quantidade de Imóveis": "QtdImoveis",
+    "Alavancagem": "Alavancagem",
+    "Prazo Médio dos Contratos": "PrazoContratos",
+    "Rentabilidade Imobiliária": "RentabilidadeImobiliaria"
+};
 
 // ============================================================
-// FUNÇÕES AUXILIARES (reutilizadas do atualizaracoes.js)
+// FUNÇÕES AUXILIARES
 // ============================================================
 
 function separarLinhaCSV(linha) {
@@ -110,13 +123,6 @@ function converterCSVParaPatrimonio(texto) {
 
     const cabecalho = separarLinhaCSV(linhas[0]).map(valor => valor.trim());
 
-    // Valida se as colunas de FIIs existem
-    for (const coluna of COLUNAS_FIIS) {
-        if (!cabecalho.includes(coluna)) {
-            console.warn(`ATENÇÃO: Coluna "${coluna}" não encontrada no CSV. Será ignorada.`);
-        }
-    }
-
     const dados = [];
     for (let indice = 1; indice < linhas.length; indice++) {
         if (!linhas[indice].trim()) continue;
@@ -171,28 +177,21 @@ async function gravarPatrimonioNoWorker(patrimonio, cabecalho) {
 }
 
 // ============================================================
-// VALIDAR RESULTADO DO SCRAPING
+// VALIDAR RESULTADO DO SCRAPING (Dinâmica)
 // ============================================================
 
 function dadosScrapingValidos(dados) {
-    if (!dados) return false;
-
-    // Verifica se o CapRate foi encontrado (indicador principal)
-    const capRate = dados.capRate;
-    if (
-        capRate === undefined ||
-        capRate === null ||
-        (typeof capRate === "string" && capRate.trim() === "") ||
-        (typeof capRate === "string" && capRate.trim().toUpperCase() === "ERRO")
-    ) {
-        return false;
-    }
-
-    return true;
+    if (!dados || !dados.indicadores) return false;
+    
+    // Verifica se pelo menos um indicador foi encontrado
+    const temAlgumDado = Object.values(dados.indicadores).some(valor => 
+        valor && valor !== "ERRO" && valor !== "VAZIO"
+    );
+    return temAlgumDado;
 }
 
 // ============================================================
-// FUNÇÃO PRINCIPAL: ATUALIZAR FIIs
+// FUNÇÃO PRINCIPAL: ATUALIZAR FIIs (Dinâmica)
 // ============================================================
 
 async function atualizarFIIs(opcoes = {}) {
@@ -221,12 +220,40 @@ async function atualizarFIIs(opcoes = {}) {
     let erros = 0;
 
     onProgress("========================================");
-    onProgress("ATUALIZAÇÃO DE FIIs");
+    onProgress("ATUALIZAÇÃO DE FIIs (DINÂMICA)");
     onProgress("========================================");
     onProgress(`Total de FIIs: ${total}`);
 
     // --------------------------------------------------------
-    // 3. PROCESSAR CADA FII
+    // 3. IDENTIFICAR QUAIS COLUNAS DO CSV SÃO DE FIIs
+    // --------------------------------------------------------
+    const COLUNAS_ORIGINAIS = [
+        "Ativo", "Tipo", "Quantidade", "TotalInvestido", "DataPrimeiraCompra",
+        "DataAtualizacao", "ValorAtual", "Min52", "Max52", "DY", "Valorizacao",
+        "ValorAtualPosicao", "LucroPrejuizo", "Rentabilidade", "PesoCarteira",
+        "RendaAnualEstimada", "RendaMensalEstimada", "ValorPosicaoMax52",
+        "ValorPosicaoMin52", "PotencialFinanceiroMax52", "RiscoFinanceiroMin52"
+    ];
+
+    // Colunas de Ações (não devem ser alteradas pelo atualizador de FIIs)
+    const COLUNAS_ACOES = [
+        "Setor", "Subsetor", "Segmento", "ParticipacaoIndices", "FreeFloat",
+        "VolumeDia", "ValorMercado", "ValorFirma", "PartIBOV", "Ativos", "DividaLiquida"
+    ];
+
+    // Colunas de FIIs (tudo que não é original nem Ação)
+    const colunasFIIs = cabecalho.filter(coluna => 
+        !COLUNAS_ORIGINAIS.includes(coluna) && 
+        !COLUNAS_ACOES.includes(coluna)
+    );
+
+    onProgress(`Colunas de FIIs identificadas: ${colunasFIIs.length}`);
+    if (colunasFIIs.length > 0) {
+        onProgress(`  ${colunasFIIs.join(', ')}`);
+    }
+
+    // --------------------------------------------------------
+    // 4. PROCESSAR CADA FII
     // --------------------------------------------------------
     for (let indice = 0; indice < total; indice++) {
         const registro = fiis[indice];
@@ -246,39 +273,34 @@ async function atualizarFIIs(opcoes = {}) {
             // ------------------------------------------------
             if (!dadosScrapingValidos(dados)) {
                 erros++;
-                onProgress(`Resultado: ERRO (CapRate não encontrado)`);
+                onProgress("Resultado: ERRO (Nenhum indicador encontrado)");
                 onProgress("Dados anteriores mantidos.");
                 continue;
             }
 
             // ------------------------------------------------
-            // ATUALIZAR APENAS AS COLUNAS DE FIIs
+            // ATUALIZAR USANDO O MAPEAMENTO
             // ------------------------------------------------
             const dataAtualizacao = formatarDataAtualizacao();
             registro.DataAtualizacao = dataAtualizacao;
 
-            // Mapear os campos do scraping para as colunas do CSV
-            const mapeamento = {
-                capRate: "CapRate",
-                rendimentoMensal: "RendimentoMensal",
-                rendimento12M: "Rendimento12M",
-                vacanciaMedia: "VacanciaMedia",
-                vacanciaFisica: "VacanciaFisica",
-                vacanciaFinanceira: "VacanciaFinanceira",
-                qtdImoveis: "QtdImoveis",
-                alavancagem: "Alavancagem",
-                prazoContratos: "PrazoContratos",
-                rentabilidadeImobiliaria: "RentabilidadeImobiliaria"
-            };
+            let indicadoresEncontrados = 0;
 
-            for (const [campoScraping, colunaCSV] of Object.entries(mapeamento)) {
-                if (dados[campoScraping] && dados[campoScraping] !== "ERRO") {
-                    registro[colunaCSV] = dados[campoScraping];
+            // Percorre todos os indicadores retornados pelo scraping
+            for (const [tituloSite, valor] of Object.entries(dados.indicadores)) {
+                // Verifica se o título está no mapeamento
+                const nomeColuna = MAPEAMENTO[tituloSite];
+                if (nomeColuna && valor && valor !== "ERRO" && valor !== "VAZIO") {
+                    // Verifica se a coluna existe no cabeçalho do CSV
+                    if (cabecalho.includes(nomeColuna)) {
+                        registro[nomeColuna] = valor;
+                        indicadoresEncontrados++;
+                    }
                 }
             }
 
             atualizados++;
-            onProgress(`Resultado: OK (${dados.diagnostico?.encontrados || 0}/10 indicadores)`);
+            onProgress(`Resultado: OK (${indicadoresEncontrados} indicadores atualizados)`);
 
         } catch (erro) {
             console.error(`Erro no scraping de ${ticker}:`, erro);
@@ -289,7 +311,7 @@ async function atualizarFIIs(opcoes = {}) {
     }
 
     // --------------------------------------------------------
-    // 4. GRAVAR CSV
+    // 5. GRAVAR CSV
     // --------------------------------------------------------
     onProgress("");
     onProgress("Gravando patrimonio_consolidado.csv...");
@@ -297,7 +319,7 @@ async function atualizarFIIs(opcoes = {}) {
     const respostaGravacao = await gravarPatrimonioNoWorker(patrimonio, cabecalho);
 
     // --------------------------------------------------------
-    // 5. RESUMO
+    // 6. RESUMO
     // --------------------------------------------------------
     onProgress("");
     onProgress("========================================");
