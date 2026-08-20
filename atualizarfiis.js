@@ -17,24 +17,122 @@ const URL_WORKER_CSV =
     "https://financasonline-csv.augusto-gouveia2000.workers.dev/";
 
 // ============================================================
-// MAPEAMENTO: Títulos do StatusInvest → Colunas do CSV
+// MAPEAMENTO EXPANDIDO: Títulos do StatusInvest → Colunas do CSV
 // ============================================================
 
 const MAPEAMENTO = {
+    // ============================================================
+    // VALOR PATRIMONIAL POR COTA
+    // ============================================================
     "Valor Patrimonial por Cota": "ValorPatrimonialPorCota",
     "Val. Patrimonial P/Cota": "ValorPatrimonialPorCota",
+    "Val. patrimonial p/cota": "ValorPatrimonialPorCota",
+    "Valor Patrimonial P/Cota": "ValorPatrimonialPorCota",
+    "Valor Patrimonial por cota": "ValorPatrimonialPorCota",
+
+    // ============================================================
+    // P/VP
+    // ============================================================
     "P/VP": "PVP",
+
+    // ============================================================
+    // VALOR EM CAIXA
+    // ============================================================
     "Valor em Caixa": "ValorEmCaixa",
+    "Valor em caixa": "ValorEmCaixa",
+    "Valor Em Caixa": "ValorEmCaixa",
+
+    // ============================================================
+    // DY CAGR (3 ANOS)
+    // ============================================================
     "DY CAGR (3 anos)": "DYCAGR3Anos",
+    "DYCAGR3Anos": "DYCAGR3Anos", // fallback direto
+
+    // ============================================================
+    // Nº DE COTISTAS
+    // ============================================================
     "Nº de Cotistas": "NumeroCotistas",
+    "N. de Cotistas": "NumeroCotistas",
+    "Numero de Cotistas": "NumeroCotistas",
+    "Número de Cotistas": "NumeroCotistas",
+
+    // ============================================================
+    // RENDIMENTO MENSAL MÉDIO (24M)
+    // ============================================================
     "Rendimento Mensal Médio (24M)": "RendimentoMensalMedio24M",
     "Rendimento Mensal Médio": "RendimentoMensalMedio24M",
+    "RENDIMENTO MENSAL MÉDIO (24M)": "RendimentoMensalMedio24M",
+    "Rendimento mensal médio (24M)": "RendimentoMensalMedio24M",
+    "Rendimento Médio (24M)": "RendimentoMensalMedio24M",
+
+    // ============================================================
+    // ANO PASSADO
+    // ============================================================
     "Ano passado": "AnoPassado",
+    "Ano Passado": "AnoPassado",
+
+    // ============================================================
+    // ANO ATUAL
+    // ============================================================
     "Ano atual": "AnoAtual",
+    "Ano Atual": "AnoAtual",
+
+    // ============================================================
+    // VOLUME (DIA)
+    // ============================================================
     "Volume (dia)": "VolumeDia",
     "Volume": "VolumeDia",
+    "VOLUME (dia)": "VolumeDia",
+    "Volume Dia": "VolumeDia",
+    "VOLUME DIA": "VolumeDia",
+
+    // ============================================================
+    // SEGMENTO ANBIMA
+    // ============================================================
     "Segmento ANBIMA": "SegmentoANBIMA",
-    "Segmento": "SegmentoANBIMA"
+    "Segmento": "SegmentoANBIMA",
+    "Segmento Anbima": "SegmentoANBIMA",
+
+    // ============================================================
+    // VALOR CAGR (3 ANOS) - se quiser adicionar
+    // ============================================================
+    "Valor CAGR (3 anos)": "ValorCAGR3Anos",
+    "Valor CAGR": "ValorCAGR3Anos",
+
+    // ============================================================
+    // PARTICIPAÇÃO NO IFIX - se quiser adicionar
+    // ============================================================
+    "PARTICIPAÇÃO NO IFIX": "ParticipacaoIFIX",
+    "Participação no IFIX": "ParticipacaoIFIX",
+
+    // ============================================================
+    // PROVISIONADO - se quiser adicionar
+    // ============================================================
+    "Provisionado": "Provisionado",
+
+    // ============================================================
+    // TOMADOR (MÉDIA) - se quiser adicionar
+    // ============================================================
+    "TOMADOR (média)": "TomadorMedia",
+    "Tomador (média)": "TomadorMedia",
+
+    // ============================================================
+    // DOADOR (MÉDIA) - se quiser adicionar
+    // ============================================================
+    "DOADOR (média)": "DoadorMedia",
+    "Doador (média)": "DoadorMedia",
+
+    // ============================================================
+    // Nº DE AÇÕES ALUGADAS (DIA) - se quiser adicionar
+    // ============================================================
+    "Nº DE AÇÕES ALUGADAS (dia)": "NumeroAcoesAlugadasDia",
+    "Nº de Ações Alugadas (dia)": "NumeroAcoesAlugadasDia",
+
+    // ============================================================
+    // Nº DE CONTRATOS - se quiser adicionar
+    // ============================================================
+    "Nº DE CONTRATOS": "NumeroContratos",
+    "Nº de Contratos": "NumeroContratos"
 };
 
 // ============================================================
@@ -173,7 +271,7 @@ async function gravarPatrimonioNoWorker(patrimonio, cabecalho) {
 
 function dadosScrapingValidos(dados) {
     if (!dados || !dados.indicadores) return false;
-    
+
     // Verifica se pelo menos um indicador foi encontrado
     const temAlgumDado = Object.values(dados.indicadores).some(valor => 
         valor && valor !== "ERRO" && valor !== "VAZIO"
@@ -270,7 +368,7 @@ async function atualizarFIIs(opcoes = {}) {
             }
 
             // ------------------------------------------------
-            // ATUALIZAR USANDO O MAPEAMENTO
+            // ATUALIZAR USANDO O MAPEAMENTO EXPANDIDO
             // ------------------------------------------------
             const dataAtualizacao = formatarDataAtualizacao();
             registro.DataAtualizacao = dataAtualizacao;
