@@ -50,6 +50,84 @@
 
             box-sizing: border-box;
         }
+
+        /* =========================================================
+           ESTILOS PARA A ABA AÇÕES
+           ========================================================= */
+
+        .acoes-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 16px 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .acoes-header .btn-atualizar {
+            padding: 10px 24px;
+            background: #00598a;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, opacity 0.2s;
+        }
+
+        .acoes-header .btn-atualizar:hover {
+            background: #003d66;
+        }
+
+        .acoes-header .btn-atualizar:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .acoes-header .status-info {
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        #tabela-acoes-container {
+            margin-top: 20px;
+        }
+
+        #progresso-acoes {
+            margin: 10px 0;
+            padding: 12px 16px;
+            background: #e3f2fd;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #0d47a1;
+            border-left: 4px solid #00598a;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            white-space: pre-wrap;
+            display: none;
+        }
+
+        #progresso-acoes.ativo {
+            display: block;
+        }
+
+        #progresso-acoes.erro {
+            border-left-color: #d32f2f;
+            background: #ffebee;
+            color: #b71c1c;
+        }
+
+        #progresso-acoes.sucesso {
+            border-left-color: #2e7d32;
+            background: #e8f5e9;
+            color: #1b5e20;
+        }
     </style>
 
 </head>
@@ -78,14 +156,12 @@
 
         </div>
 
-
         <nav
             class="tab-navigation"
             aria-label="Navegação principal"
             role="tablist">
 
             <!-- 1. CARTEIRA -->
-
             <button
                 class="tab-button active"
                 type="button"
@@ -93,18 +169,11 @@
                 aria-selected="true"
                 aria-controls="tab-carteira"
                 data-tab="tab-carteira">
-
                 <i class="fa-solid fa-chart-pie"></i>
-
-                <span>
-                    CARTEIRA
-                </span>
-
+                <span>CARTEIRA</span>
             </button>
 
-
             <!-- 2. RENTABILIDADE -->
-
             <button
                 class="tab-button"
                 type="button"
@@ -112,18 +181,11 @@
                 aria-selected="false"
                 aria-controls="tab-rentabilidade"
                 data-tab="tab-rentabilidade">
-
                 <i class="fa-solid fa-arrow-trend-up"></i>
-
-                <span>
-                    RENTABILIDADE
-                </span>
-
+                <span>RENTABILIDADE</span>
             </button>
 
-
             <!-- 3. MERCADO -->
-
             <button
                 class="tab-button"
                 type="button"
@@ -131,68 +193,23 @@
                 aria-selected="false"
                 aria-controls="tab-mercado"
                 data-tab="tab-mercado">
-
                 <i class="fa-solid fa-chart-line"></i>
-
-                <span>
-                    MERCADO
-                </span>
-
-                        </button>
-            <!-- ============================================================
-                 BOTÃO DA ABA AÇÕES
-                 ============================================================ -->
-            
-            <button class="tab-button" data-tab="tab-acoes" role="tab" aria-selected="false">
-                📊 Ações
+                <span>MERCADO</span>
             </button>
-            
-            <!-- ============================================================
-                 ABA AÇÕES
-                 ============================================================ -->
-            
-            <section id="tab-acoes" role="tabpanel" hidden aria-labelledby="tab-acoes">
-                <div class="tab-content">
-                    <h2>📊 Análise de Ações</h2>
-                    <p style="color: #666; margin-bottom: 20px;">
-                        Indicadores fundamentalistas exclusivos para ações.
-                    </p>
-            
-                    <!-- Botão de atualização -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
-                        <div>
-                            <button id="botao-atualizar-acoes" style="
-                                padding: 10px 24px;
-                                background: #00598a;
-                                color: #fff;
-                                border: none;
-                                border-radius: 6px;
-                                font-size: 14px;
-                                font-weight: 600;
-                                cursor: pointer;
-                                transition: background 0.2s;
-                            " onmouseover="this.style.background='#003d66'" onmouseout="this.style.background='#00598a'">
-                                🔄 ATUALIZAR AÇÕES
-                            </button>
-                            <span style="font-size: 12px; color: #999; margin-left: 10px;">
-                                Atualiza os indicadores das ações
-                            </span>
-                        </div>
-                        <div id="status-acoes" style="font-size: 12px; color: #999;">
-                            Última atualização: <span id="ultima-atualizacao-acoes">-</span>
-                        </div>
-                    </div>
-            
-                    <!-- Container da tabela -->
-                    <div id="tabela-acoes-container">
-                        <!-- A tabela será renderizada aqui pelo JavaScript -->
-                    </div>
-                </div>
-            </section>
 
+            <!-- 4. AÇÕES (NOVO) -->
+            <button
+                class="tab-button"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="tab-acoes"
+                data-tab="tab-acoes">
+                <i class="fa-solid fa-building"></i>
+                <span>AÇÕES</span>
+            </button>
 
-            <!-- 4. CONFIGURAÇÃO -->
-
+            <!-- 5. CONFIGURAÇÃO -->
             <button
                 class="tab-button"
                 type="button"
@@ -200,22 +217,15 @@
                 aria-selected="false"
                 aria-controls="tab-configuracao"
                 data-tab="tab-configuracao">
-
                 <i class="fa-solid fa-gear"></i>
-
-                <span>
-                    CONFIGURAÇÃO
-                </span>
-
+                <span>CONFIGURAÇÃO</span>
             </button>
 
         </nav>
 
     </header>
 
-
     <main class="app-main">
-
 
         <!-- =========================================================
              1. CARTEIRA
@@ -248,11 +258,7 @@
 
             </div>
 
-
-            <!-- =====================================================
-                 KPIs
-                 ===================================================== -->
-
+            <!-- KPIs -->
             <div
                 id="kpisCarteira"
                 class="kpi-grid"
@@ -274,7 +280,6 @@
 
                 </article>
 
-
                 <article class="kpi-card">
 
                     <span class="kpi-icon kpi-blue">
@@ -290,7 +295,6 @@
                     </strong>
 
                 </article>
-
 
                 <article class="kpi-card">
 
@@ -312,7 +316,6 @@
 
                 </article>
 
-
                 <article class="kpi-card">
 
                     <span class="kpi-icon kpi-purple">
@@ -328,7 +331,6 @@
                     </strong>
 
                 </article>
-
 
                 <article class="kpi-card">
 
@@ -348,16 +350,10 @@
 
             </div>
 
-
-            <!-- =====================================================
-                 GRÁFICOS
-                 ===================================================== -->
-
+            <!-- GRÁFICOS -->
             <div class="charts-grid">
 
-
                 <!-- GRÁFICO 1 — ROSCA -->
-
                 <article class="chart-card chart-card-wide">
 
                     <div class="chart-heading">
@@ -383,9 +379,7 @@
 
                 </article>
 
-
                 <!-- GRÁFICO 2 — LUCRO / PREJUÍZO -->
-
                 <article class="chart-card chart-card-wide">
 
                     <div class="chart-heading">
@@ -411,9 +405,7 @@
 
                 </article>
 
-
                 <!-- GRÁFICO 3 — CLASSE -->
-
                 <article class="chart-card chart-card-wide">
 
                     <div class="chart-heading">
@@ -441,18 +433,10 @@
 
             </div>
 
-
-            <!-- =====================================================
-                 TABELA DA CARTEIRA
-                 Fica abaixo dos 3 gráficos.
-                 O JavaScript monta a tabela aqui.
-                 ===================================================== -->
-
+            <!-- TABELA DA CARTEIRA -->
             <div id="tabelaCarteira"></div>
 
-
         </section>
-
 
         <!-- =========================================================
              2. RENTABILIDADE
@@ -488,7 +472,6 @@
             <div id="conteudoRentabilidade"></div>
 
         </section>
-
 
         <!-- =========================================================
              3. MERCADO
@@ -526,9 +509,69 @@
 
         </section>
 
+        <!-- =========================================================
+             4. AÇÕES (NOVA ABA)
+             ========================================================= -->
+
+        <section
+            id="tab-acoes"
+            class="tab-content"
+            role="tabpanel"
+            hidden
+            aria-labelledby="tab-acoes">
+
+            <div class="page-heading">
+
+                <div>
+
+                    <span class="eyebrow">
+                        <i class="fa-solid fa-building"></i>
+                        Análise fundamentalista
+                    </span>
+
+                    <h1>
+                        Análise de Ações
+                    </h1>
+
+                    <p>
+                        Indicadores exclusivos para ações da sua carteira.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <!-- Cabeçalho com botão e status -->
+            <div class="acoes-header">
+                <div>
+                    <button
+                        id="botao-atualizar-acoes"
+                        class="btn-atualizar"
+                        type="button">
+                        <i class="fa-solid fa-rotate"></i>
+                        ATUALIZAR AÇÕES
+                    </button>
+                    <span style="font-size: 12px; color: #6c757d; margin-left: 12px;">
+                        Busca os indicadores no StatusInvest
+                    </span>
+                </div>
+                <div class="status-info">
+                    Última atualização: <span id="ultima-atualizacao-acoes">-</span>
+                </div>
+            </div>
+
+            <!-- Área de progresso -->
+            <div id="progresso-acoes"></div>
+
+            <!-- Container da tabela -->
+            <div id="tabela-acoes-container">
+                <!-- A tabela será renderizada aqui pelo JavaScript -->
+            </div>
+
+        </section>
 
         <!-- =========================================================
-             4. CONFIGURAÇÃO
+             5. CONFIGURAÇÃO
              ========================================================= -->
 
         <section
@@ -559,7 +602,6 @@
 
             </div>
 
-
             <div class="content-card portfolio-card">
 
                 <div
@@ -578,7 +620,6 @@
 
     </main>
 
-
     <!-- =============================================================
          CHART.JS
          ============================================================= -->
@@ -586,7 +627,6 @@
     <script
         src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
     </script>
-
 
     <!-- =============================================================
          APLICAÇÃO PRINCIPAL
