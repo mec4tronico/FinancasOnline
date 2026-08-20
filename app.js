@@ -1,105 +1,332 @@
-import { atualizarAbaCarteira } from "./aba_carteira.js";
+// ============================================================================
+// APP.JS
+// ============================================================================
+//
+// Responsável por:
+//
+// - Inicializar a aplicação
+// - Inicializar a aba Carteira automaticamente
+// - Inicializar a aba Configuração
+// - Controlar a navegação entre as abas
+// - Carregar Rentabilidade quando a aba for aberta
+// - Carregar Mercado quando a aba for aberta
+//
+// ============================================================================
+
+
+// ============================================================================
+// IMPORTAÇÕES
+// ============================================================================
+
+import {
+    atualizarAbaCarteira
+} from "./aba_carteira.js";
+
+
 import {
     iniciarAbaConfiguracao,
     carregarAbaConfiguracao
 } from "./aba_configuracao.js";
 
 
-document.addEventListener("DOMContentLoaded", () => {
+import {
+    atualizarAbaRentabilidade
+} from "./aba_rentabilidade.js";
 
-    // ===================================================================
-    // 1. INICIALIZAÇÃO DA CARTEIRA
-    // ===================================================================
-    //
-    // A Carteira é a primeira aba e deve carregar automaticamente:
-    // - KPIs
-    // - 3 gráficos
-    // - tabela da carteira
-    //
-    // Tudo é carregado pelo aba_carteira.js
-    //
 
-    atualizarAbaCarteira()
-        .catch(erro => {
+import {
+    atualizarAbaMercado
+} from "./aba_mercado.js";
+
+
+// ============================================================================
+// INICIALIZAÇÃO DA APLICAÇÃO
+// ============================================================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+
+        // ====================================================================
+        // 1. INICIALIZAÇÃO DA CARTEIRA
+        // ====================================================================
+        //
+        // A Carteira é a primeira aba.
+        //
+        // Ela deve ser carregada automaticamente quando o site abrir.
+        //
+        // Carrega:
+        // - KPIs
+        // - Gráfico de distribuição
+        // - Gráfico de patrimônio por classe
+        // - Gráfico de lucro/prejuízo
+        // - Tabela da carteira
+        //
+        // ====================================================================
+
+        atualizarAbaCarteira()
+            .catch(
+                erro => {
+
+                    console.error(
+                        "Erro ao inicializar a aba Carteira:",
+                        erro
+                    );
+
+                }
+            );
+
+
+        // ====================================================================
+        // 2. INICIALIZAÇÃO DA CONFIGURAÇÃO
+        // ====================================================================
+        //
+        // A Configuração precisa ser inicializada uma vez para preparar
+        // seus controles e eventos.
+        //
+        // O carregamento dos dados continua acontecendo quando a aba
+        // for acessada.
+        //
+        // ====================================================================
+
+        try {
+
+            if (
+                typeof iniciarAbaConfiguracao ===
+                "function"
+            ) {
+
+                iniciarAbaConfiguracao();
+
+            }
+
+        } catch (erro) {
 
             console.error(
-                "Erro ao inicializar a aba Carteira:",
+                "Erro ao iniciar a aba Configuração:",
                 erro
             );
 
-        });
-
-
-    // ===================================================================
-    // 2. INICIALIZAÇÃO DA CONFIGURAÇÃO
-    // ===================================================================
-
-    try {
-
-        if (
-            typeof iniciarAbaConfiguracao === "function"
-        ) {
-
-            iniciarAbaConfiguracao();
-
         }
 
-    } catch (erro) {
 
-        console.error(
-            "Erro ao iniciar a aba Configuração:",
-            erro
-        );
+        // ====================================================================
+        // 3. LOCALIZAR BOTÕES DAS ABAS
+        // ====================================================================
 
-    }
-
-
-    // ===================================================================
-    // 3. NAVEGAÇÃO ENTRE ABAS
-    // ===================================================================
-
-    const botoesAbas =
-        document.querySelectorAll(".tab-button");
+        const botoesAbas =
+            document.querySelectorAll(
+                ".tab-button"
+            );
 
 
-    function navegarPara(idAbaAlvo) {
+        // ====================================================================
+        // 4. FUNÇÃO DE NAVEGAÇÃO
+        // ====================================================================
 
-        botoesAbas.forEach(botao => {
-
-            const idAba =
-                botao.dataset.tab;
-
-            const section =
-                document.getElementById(idAba);
+        function navegarPara(idAbaAlvo) {
 
 
-            // -----------------------------------------------------------
-            // ABA ATIVA
-            // -----------------------------------------------------------
+            // =================================================================
+            // PERCORRER TODAS AS ABAS
+            // =================================================================
+
+            botoesAbas.forEach(
+                botao => {
+
+
+                    const idAba =
+                        botao.dataset.tab;
+
+
+                    const section =
+                        document.getElementById(
+                            idAba
+                        );
+
+
+                    // =========================================================
+                    // ABA ATIVA
+                    // =========================================================
+
+                    if (
+                        idAba === idAbaAlvo
+                    ) {
+
+                        botao.classList.add(
+                            "active"
+                        );
+
+
+                        botao.setAttribute(
+                            "aria-selected",
+                            "true"
+                        );
+
+
+                        if (section) {
+
+                            section.removeAttribute(
+                                "hidden"
+                            );
+
+
+                            section.style.display =
+                                "block";
+
+
+                            section.classList.add(
+                                "active"
+                            );
+
+                        }
+
+                    }
+
+
+                    // =========================================================
+                    // DEMAIS ABAS
+                    // =========================================================
+
+                    else {
+
+                        botao.classList.remove(
+                            "active"
+                        );
+
+
+                        botao.setAttribute(
+                            "aria-selected",
+                            "false"
+                        );
+
+
+                        if (section) {
+
+                            section.setAttribute(
+                                "hidden",
+                                ""
+                            );
+
+
+                            section.style.display =
+                                "none";
+
+
+                            section.classList.remove(
+                                "active"
+                            );
+
+                        }
+
+                    }
+
+                }
+            );
+
+
+            // =================================================================
+            // 5. CARREGAR CONTEÚDO DA ABA CONFIGURAÇÃO
+            // =================================================================
+            //
+            // Sempre que a aba Configuração for aberta,
+            // seus dados são recarregados.
+            //
+            // =================================================================
 
             if (
-                idAba === idAbaAlvo
+                idAbaAlvo ===
+                "tab-configuracao"
             ) {
 
-                botao.classList.add("active");
+                try {
 
-                botao.setAttribute(
-                    "aria-selected",
-                    "true"
-                );
+                    const resultado =
+                        carregarAbaConfiguracao();
 
 
-                if (section) {
+                    // Caso a função seja assíncrona,
+                    // também capturamos erros da Promise.
 
-                    section.removeAttribute(
-                        "hidden"
+                    if (
+                        resultado &&
+                        typeof resultado.catch ===
+                        "function"
+                    ) {
+
+                        resultado.catch(
+                            erro => {
+
+                                console.error(
+                                    "Erro ao carregar a aba Configuração:",
+                                    erro
+                                );
+
+                            }
+                        );
+
+                    }
+
+                } catch (erro) {
+
+                    console.error(
+                        "Erro ao carregar a aba Configuração:",
+                        erro
                     );
 
-                    section.style.display =
-                        "block";
+                }
 
-                    section.classList.add(
-                        "active"
+            }
+
+
+            // =================================================================
+            // 6. CARREGAR ABA RENTABILIDADE
+            // =================================================================
+            //
+            // A Rentabilidade não é carregada na inicialização.
+            //
+            // Ela é carregada somente quando o usuário clicar nela.
+            //
+            // =================================================================
+
+            if (
+                idAbaAlvo ===
+                "tab-rentabilidade"
+            ) {
+
+                try {
+
+                    const resultado =
+                        atualizarAbaRentabilidade();
+
+
+                    // Captura erros caso a função seja assíncrona.
+
+                    if (
+                        resultado &&
+                        typeof resultado.catch ===
+                        "function"
+                    ) {
+
+                        resultado.catch(
+                            erro => {
+
+                                console.error(
+                                    "Erro ao carregar a aba Rentabilidade:",
+                                    erro
+                                );
+
+                            }
+                        );
+
+                    }
+
+                } catch (erro) {
+
+                    console.error(
+                        "Erro ao carregar a aba Rentabilidade:",
+                        erro
                     );
 
                 }
@@ -107,116 +334,129 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
 
-            // -----------------------------------------------------------
-            // DEMAIS ABAS
-            // -----------------------------------------------------------
+            // =================================================================
+            // 7. CARREGAR ABA MERCADO
+            // =================================================================
+            //
+            // A aba Mercado também é carregada somente quando acessada.
+            //
+            // =================================================================
 
-            else {
+            if (
+                idAbaAlvo ===
+                "tab-mercado"
+            ) {
 
-                botao.classList.remove(
-                    "active"
-                );
+                try {
 
-                botao.setAttribute(
-                    "aria-selected",
-                    "false"
-                );
+                    const resultado =
+                        atualizarAbaMercado();
 
 
-                if (section) {
+                    // Captura erros caso a função seja assíncrona.
 
-                    section.setAttribute(
-                        "hidden",
-                        ""
-                    );
+                    if (
+                        resultado &&
+                        typeof resultado.catch ===
+                        "function"
+                    ) {
 
-                    section.style.display =
-                        "none";
+                        resultado.catch(
+                            erro => {
 
-                    section.classList.remove(
-                        "active"
+                                console.error(
+                                    "Erro ao carregar a aba Mercado:",
+                                    erro
+                                );
+
+                            }
+                        );
+
+                    }
+
+                } catch (erro) {
+
+                    console.error(
+                        "Erro ao carregar a aba Mercado:",
+                        erro
                     );
 
                 }
 
             }
 
-        });
+        }
 
 
-        // ===================================================================
-        // 4. CONFIGURAÇÃO
-        // ===================================================================
+        // ====================================================================
+        // 8. REGISTRAR CLIQUES DOS BOTÕES DAS ABAS
+        // ====================================================================
+
+        botoesAbas.forEach(
+            botao => {
+
+
+                const idAlvo =
+                    botao.dataset.tab;
+
+
+                if (!idAlvo) {
+
+                    return;
+
+                }
+
+
+                botao.addEventListener(
+                    "click",
+                    () => {
+
+                        navegarPara(
+                            idAlvo
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+
+        // ====================================================================
+        // 9. ABRIR CARTEIRA AUTOMATICAMENTE
+        // ====================================================================
         //
-        // Quando entrar na Configuração, o CSV completo é recarregado.
+        // A Carteira é a primeira aba da aplicação.
         //
+        // Portanto, ao abrir o site:
+        //
+        // - Carteira fica visível
+        // - As outras abas ficam ocultas
+        // - O botão Carteira recebe a classe "active"
+        //
+        // ====================================================================
+
+        const primeiraAbaCarteira =
+            document.getElementById(
+                "tab-carteira"
+            );
+
 
         if (
-            idAbaAlvo ===
-            "tab-configuracao"
+            primeiraAbaCarteira
         ) {
 
-            try {
+            navegarPara(
+                "tab-carteira"
+            );
 
-                carregarAbaConfiguracao();
+        } else {
 
-            } catch (erro) {
-
-                console.error(
-                    "Erro ao carregar a aba Configuração:",
-                    erro
-                );
-
-            }
+            console.error(
+                "A aba Carteira (#tab-carteira) não foi encontrada no HTML."
+            );
 
         }
 
     }
-
-
-    // ===================================================================
-    // 5. REGISTRAR CLIQUES DAS ABAS
-    // ===================================================================
-
-    botoesAbas.forEach(botao => {
-
-        const idAlvo =
-            botao.dataset.tab;
-
-
-        if (!idAlvo) {
-            return;
-        }
-
-
-        botao.addEventListener(
-            "click",
-            () => {
-
-                navegarPara(idAlvo);
-
-            }
-        );
-
-    });
-
-
-    // ===================================================================
-    // 6. ABRIR CARTEIRA AUTOMATICAMENTE
-    // ===================================================================
-
-    const primeiraAbaCarteira =
-        document.getElementById(
-            "tab-carteira"
-        );
-
-
-    if (primeiraAbaCarteira) {
-
-        navegarPara(
-            "tab-carteira"
-        );
-
-    }
-
-});
+);
