@@ -16,7 +16,7 @@
  * ============================================================================
  */
 
-import { atualizarMercado } from "./atualizar.js";
+import { atualizarFIIs } from "./atualizar.js";
 
 const ARQUIVO_CSV = 'patrimonio_consolidado.csv';
 
@@ -264,10 +264,10 @@ function renderizarTabelaConfiguracao() {
 
             <div class="acoes-aba">
                 <button
-                    id="btn-atualizar-mercado"
+                    id="btn-atualizar-FIIs"
                     class="btn-padrao"
                 >
-                    Atualizar Mercado
+                    Atualizar FIIs
                 </button>
             </div>
         </div>
@@ -413,14 +413,14 @@ function renderizarTabelaConfiguracao() {
 
 function configurarEventosInterativos() {
 
-    const btnAtualizarMercado =
-        document.getElementById('btn-atualizar-mercado');
+    const btnAtualizarFIIs =
+        document.getElementById('btn-atualizar-FIIs');
 
-    if (!btnAtualizarMercado) {
+    if (!btnAtualizarFIIs) {
         return;
     }
 
-    btnAtualizarMercado.addEventListener(
+    btnAtualizarFIIs.addEventListener(
         'click',
         async () => {
 
@@ -434,7 +434,7 @@ function configurarEventosInterativos() {
 
             try {
 
-                await atualizarMercado({
+                await atualizarFIIs({
 
                     onProgress: mensagem => {
 

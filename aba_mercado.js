@@ -1,19 +1,19 @@
 // ============================================================
-// ABA MERCADO
+// ABA FIIs
 // ============================================================
 // Estrutura inicial.
 // Conteúdo será implementado futuramente.
 // ============================================================
 
-function atualizarAbaMercado() {
+function atualizarAbaFIIs() {
 
     const container =
-        document.getElementById("tab-mercado");
+        document.getElementById("tab-FIIs");
 
     if (!container) {
 
         console.error(
-            "[Aba Mercado] Container #tab-mercado não encontrado."
+            "[Aba FIIs] Container #tab-FIIs não encontrado."
         );
 
         return;
@@ -31,7 +31,7 @@ function atualizarAbaMercado() {
                 Em desenvolvimento
             </span>
 
-            <h2>Mercado</h2>
+            <h2>FIIs</h2>
 
             <p>
                 Esta aba ainda vai ser implementada no futuro.
@@ -43,5 +43,5 @@ function atualizarAbaMercado() {
 }
 
 export {
-    atualizarAbaMercado
+    atualizarAbaFIIs
 };

@@ -243,7 +243,7 @@ async function scrapingAcoes(ticker) {
     const pl = obterValorPorTitulo("P/L");
     const pvp = obterValorPorTitulo("P/VP");
     const evebitda = obterValorPorTitulo("EV/EBITDA");
-    const valorFirma = obterValorPorTitulo("VALOR DE MERCADO") || 
+    const valorFirma = obterValorPorTitulo("VALOR DE FIIs") || 
                        obterValorPorTitulo("ENTERPRISE VALUE");
 
     // Endividamento

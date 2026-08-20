@@ -9,7 +9,7 @@
 // - Inicializar a aba Configuração
 // - Controlar a navegação entre as abas
 // - Carregar Rentabilidade quando a aba for aberta
-// - Carregar Mercado quando a aba for aberta
+// - Carregar FIIs quando a aba for aberta
 // - Carregar Ações quando a aba for aberta (NOVO)
 //
 // ============================================================================
@@ -32,8 +32,8 @@ import {
 } from "./aba_rentabilidade.js";
 
 import {
-    atualizarAbaMercado
-} from "./aba_mercado.js";
+    atualizarAbaFIIs
+} from "./aba_FIIs.js";
 
 // ============================================================================
 // IMPORTAÇÃO DA NOVA ABA AÇÕES
@@ -290,18 +290,18 @@ document.addEventListener(
             }
 
             // =================================================================
-            // 8. CARREGAR ABA MERCADO
+            // 8. CARREGAR ABA FIIs
             // =================================================================
 
             if (
                 idAbaAlvo ===
-                "tab-mercado"
+                "tab-FIIs"
             ) {
 
                 try {
 
                     const resultado =
-                        atualizarAbaMercado();
+                        atualizarAbaFIIs();
 
                     if (
                         resultado &&
@@ -313,7 +313,7 @@ document.addEventListener(
                             erro => {
 
                                 console.error(
-                                    "Erro ao carregar a aba Mercado:",
+                                    "Erro ao carregar a aba FIIs:",
                                     erro
                                 );
 
@@ -325,7 +325,7 @@ document.addEventListener(
                 } catch (erro) {
 
                     console.error(
-                        "Erro ao carregar a aba Mercado:",
+                        "Erro ao carregar a aba FIIs:",
                         erro
                     );
 

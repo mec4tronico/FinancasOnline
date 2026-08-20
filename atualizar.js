@@ -6,8 +6,8 @@
 //
 // 1. Ler patrimonio_consolidado.csv
 // 2. Executar scraping dos ativos
-// 3. Validar os dados de mercado
-// 4. Atualizar somente as colunas de mercado
+// 3. Validar os dados de FIIs
+// 4. Atualizar somente as colunas de FIIs
 // 5. Manter dados anteriores quando houver erro
 // 6. Executar calculos.js para as colunas calculadas
 // 7. Gravar patrimonio_consolidado.csv no GitHub
@@ -16,7 +16,7 @@
 // - O CSV pode possuir 40 colunas.
 // - A estrutura é obtida diretamente do cabeçalho do CSV.
 // - Nenhuma coluna é removida ou recriada.
-// - Somente as colunas de mercado são alteradas pelo scraping.
+// - Somente as colunas de FIIs são alteradas pelo scraping.
 //
 // NÃO é responsabilidade deste arquivo:
 // - criar botões
@@ -59,7 +59,7 @@ const URL_WORKER_CSV =
 // As demais colunas existentes no CSV são preservadas.
 //
 
-const COLUNAS_MERCADO = [
+const COLUNAS_FIIs = [
 
     "DataAtualizacao",
     "ValorAtual",
@@ -176,7 +176,7 @@ function converterCSVParaPatrimonio(texto) {
 
         "Ativo",
         "Tipo",
-        ...COLUNAS_MERCADO
+        ...COLUNAS_FIIs
 
     ];
 
@@ -674,10 +674,10 @@ async function gravarPatrimonioNoWorker(
 
 
 // ============================================================
-// ATUALIZAR MERCADO
+// ATUALIZAR FIIs
 // ============================================================
 
-async function atualizarMercado(
+async function atualizarFIIs(
     opcoes = {}
 ) {
 
@@ -740,7 +740,7 @@ async function atualizarMercado(
 
 
     onProgress(
-        "ATUALIZAÇÃO DE MERCADO"
+        "ATUALIZAÇÃO DE FIIs"
     );
 
 
@@ -843,7 +843,7 @@ for (
         }
 
         // ------------------------------------------------
-        // ATUALIZAR AS COLUNAS DE MERCADO (já existentes)
+        // ATUALIZAR AS COLUNAS DE FIIs (já existentes)
         // ------------------------------------------------
 
         registro.DataAtualizacao =
@@ -1024,7 +1024,7 @@ for (
 
 
     onProgress(
-        "Atualização de mercado concluída."
+        "Atualização de FIIs concluída."
     );
 
 
@@ -1054,6 +1054,6 @@ for (
 
 export {
 
-    atualizarMercado
+    atualizarFIIs
 
 };
