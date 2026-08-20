@@ -677,7 +677,7 @@ async function gravarPatrimonioNoWorker(
 // ATUALIZAR FIIs
 // ============================================================
 
-async function atualizarFIIs(
+async function atualizarBasico(
     opcoes = {}
 ) {
 
@@ -1054,6 +1054,6 @@ for (
 
 export {
 
-    atualizarFIIs
+    atualizarBasico
 
 };
