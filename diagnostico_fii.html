@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico scrapingFIIs</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        h1 { color: #00598a; }
+        .controles { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+        button { padding: 10px 20px; font-size: 14px; cursor: pointer; background: #00598a; color: #fff; border: none; border-radius: 6px; }
+        button:hover { background: #003d66; }
+        input { padding: 10px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; width: 150px; }
+        #status { margin: 15px 0; padding: 12px 16px; background: #e3f2fd; border-radius: 6px; border-left: 4px solid #00598a; font-weight: bold; }
+        #status.erro { background: #ffebee; border-left-color: #d32f2f; color: #b71c1c; }
+        #status.sucesso { background: #e8f5e9; border-left-color: #2e7d32; color: #1b5e20; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 15px; }
+        th { background: #f5f5f5; padding: 10px; text-align: left; border-bottom: 2px solid #e0e0e0; }
+        td { padding: 8px 10px; border-bottom: 1px solid #f0f0f0; }
+        .titulo { font-weight: 600; color: #00598a; }
+        .valor { color: #2e7d32; }
+        .nao-encontrado { color: #999; font-style: italic; }
+        #log { background: #1e1e1e; color: #d4d4d4; padding: 15px; font-family: Consolas, monospace; font-size: 12px; max-height: 200px; overflow-y: auto; white-space: pre-wrap; margin-top: 20px; border-radius: 6px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Diagnóstico scrapingFIIs</h1>
+        <p>Este teste chama o <code>scrapingFIIs(ticker)</code> e exibe os títulos <strong>exatamente</strong> como são retornados.</p>
+
+        <div class="controles">
+            <label>Ticker:
+                <input id="ticker" type="text" value="HCTR11">
+            </label>
+            <button id="btnTestar">🚀 Testar scraping</button>
+        </div>
+
+        <div id="status">Aguardando...</div>
+
+        <div id="resultado">
+            <p style="color: #999;">Clique em "Testar scraping" para buscar os indicadores.</p>
+        </div>
+
+        <div id="log">📋 Aguardando execução...</div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "./scrapingfiis.js": "./scrapingfiis.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import { scrapingFIIs } from './scrapingfiis.js';
+
+        const logEl = document.getElementById('log');
+        const statusEl = document.getElementById('status');
+        const resultadoEl = document.getElementById('resultado');
+
+        function adicionarLog(mensagem, tipo = 'info') {
+            const classes = { 'info': 'log-info', 'sucesso': 'log-sucesso', 'erro': 'log-erro', 'destaque': 'log-destaque' };
+            const span = document.createElement('span');
+            span.className = classes[tipo] || 'log-info';
+            span.textContent = mensagem + '\n';
+            logEl.appendChild(span);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function limparLog() {
+            logEl.innerHTML = '';
+        }
+
+        function setStatus(mensagem, tipo = '') {
+            statusEl.textContent = mensagem;
+            statusEl.className = tipo;
+        }
+
+        async function testarScraping() {
+            const ticker = document.getElementById('ticker').value.trim().toUpperCase();
+            if (!ticker) {
+                alert('Informe um ticker.');
+                return;
+            }
+
+            const botao = document.getElementById('btnTestar');
+            botao.disabled = true;
+            botao.textContent = '⏳ Buscando...';
+
+            limparLog();
+            setStatus(`🔄 Buscando indicadores para ${ticker}...`, '');
+
+            try {
+                const resultado = await scrapingFIIs(ticker);
+
+                if (resultado.erroDiagnostico) {
+                    setStatus(`❌ Erro: ${resultado.erroDiagnostico}`, 'erro');
+                    adicionarLog(`❌ Erro: ${resultado.erroDiagnostico}`, 'erro');
+                    botao.disabled = false;
+                    botao.textContent = '🚀 Testar scraping';
+                    return;
+                }
+
+                const indicadores = resultado.indicadores || {};
+                const total = Object.keys(indicadores).length;
+
+                setStatus(`✅ ${total} indicadores encontrados para ${ticker}.`, 'sucesso');
+                adicionarLog(`✅ ${total} indicadores encontrados.`, 'sucesso');
+
+                // ============================================================
+                // RENDERIZAR TABELA COM OS TÍTULOS EXATOS
+                // ============================================================
+
+                let html = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 50%;">📌 Título EXATO (como retornado)</th>
+                                <th style="width: 50%;">📊 Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                if (total === 0) {
+                    html += `
+                        <tr>
+                            <td colspan="2" style="text-align: center; color: #999; padding: 20px;">
+                                Nenhum indicador encontrado.
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    // Ordenar por título para facilitar a leitura
+                    const sorted = Object.keys(indicadores).sort();
+                    for (const titulo of sorted) {
+                        const valor = indicadores[titulo];
+                        html += `
+                            <tr>
+                                <td class="titulo">${titulo}</td>
+                                <td class="valor">${valor}</td>
+                            </tr>
+                        `;
+                    }
+                }
+
+                html += `
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 15px; padding: 12px 16px; background: #f9f9f9; border-radius: 6px; font-size: 12px; color: #555; border: 1px dashed #ccc;">
+                        <strong>💡 Dica:</strong> Copie os títulos <strong>exatamente</strong> como aparecem na coluna "Título EXATO" e verifique se eles estão no <code>MAPEAMENTO</code> do <code>atualizarfiis.js</code>.
+                    </div>
+                    <div style="margin-top: 8px; padding: 10px; background: #fff3cd; border-radius: 6px; font-size: 12px; color: #856404; border: 1px solid #ffc107;">
+                        <strong>🔑 Títulos para verificar no mapeamento:</strong><br>
+                        <code style="display: block; margin-top: 5px; white-space: pre-wrap; word-break: break-all;">
+                            ${sorted.map(t => `"${t}"`).join(', ')}
+                        </code>
+                    </div>
+                `;
+
+                resultadoEl.innerHTML = html;
+
+                // Log dos títulos para facilitar cópia
+                adicionarLog('\n📋 Títulos encontrados:');
+                for (const titulo of sorted) {
+                    adicionarLog(`  "${titulo}"`);
+                }
+
+            } catch (erro) {
+                console.error(erro);
+                setStatus(`❌ Erro: ${erro.message}`, 'erro');
+                adicionarLog(`❌ ERRO: ${erro.message}`, 'erro');
+                resultadoEl.innerHTML = `<p style="color: #d32f2f;">❌ Erro ao executar scraping: ${erro.message}</p>`;
+            }
+
+            botao.disabled = false;
+            botao.textContent = '🚀 Testar scraping';
+        }
+
+        // ============================================================
+        // EVENTOS
+        // ============================================================
+
+        document.getElementById('btnTestar').addEventListener('click', testarScraping);
+
+        // Permitir Enter no campo de ticker
+        document.getElementById('ticker').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                testarScraping();
+            }
+        });
+
+        // Carregar automaticamente ao abrir a página
+        setTimeout(testarScraping, 300);
+    </script>
+</body>
+</html>
