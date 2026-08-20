@@ -22,6 +22,10 @@
         .valor { color: #2e7d32; }
         .nao-encontrado { color: #999; font-style: italic; }
         #log { background: #1e1e1e; color: #d4d4d4; padding: 15px; font-family: Consolas, monospace; font-size: 12px; max-height: 200px; overflow-y: auto; white-space: pre-wrap; margin-top: 20px; border-radius: 6px; }
+        .log-info { color: #4fc3f7; }
+        .log-sucesso { color: #81c784; }
+        .log-erro { color: #e57373; }
+        .log-destaque { color: #ffb74d; }
     </style>
 </head>
 <body>
@@ -61,9 +65,8 @@
         const resultadoEl = document.getElementById('resultado');
 
         function adicionarLog(mensagem, tipo = 'info') {
-            const classes = { 'info': 'log-info', 'sucesso': 'log-sucesso', 'erro': 'log-erro', 'destaque': 'log-destaque' };
             const span = document.createElement('span');
-            span.className = classes[tipo] || 'log-info';
+            span.className = `log-${tipo}`;
             span.textContent = mensagem + '\n';
             logEl.appendChild(span);
             logEl.scrollTop = logEl.scrollHeight;
@@ -113,6 +116,9 @@
                 // RENDERIZAR TABELA COM OS TÍTULOS EXATOS
                 // ============================================================
 
+                // Ordenar os títulos para facilitar a leitura
+                const sortedTitulos = Object.keys(indicadores).sort();
+
                 let html = `
                     <table>
                         <thead>
@@ -133,9 +139,7 @@
                         </tr>
                     `;
                 } else {
-                    // Ordenar por título para facilitar a leitura
-                    const sorted = Object.keys(indicadores).sort();
-                    for (const titulo of sorted) {
+                    for (const titulo of sortedTitulos) {
                         const valor = indicadores[titulo];
                         html += `
                             <tr>
@@ -155,7 +159,7 @@
                     <div style="margin-top: 8px; padding: 10px; background: #fff3cd; border-radius: 6px; font-size: 12px; color: #856404; border: 1px solid #ffc107;">
                         <strong>🔑 Títulos para verificar no mapeamento:</strong><br>
                         <code style="display: block; margin-top: 5px; white-space: pre-wrap; word-break: break-all;">
-                            ${sorted.map(t => `"${t}"`).join(', ')}
+                            ${sortedTitulos.map(t => `"${t}"`).join(', ')}
                         </code>
                     </div>
                 `;
@@ -164,7 +168,7 @@
 
                 // Log dos títulos para facilitar cópia
                 adicionarLog('\n📋 Títulos encontrados:');
-                for (const titulo of sorted) {
+                for (const titulo of sortedTitulos) {
                     adicionarLog(`  "${titulo}"`);
                 }
 
