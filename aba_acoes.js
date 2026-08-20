@@ -131,7 +131,7 @@ function renderizarGraficos(acoes) {
 }
 
 // ============================================================
-// GRÁFICO 1: Valorização vs DY (Dispersão) - COM BOLHAS 8x MAIORES
+// GRÁFICO 1: Valorização vs DY (Dispersão) - COM TAMANHO MÍNIMO
 // ============================================================
 
 function renderizarValorizacaoVsDY(acoes) {
@@ -188,8 +188,11 @@ function renderizarValorizacaoVsDY(acoes) {
                     backgroundColor: 'rgba(33, 150, 243, 0.7)',
                     borderColor: 'rgba(33, 150, 243, 1)',
                     borderWidth: 1,
-                    // BOLHAS 8x MAIORES: multiplicador antigo (2) * 8 = 16
-                    pointRadius: dadosValidos.map(d => Math.sqrt(d.volume / 1000000) * 16 + 3)
+                    // TAMANHO MÍNIMO: 8px
+                    pointRadius: dadosValidos.map(d => {
+                        const tamanho = Math.sqrt(d.volume / 1000000) * 16 + 3;
+                        return Math.max(tamanho, 8); // Mínimo 8px
+                    })
                 }]
             },
             options: {
@@ -233,7 +236,7 @@ function renderizarValorizacaoVsDY(acoes) {
     container.insertAdjacentHTML('beforeend', `
         <div style="font-size: 11px; color: #666; margin-top: 8px; text-align: center; border-top: 1px solid #eee; padding-top: 8px;">
             📌 <strong>O que mostra:</strong> Relação entre o Dividend Yield (eixo X) e a Valorização da ação (eixo Y). 
-            O tamanho da bolha representa o volume negociado (8x maior para melhor visualização).
+            O tamanho da bolha representa o volume negociado (mínimo de 8px para visibilidade).
             <span style="display: block; margin-top: 2px; color: #999;">
                 🔍 Quanto mais à direita, maior o DY. Quanto mais acima, maior a valorização.
             </span>
@@ -242,7 +245,7 @@ function renderizarValorizacaoVsDY(acoes) {
 }
 
 // ============================================================
-// GRÁFICO 2: Tamanho vs Valorização (Bolhas) - COM BOLHAS 8x MAIORES
+// GRÁFICO 2: Tamanho vs Valorização (Bolhas) - COM TAMANHO MÍNIMO
 // ============================================================
 
 function renderizarTamanhoVsValorizacao(acoes) {
@@ -267,8 +270,8 @@ function renderizarTamanhoVsValorizacao(acoes) {
         return {
             x: isNaN(valorMercado) ? 0 : valorMercado / 1000000000,
             y: isNaN(valorizacao) ? 0 : valorizacao,
-            // BOLHAS 8x MAIORES: multiplicador antigo (3) * 8 = 24
-            r: Math.sqrt(Math.abs(valorFirma) / 1000000000) * 24 + 3,
+            // TAMANHO MÍNIMO: 10px
+            r: Math.max(Math.sqrt(Math.abs(valorFirma) / 1000000000) * 24 + 3, 10),
             label: acao.Ativo,
             setor: acao.Setor || "Outros"
         };
@@ -281,7 +284,7 @@ function renderizarTamanhoVsValorizacao(acoes) {
             <p style="color: #999; font-size: 13px;">Sem dados suficientes para exibir o gráfico.</p>
             <div style="font-size: 11px; color: #999; margin-top: 5px;">
                 📌 Este gráfico mostra o tamanho da empresa (Valor de Mercado) em relação à sua valorização.
-                Bolhas maiores indicam empresas maiores (8x maior para melhor visualização).
+                Bolhas maiores indicam empresas maiores (mínimo de 10px para visibilidade).
             </div>
         `;
         return;
@@ -353,9 +356,9 @@ function renderizarTamanhoVsValorizacao(acoes) {
     container.insertAdjacentHTML('beforeend', `
         <div style="font-size: 11px; color: #666; margin-top: 8px; text-align: center; border-top: 1px solid #eee; padding-top: 8px;">
             📌 <strong>O que mostra:</strong> Relação entre o tamanho da empresa (Valor de Mercado) e sua valorização.
-            A cor indica o setor da empresa. Tamanho da bolha representa o Valor de Firma (8x maior para melhor visualização).
+            O tamanho da bolha representa o Valor de Firma (mínimo de 10px para visibilidade).
             <span style="display: block; margin-top: 2px; color: #999;">
-                🔍 Quanto maior a bolha, maior a empresa. Cores diferentes representam setores diferentes.
+                🔍 Quanto maior a bolha, maior a empresa.
             </span>
         </div>
     `);
