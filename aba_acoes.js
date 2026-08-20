@@ -33,7 +33,7 @@ const COLUNAS_ACOES = [
 ];
 
 // ============================================================
-// FUNÇÕES AUXILIARES (reutilizadas)
+// FUNÇÕES AUXILIARES
 // ============================================================
 
 function separarLinhaCSV(linha) {
@@ -111,35 +111,19 @@ function converterCSVParaObjetos(texto) {
 // ============================================================
 
 function renderizarGraficos(acoes) {
-    // Verifica se Chart.js está disponível
     if (typeof Chart === "undefined") {
         console.warn("Chart.js não está carregado.");
         return;
     }
 
-    // =========================================================
-    // GRÁFICO 1: Valorização vs DY (Dispersão)
-    // =========================================================
     renderizarValorizacaoVsDY(acoes);
-
-    // =========================================================
-    // GRÁFICO 2: Tamanho vs Valorização (Bolhas)
-    // =========================================================
     renderizarTamanhoVsValorizacao(acoes);
-
-    // =========================================================
-    // GRÁFICO 3: Endividamento (Barras)
-    // =========================================================
     renderizarEndividamento(acoes);
-
-    // =========================================================
-    // GRÁFICO 4: Scorecard de Qualidade
-    // =========================================================
     renderizarScorecard(acoes);
 }
 
 // ============================================================
-// GRÁFICO 1: Valorização vs DY (Dispersão)
+// GRÁFICO 1: Valorização vs DY
 // ============================================================
 
 function renderizarValorizacaoVsDY(acoes) {
@@ -153,7 +137,6 @@ function renderizarValorizacaoVsDY(acoes) {
         container._chart.destroy();
     }
 
-    // Preparar dados
     const dados = acoes.map(acao => {
         const dy = parseFloat(String(acao.DY || "0").replace(",", "."));
         const valorizacao = parseFloat(String(acao.Valorizacao || "0").replace("%", "").replace(",", "."));
@@ -166,14 +149,12 @@ function renderizarValorizacaoVsDY(acoes) {
         };
     });
 
-    // Filtrar dados válidos
     const dadosValidos = dados.filter(d => d.x > 0 || d.y > 0);
     if (dadosValidos.length === 0) {
         container.innerHTML = `
             <p style="color: #999; font-size: 13px;">Sem dados suficientes para exibir o gráfico.</p>
             <div style="font-size: 11px; color: #999; margin-top: 5px;">
                 📌 Este gráfico mostra a relação entre o Dividend Yield (DY) e a Valorização da ação.
-                Pontos mais à direita indicam maior DY, pontos mais acima indicam maior valorização.
             </div>
         `;
         return;
@@ -233,11 +214,9 @@ function renderizarValorizacaoVsDY(acoes) {
         container.innerHTML = `<p style="color: #999;">⚠️ Erro ao carregar gráfico.</p>`;
     }
 
-    // Legenda explicativa
     container.insertAdjacentHTML('beforeend', `
         <div style="font-size: 11px; color: #666; margin-top: 8px; text-align: center; border-top: 1px solid #eee; padding-top: 8px;">
-            📌 <strong>O que mostra:</strong> Relação entre o Dividend Yield (eixo X) e a Valorização da ação (eixo Y). 
-            O tamanho da bolha representa o volume negociado.
+            📌 <strong>O que mostra:</strong> Relação entre o Dividend Yield (eixo X) e a Valorização da ação (eixo Y).
             <span style="display: block; margin-top: 2px; color: #999;">
                 🔍 Quanto mais à direita, maior o DY. Quanto mais acima, maior a valorização.
             </span>
@@ -246,7 +225,7 @@ function renderizarValorizacaoVsDY(acoes) {
 }
 
 // ============================================================
-// GRÁFICO 2: Tamanho vs Valorização (Bolhas)
+// GRÁFICO 2: Tamanho vs Valorização
 // ============================================================
 
 function renderizarTamanhoVsValorizacao(acoes) {
@@ -260,7 +239,6 @@ function renderizarTamanhoVsValorizacao(acoes) {
         container._chart.destroy();
     }
 
-    // Preparar dados
     const dados = acoes.map(acao => {
         const valorMercado = parseFloat(String(acao.ValorMercado || "0").replace(",", "."));
         const valorizacao = parseFloat(String(acao.Valorizacao || "0").replace("%", "").replace(",", "."));
@@ -274,14 +252,12 @@ function renderizarTamanhoVsValorizacao(acoes) {
         };
     });
 
-    // Filtrar dados válidos
     const dadosValidos = dados.filter(d => d.x > 0 || d.y > 0);
     if (dadosValidos.length === 0) {
         container.innerHTML = `
             <p style="color: #999; font-size: 13px;">Sem dados suficientes para exibir o gráfico.</p>
             <div style="font-size: 11px; color: #999; margin-top: 5px;">
                 📌 Este gráfico mostra o tamanho da empresa (Valor de Mercado) em relação à sua valorização.
-                Bolhas maiores indicam empresas maiores.
             </div>
         `;
         return;
@@ -349,11 +325,9 @@ function renderizarTamanhoVsValorizacao(acoes) {
         container.innerHTML = `<p style="color: #999;">⚠️ Erro ao carregar gráfico.</p>`;
     }
 
-    // Legenda explicativa
     container.insertAdjacentHTML('beforeend', `
         <div style="font-size: 11px; color: #666; margin-top: 8px; text-align: center; border-top: 1px solid #eee; padding-top: 8px;">
-            📌 <strong>O que mostra:</strong> Relação entre o tamanho da empresa (Valor de Mercado) e sua valorização.
-            A cor indica o setor da empresa.
+            📌 <strong>O que mostra:</strong> Relação entre o tamanho da empresa e sua valorização.
             <span style="display: block; margin-top: 2px; color: #999;">
                 🔍 Quanto maior a bolha, maior a empresa. Cores diferentes representam setores diferentes.
             </span>
@@ -362,7 +336,7 @@ function renderizarTamanhoVsValorizacao(acoes) {
 }
 
 // ============================================================
-// GRÁFICO 3: Endividamento (Barras) - CORRIGIDO COM EIXO Y DINÂMICO
+// GRÁFICO 3: Endividamento
 // ============================================================
 
 function renderizarEndividamento(acoes) {
@@ -376,7 +350,6 @@ function renderizarEndividamento(acoes) {
         container._chart.destroy();
     }
 
-    // Ordenar por dívida líquida (decrescente)
     const sorted = [...acoes].sort((a, b) => {
         const divA = parseFloat(String(a.DividaLiquida || "0").replace(",", "."));
         const divB = parseFloat(String(b.DividaLiquida || "0").replace(",", "."));
@@ -393,13 +366,11 @@ function renderizarEndividamento(acoes) {
         return isNaN(valor) ? 0 : valor / 1000000000;
     });
 
-    // Verificar se há dados válidos
     if (dadosDivida.every(v => v === 0) && dadosAtivos.every(v => v === 0)) {
         container.innerHTML = `
             <p style="color: #999; font-size: 13px;">Sem dados de endividamento para exibir.</p>
             <div style="font-size: 11px; color: #999; margin-top: 5px;">
                 📌 Este gráfico mostra a Dívida Líquida e os Ativos Totais de cada empresa.
-                Empresas com dívida negativa têm mais caixa do que dívidas.
             </div>
         `;
         return;
@@ -409,10 +380,9 @@ function renderizarEndividamento(acoes) {
     container.innerHTML = "";
     container.appendChild(ctx);
 
-    // Calcular o valor máximo para o eixo Y
     const maxDivida = Math.max(...dadosDivida.map(v => Math.abs(v)));
     const maxAtivos = Math.max(...dadosAtivos);
-    const maxY = Math.max(maxDivida, maxAtivos, 1) * 1.1; // 10% de margem
+    const maxY = Math.max(maxDivida, maxAtivos, 1) * 1.1;
 
     try {
         container._chart = new Chart(ctx, {
@@ -465,20 +435,18 @@ function renderizarEndividamento(acoes) {
         container.innerHTML = `<p style="color: #999;">⚠️ Erro ao carregar gráfico.</p>`;
     }
 
-    // Legenda explicativa
     container.insertAdjacentHTML('beforeend', `
         <div style="font-size: 11px; color: #666; margin-top: 8px; text-align: center; border-top: 1px solid #eee; padding-top: 8px;">
             📌 <strong>O que mostra:</strong> Endividamento das empresas (Dívida Líquida) versus seus Ativos Totais.
             <span style="display: block; margin-top: 2px; color: #999;">
-                🔍 Barras vermelhas indicam dívida positiva (endividamento). Barras verdes indicam caixa líquido positivo (dívida negativa).
-                Quanto maior a barra azul, maior o tamanho da empresa em ativos.
+                🔍 Barras vermelhas indicam dívida positiva. Barras verdes indicam caixa líquido positivo.
             </span>
         </div>
     `);
 }
 
 // ============================================================
-// GRÁFICO 4: Scorecard de Qualidade
+// GRÁFICO 4: Scorecard
 // ============================================================
 
 function renderizarScorecard(acoes) {
@@ -538,7 +506,7 @@ function renderizarScorecard(acoes) {
                 🟢 Bom | 🟡 Médio | 🔴 Ruim | ⚪ Sem dado
             </div>
             <div style="font-size: 11px; color: #666; margin-top: 8px; text-align: center; border-top: 1px solid #eee; padding-top: 8px;">
-                📌 <strong>Scorecard:</strong> Avaliação simplificada da qualidade da ação com base em DY, Valorização e Endividamento.
+                📌 <strong>Scorecard:</strong> Avaliação simplificada da qualidade da ação.
                 <span style="display: block; margin-top: 2px; color: #999;">
                     🔍 Quanto mais estrelas ⭐, melhor a avaliação geral da ação.
                 </span>
@@ -720,7 +688,7 @@ async function executarAtualizacaoAcoes() {
 
     } catch (erro) {
         console.error("Erro na atualização:", erro);
-        divProgresso.textContent += `\n❌ ERRO: ${erro.message || "Falha na atualización"}`;
+        divProgresso.textContent += `\n❌ ERRO: ${erro.message || "Falha na atualização"}`;
         divProgresso.style.borderLeftColor = "#d32f2f";
         divProgresso.style.background = "#ffebee";
         divProgresso.style.color = "#b71c1c";
@@ -739,6 +707,23 @@ function iniciarAbaAcoes() {
     const container = document.getElementById("tabela-acoes-container");
 
     if (!container) {
-        console
+        console.warn("Container #tabela-acoes-container não encontrado.");
+        return;
     }
+
+    if (botao) {
+        botao.addEventListener("click", executarAtualizacaoAcoes);
+    }
+
+    atualizarAbaAcoes();
 }
+
+// ============================================================
+// EXPORTAÇÕES
+// ============================================================
+
+export {
+    iniciarAbaAcoes,
+    atualizarAbaAcoes,
+    executarAtualizacaoAcoes
+};
