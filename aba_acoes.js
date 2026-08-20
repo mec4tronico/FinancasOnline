@@ -221,6 +221,10 @@ function renderizarHeatmap(acoes) {
 // GRÁFICO 2: Rentabilidade vs Endividamento (Bolhas)
 // ============================================================
 
+// ============================================================
+// GRÁFICO 2: Rentabilidade vs Endividamento (Bolhas) - CORRIGIDO
+// ============================================================
+
 function renderizarBolhas(acoes) {
     const container = document.getElementById("grafico-bolhas");
     if (!container) return;
@@ -236,6 +240,7 @@ function renderizarBolhas(acoes) {
         container._chart.destroy();
     }
 
+    // Preparar dados: ROE (Y) vs Dívida Líquida/PL (X)
     const dados = acoes.map(acao => {
         const roe = parseFloat(String(acao.ROE || "0").replace(",", "."));
         const dividaPL = parseFloat(String(acao.DividaLiquidaPL || "0").replace(",", "."));
@@ -244,9 +249,18 @@ function renderizarBolhas(acoes) {
             x: isNaN(dividaPL) ? 0 : dividaPL,
             y: isNaN(roe) ? 0 : roe,
             r: Math.sqrt(Math.abs(valorFirma) / 1000000000) * 5 + 3 || 5,
-            label: acao.Ativo
+            label: acao.Ativo,
+            // Cores baseadas no setor (se disponível)
+            setor: acao.Setor || "Outros"
         };
     });
+
+    // Filtrar dados inválidos (onde ROE e DividaPL são 0)
+    const dadosValidos = dados.filter(d => d.y > 0 || d.x > 0);
+    if (dadosValidos.length === 0) {
+        container.innerHTML = `<p style="color: #999; font-size: 13px;">Sem dados suficientes para o gráfico de bolhas.</p>`;
+        return;
+    }
 
     const ctx = document.createElement("canvas");
     container.innerHTML = "";
@@ -258,9 +272,20 @@ function renderizarBolhas(acoes) {
             data: {
                 datasets: [{
                     label: 'Rentabilidade vs Endividamento',
-                    data: dados,
-                    backgroundColor: dados.map(() => `rgba(33, 150, 243, 0.7)`),
-                    borderColor: dados.map(() => `rgba(33, 150, 243, 1)`),
+                    data: dadosValidos,
+                    backgroundColor: dadosValidos.map(d => {
+                        // Se tiver setor, usar cores diferentes
+                        if (d.setor.includes("Financeiro")) return 'rgba(76, 175, 80, 0.7)';
+                        if (d.setor.includes("Energia") || d.setor.includes("Utilidade")) return 'rgba(33, 150, 243, 0.7)';
+                        if (d.setor.includes("Mineração") || d.setor.includes("Materiais")) return 'rgba(255, 152, 0, 0.7)';
+                        return 'rgba(156, 39, 176, 0.7)';
+                    }),
+                    borderColor: dadosValidos.map(d => {
+                        if (d.setor.includes("Financeiro")) return 'rgba(76, 175, 80, 1)';
+                        if (d.setor.includes("Energia") || d.setor.includes("Utilidade")) return 'rgba(33, 150, 243, 1)';
+                        if (d.setor.includes("Mineração") || d.setor.includes("Materiais")) return 'rgba(255, 152, 0, 1)';
+                        return 'rgba(156, 39, 176, 1)';
+                    }),
                     borderWidth: 1
                 }]
             },
@@ -268,23 +293,51 @@ function renderizarBolhas(acoes) {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false },
+                    legend: { 
+                        display: true,
+                        labels: {
+                            font: { size: 10 },
+                            generateLabels: function(chart) {
+                                // Personalizar legenda para mostrar os setores
+                                return [
+                                    { text: '🏦 Financeiro', fillStyle: 'rgba(76, 175, 80, 0.7)', strokeStyle: 'rgba(76, 175, 80, 1)' },
+                                    { text: '⚡ Energia/Utilidade', fillStyle: 'rgba(33, 150, 243, 0.7)', strokeStyle: 'rgba(33, 150, 243, 1)' },
+                                    { text: '⛏️ Mineração/Materiais', fillStyle: 'rgba(255, 152, 0, 0.7)', strokeStyle: 'rgba(255, 152, 0, 1)' },
+                                    { text: '📦 Outros', fillStyle: 'rgba(156, 39, 176, 0.7)', strokeStyle: 'rgba(156, 39, 176, 1)' }
+                                ];
+                            }
+                        }
+                    },
                     tooltip: {
                         callbacks: {
                             label: function(context) {
                                 const d = context.raw;
-                                return `${d.label}: ROE=${d.y.toFixed(1)}%, Dívida/PL=${d.x.toFixed(2)}`;
+                                return [
+                                    `${d.label}`,
+                                    `ROE: ${d.y.toFixed(1)}%`,
+                                    `Dívida Líquida/PL: ${d.x.toFixed(2)}`,
+                                    `Valor de Mercado: R$ ${(Math.abs(d.r) * 200).toFixed(0)}M`
+                                ];
                             }
                         }
                     }
                 },
                 scales: {
                     x: {
-                        title: { display: true, text: 'Dívida Líquida / PL', font: { size: 11 } },
-                        grid: { color: 'rgba(0,0,0,0.05)' }
+                        title: { 
+                            display: true, 
+                            text: 'Dívida Líquida / PL (Endividamento)',
+                            font: { size: 12, weight: 'bold' }
+                        },
+                        grid: { color: 'rgba(0,0,0,0.05)' },
+                        beginAtZero: true
                     },
                     y: {
-                        title: { display: true, text: 'ROE (%)', font: { size: 11 } },
+                        title: { 
+                            display: true, 
+                            text: 'ROE (%) - Rentabilidade',
+                            font: { size: 12, weight: 'bold' }
+                        },
                         grid: { color: 'rgba(0,0,0,0.05)' },
                         beginAtZero: true
                     }
