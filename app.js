@@ -20,20 +20,20 @@
 
 import {
     atualizarAbaCarteira
-} from "./aba_carteira.js";
+} from "./aba_carteira.js?v=2";
 
 import {
     iniciarAbaConfiguracao,
     carregarAbaConfiguracao
-} from "./aba_configuracao.js";
+} from "./aba_configuracao.js?v=2";
 
 import {
     atualizarAbaRentabilidade
-} from "./aba_rentabilidade.js";
+} from "./aba_rentabilidade.js?v=2";
 
 import {
     atualizarAbaFIIs
-} from "./aba_FIIs.js";
+} from "./aba_FIIs.js?v=2";
 
 // ============================================================================
 // IMPORTAÇÃO DA NOVA ABA AÇÕES
