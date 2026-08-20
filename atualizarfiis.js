@@ -20,7 +20,6 @@ const URL_WORKER_CSV =
 // MAPEAMENTO: Títulos do StatusInvest → Colunas do CSV
 // ============================================================
 
-javascript
 const MAPEAMENTO = {
     "Valor Patrimonial por Cota": "ValorPatrimonialPorCota",
     "Val. Patrimonial P/Cota": "ValorPatrimonialPorCota",
