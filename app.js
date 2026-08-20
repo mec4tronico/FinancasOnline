@@ -10,9 +10,9 @@
 // - Controlar a navegação entre as abas
 // - Carregar Rentabilidade quando a aba for aberta
 // - Carregar Mercado quando a aba for aberta
+// - Carregar Ações quando a aba for aberta (NOVO)
 //
 // ============================================================================
-
 
 // ============================================================================
 // IMPORTAÇÕES
@@ -22,28 +22,26 @@ import {
     atualizarAbaCarteira
 } from "./aba_carteira.js";
 
-
 import {
     iniciarAbaConfiguracao,
     carregarAbaConfiguracao
 } from "./aba_configuracao.js";
 
-
 import {
     atualizarAbaRentabilidade
 } from "./aba_rentabilidade.js";
-
 
 import {
     atualizarAbaMercado
 } from "./aba_mercado.js";
 
 // ============================================================================
-// APP.JS (com adições para ABA AÇÕES)
+// IMPORTAÇÃO DA NOVA ABA AÇÕES
 // ============================================================================
 
-import { iniciarAbaAcoes } from "./aba_acoes.js";
-
+import {
+    iniciarAbaAcoes
+} from "./aba_acoes.js";
 
 // ============================================================================
 // INICIALIZAÇÃO DA APLICAÇÃO
@@ -53,84 +51,58 @@ document.addEventListener(
     "DOMContentLoaded",
     () => {
 
-
         // ====================================================================
         // 1. INICIALIZAÇÃO DA CARTEIRA
-        // ====================================================================
-        //
-        // A Carteira é a primeira aba.
-        //
-        // Ela deve ser carregada automaticamente quando o site abrir.
-        //
-        // Carrega:
-        // - KPIs
-        // - Gráfico de distribuição
-        // - Gráfico de patrimônio por classe
-        // - Gráfico de lucro/prejuízo
-        // - Tabela da carteira
-        //
         // ====================================================================
 
         atualizarAbaCarteira()
             .catch(
                 erro => {
-
                     console.error(
                         "Erro ao inicializar a aba Carteira:",
                         erro
                     );
-
                 }
             );
-
 
         // ====================================================================
         // 2. INICIALIZAÇÃO DA CONFIGURAÇÃO
         // ====================================================================
-        //
-        // A Configuração precisa ser inicializada uma vez para preparar
-        // seus controles e eventos.
-        //
-        // O carregamento dos dados continua acontecendo quando a aba
-        // for acessada.
-        //
-        // ====================================================================
 
         try {
-
             if (
                 typeof iniciarAbaConfiguracao ===
                 "function"
             ) {
-
                 iniciarAbaConfiguracao();
-
             }
-
         } catch (erro) {
-
             console.error(
                 "Erro ao iniciar a aba Configuração:",
                 erro
             );
-
         }
-        
+
         // ====================================================================
-        // 2.5 INICIALIZAÇÃO DA ABA AÇÕES
+        // 3. INICIALIZAÇÃO DA ABA AÇÕES (NOVO)
         // ====================================================================
 
         try {
-            if (typeof iniciarAbaAcoes === "function") {
+            if (
+                typeof iniciarAbaAcoes ===
+                "function"
+            ) {
                 iniciarAbaAcoes();
             }
         } catch (erro) {
-            console.error("Erro ao iniciar a aba Ações:", erro);
+            console.error(
+                "Erro ao iniciar a aba Ações:",
+                erro
+            );
         }
 
-
         // ====================================================================
-        // 3. LOCALIZAR BOTÕES DAS ABAS
+        // 4. LOCALIZAR BOTÕES DAS ABAS
         // ====================================================================
 
         const botoesAbas =
@@ -138,13 +110,11 @@ document.addEventListener(
                 ".tab-button"
             );
 
-
         // ====================================================================
-        // 4. FUNÇÃO DE NAVEGAÇÃO
+        // 5. FUNÇÃO DE NAVEGAÇÃO
         // ====================================================================
 
         function navegarPara(idAbaAlvo) {
-
 
             // =================================================================
             // PERCORRER TODAS AS ABAS
@@ -153,16 +123,13 @@ document.addEventListener(
             botoesAbas.forEach(
                 botao => {
 
-
                     const idAba =
                         botao.dataset.tab;
-
 
                     const section =
                         document.getElementById(
                             idAba
                         );
-
 
                     // =========================================================
                     // ABA ATIVA
@@ -176,12 +143,10 @@ document.addEventListener(
                             "active"
                         );
 
-
                         botao.setAttribute(
                             "aria-selected",
                             "true"
                         );
-
 
                         if (section) {
 
@@ -189,10 +154,8 @@ document.addEventListener(
                                 "hidden"
                             );
 
-
                             section.style.display =
                                 "block";
-
 
                             section.classList.add(
                                 "active"
@@ -201,7 +164,6 @@ document.addEventListener(
                         }
 
                     }
-
 
                     // =========================================================
                     // DEMAIS ABAS
@@ -213,12 +175,10 @@ document.addEventListener(
                             "active"
                         );
 
-
                         botao.setAttribute(
                             "aria-selected",
                             "false"
                         );
-
 
                         if (section) {
 
@@ -227,10 +187,8 @@ document.addEventListener(
                                 ""
                             );
 
-
                             section.style.display =
                                 "none";
-
 
                             section.classList.remove(
                                 "active"
@@ -243,14 +201,8 @@ document.addEventListener(
                 }
             );
 
-
             // =================================================================
-            // 5. CARREGAR CONTEÚDO DA ABA CONFIGURAÇÃO
-            // =================================================================
-            //
-            // Sempre que a aba Configuração for aberta,
-            // seus dados são recarregados.
-            //
+            // 6. CARREGAR CONTEÚDO DA ABA CONFIGURAÇÃO
             // =================================================================
 
             if (
@@ -262,10 +214,6 @@ document.addEventListener(
 
                     const resultado =
                         carregarAbaConfiguracao();
-
-
-                    // Caso a função seja assíncrona,
-                    // também capturamos erros da Promise.
 
                     if (
                         resultado &&
@@ -297,15 +245,8 @@ document.addEventListener(
 
             }
 
-
             // =================================================================
-            // 6. CARREGAR ABA RENTABILIDADE
-            // =================================================================
-            //
-            // A Rentabilidade não é carregada na inicialização.
-            //
-            // Ela é carregada somente quando o usuário clicar nela.
-            //
+            // 7. CARREGAR ABA RENTABILIDADE
             // =================================================================
 
             if (
@@ -317,9 +258,6 @@ document.addEventListener(
 
                     const resultado =
                         atualizarAbaRentabilidade();
-
-
-                    // Captura erros caso a função seja assíncrona.
 
                     if (
                         resultado &&
@@ -351,13 +289,8 @@ document.addEventListener(
 
             }
 
-
             // =================================================================
-            // 7. CARREGAR ABA MERCADO
-            // =================================================================
-            //
-            // A aba Mercado também é carregada somente quando acessada.
-            //
+            // 8. CARREGAR ABA MERCADO
             // =================================================================
 
             if (
@@ -369,9 +302,6 @@ document.addEventListener(
 
                     const resultado =
                         atualizarAbaMercado();
-
-
-                    // Captura erros caso a função seja assíncrona.
 
                     if (
                         resultado &&
@@ -403,42 +333,71 @@ document.addEventListener(
 
             }
 
-        }
-        // ====================================================================
-        // 6.5 CARREGAR ABA AÇÕES
-        // ====================================================================
+            // =================================================================
+            // 9. CARREGAR ABA AÇÕES (NOVO)
+            // =================================================================
+            //
+            // A aba Ações é carregada somente quando acessada.
+            //
+            // =================================================================
 
-        if (idAbaAlvo === "tab-acoes") {
-            try {
-                const resultado = iniciarAbaAcoes();
-                if (resultado && typeof resultado.catch === "function") {
-                    resultado.catch(erro => {
-                        console.error("Erro ao carregar a aba Ações:", erro);
-                    });
+            if (
+                idAbaAlvo ===
+                "tab-acoes"
+            ) {
+
+                try {
+
+                    const resultado =
+                        iniciarAbaAcoes();
+
+                    if (
+                        resultado &&
+                        typeof resultado.catch ===
+                        "function"
+                    ) {
+
+                        resultado.catch(
+                            erro => {
+
+                                console.error(
+                                    "Erro ao carregar a aba Ações:",
+                                    erro
+                                );
+
+                            }
+                        );
+
+                    }
+
+                } catch (erro) {
+
+                    console.error(
+                        "Erro ao carregar a aba Ações:",
+                        erro
+                    );
+
                 }
-            } catch (erro) {
-                console.error("Erro ao carregar a aba Ações:", erro);
+
             }
+
         }
 
         // ====================================================================
-        // 8. REGISTRAR CLIQUES DOS BOTÕES DAS ABAS
+        // 10. REGISTRAR CLIQUES DOS BOTÕES DAS ABAS
         // ====================================================================
 
         botoesAbas.forEach(
             botao => {
 
-
                 const idAlvo =
                     botao.dataset.tab;
-
 
                 if (!idAlvo) {
 
                     return;
 
                 }
-
 
                 botao.addEventListener(
                     "click",
@@ -454,26 +413,14 @@ document.addEventListener(
             }
         );
 
-
         // ====================================================================
-        // 9. ABRIR CARTEIRA AUTOMATICAMENTE
-        // ====================================================================
-        //
-        // A Carteira é a primeira aba da aplicação.
-        //
-        // Portanto, ao abrir o site:
-        //
-        // - Carteira fica visível
-        // - As outras abas ficam ocultas
-        // - O botão Carteira recebe a classe "active"
-        //
+        // 11. ABRIR CARTEIRA AUTOMATICAMENTE
         // ====================================================================
 
         const primeiraAbaCarteira =
             document.getElementById(
                 "tab-carteira"
             );
-
 
         if (
             primeiraAbaCarteira
