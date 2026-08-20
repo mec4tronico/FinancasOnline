@@ -5,9 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Teste HTML StatusInvest</title>
+    <title>Teste scrapingfiis.js</title>
 
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
@@ -26,383 +30,573 @@
             flex-wrap: wrap;
         }
 
-        input,
-        select,
         button {
-            padding: 10px;
+            padding: 10px 20px;
             font-size: 14px;
-        }
-
-        input {
-            width: 120px;
-        }
-
-        button {
             cursor: pointer;
+            background: #00598a;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #003d66;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         #status {
             margin: 15px 0;
+            padding: 12px 16px;
+            background: #e3f2fd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            border-left: 4px solid #00598a;
+        }
+
+        #status.erro {
+            background: #ffebee;
+            border-left-color: #d32f2f;
+            color: #b71c1c;
+        }
+
+        #status.sucesso {
+            background: #e8f5e9;
+            border-left-color: #2e7d32;
+            color: #1b5e20;
+        }
+
+        .container-tabelas {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .tabela-wrapper {
+            flex: 1;
+            min-width: 45%;
+            background: #fff;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        .tabela-wrapper h3 {
+            margin-top: 0;
+            font-size: 14px;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        th {
+            background: #f5f5f5;
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e0e0e0;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 6px 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .ativo-nome {
+            font-weight: 600;
+            color: #00598a;
+        }
+
+        .valor-encontrado {
+            color: #2e7d32;
+        }
+
+        .valor-nao-encontrado {
+            color: #999;
+            font-style: italic;
+        }
+
+        .diferenca {
             font-weight: bold;
         }
 
-        textarea {
-            width: 100%;
-            height: 700px;
-            box-sizing: border-box;
+        .diferenca.melhor {
+            color: #2e7d32;
+        }
+
+        .diferenca.pior {
+            color: #d32f2f;
+        }
+
+        #log-container {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 6px;
+            padding: 15px;
             font-family: Consolas, monospace;
             font-size: 12px;
-            white-space: pre;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-top: 20px;
+        }
+
+        #log-container .log-info {
+            color: #4fc3f7;
+        }
+
+        #log-container .log-sucesso {
+            color: #81c784;
+        }
+
+        #log-container .log-erro {
+            color: #e57373;
+        }
+
+        #log-container .log-destaque {
+            color: #ffb74d;
         }
     </style>
 </head>
 
 <body>
 
-    <h1>Teste — HTML bruto do StatusInvest</h1>
+    <h1>🧪 Teste scrapingfiis.js</h1>
 
     <div class="controles">
-
-        <label>
-            Ticker:
-            <input
-                id="ticker"
-                type="text"
-                value="AXIA3"
-            >
-        </label>
-
-        <label>
-            Tipo:
-            <select id="tipo">
-                <option value="acoes">Ações</option>
-                <option value="fii">FII</option>
-            </select>
-        </label>
-
-        <button id="btnBuscar">
-            Buscar HTML
-        </button>
-
-        <button id="btnSalvar">
-            Salvar HTML
-        </button>
-
+        <button id="btnTestar">🚀 Executar scraping (sem gravar)</button>
+        <span style="font-size: 12px; color: #666;">Os dados serão apenas exibidos, não salvos no CSV.</span>
     </div>
 
-    <div id="status">
-        Aguardando...
+    <div id="status">Aguardando...</div>
+
+    <div class="container-tabelas">
+        <div class="tabela-wrapper">
+            <h3>📊 Dados Atuais (do CSV)</h3>
+            <div id="tabela-atual">
+                <p style="color: #999;">Carregando dados...</p>
+            </div>
+        </div>
+        <div class="tabela-wrapper">
+            <h3>🔄 Dados Novos (após scraping)</h3>
+            <div id="tabela-nova">
+                <p style="color: #999;">Aguardando scraping...</p>
+            </div>
+        </div>
     </div>
 
-    <textarea
-        id="resultado"
-        placeholder="O HTML bruto do StatusInvest aparecerá aqui..."
-    ></textarea>
+    <div id="log-container">
+        <span class="log-info">📋 Aguardando execução...</span>
+    </div>
 
+    <script type="importmap">
+        {
+            "imports": {
+                "./scrapingfiis.js": "./scrapingfiis.js"
+            }
+        }
+    </script>
 
-    <script>
+    <script type="module">
+        // ============================================================
+        // IMPORTAÇÕES
+        // ============================================================
+
+        import { scrapingFIIs } from './scrapingfiis.js';
 
         // ============================================================
         // CONFIGURAÇÃO
         // ============================================================
 
-        const PROXY_CLOUDFLARE =
-            "https://financasonline.augusto-gouveia2000.workers.dev/";
+        const ARQUIVO_CSV =
+            "https://raw.githubusercontent.com/mec4tronico/FinancasOnline/main/" +
+            "patrimonio_consolidado.csv";
 
+        const COLUNAS_FIIS = [
+            "Ativo",
+            "CapRate",
+            "RendimentoMensal",
+            "Rendimento12M",
+            "VacanciaMedia",
+            "VacanciaFisica",
+            "VacanciaFinanceira",
+            "QtdImoveis",
+            "Alavancagem",
+            "PrazoContratos",
+            "RentabilidadeImobiliaria"
+        ];
 
-        const TIMEOUT_30_SEGUNDOS = 30000;
+        let dadosAtuais = [];
+        let dadosNovos = {};
 
-
-        let htmlRecebido = "";
-
+        const logContainer = document.getElementById('log-container');
+        const statusDiv = document.getElementById('status');
 
         // ============================================================
-        // BUSCAR HTML BRUTO
+        // FUNÇÃO DE LOG
         // ============================================================
 
-        async function buscarHTML() {
+        function adicionarLog(mensagem, tipo = 'info') {
+            const classes = {
+                'info': 'log-info',
+                'sucesso': 'log-sucesso',
+                'erro': 'log-erro',
+                'destaque': 'log-destaque'
+            };
+            const span = document.createElement('span');
+            span.className = classes[tipo] || 'log-info';
+            span.textContent = mensagem + '\n';
+            logContainer.appendChild(span);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
 
-            const ticker =
-                document
-                    .getElementById("ticker")
-                    .value
-                    .trim()
-                    .toUpperCase();
+        function limparLog() {
+            logContainer.innerHTML = '';
+        }
 
-            const tipo =
-                document
-                    .getElementById("tipo")
-                    .value;
+        function setStatus(mensagem, tipo = '') {
+            statusDiv.textContent = mensagem;
+            statusDiv.className = tipo;
+        }
 
+        // ============================================================
+        // FUNÇÕES AUXILIARES (CSV)
+        // ============================================================
 
-            const status =
-                document.getElementById("status");
+        function separarLinhaCSV(linha) {
+            const valores = [];
+            let valorAtual = "";
+            let dentroDeAspas = false;
 
-            const resultado =
-                document.getElementById("resultado");
+            for (let indice = 0; indice < linha.length; indice++) {
+                const caractere = linha[indice];
+                if (caractere === '"') {
+                    if (dentroDeAspas && linha[indice + 1] === '"') {
+                        valorAtual += '"';
+                        indice++;
+                    } else {
+                        dentroDeAspas = !dentroDeAspas;
+                    }
+                } else if (caractere === "," && !dentroDeAspas) {
+                    valores.push(valorAtual);
+                    valorAtual = "";
+                } else {
+                    valorAtual += caractere;
+                }
+            }
 
+            valores.push(valorAtual);
+            return valores;
+        }
 
-            if (!ticker) {
+        function converterCSVParaObjetos(texto) {
+            const linhas = texto.trim().split(/\r?\n/);
+            if (linhas.length === 0 || !linhas[0].trim()) {
+                throw new Error("CSV vazio.");
+            }
 
-                status.textContent =
-                    "Informe um ticker.";
+            const cabecalho = separarLinhaCSV(linhas[0]).map(valor => valor.trim());
+            const dados = [];
 
+            for (let indice = 1; indice < linhas.length; indice++) {
+                if (!linhas[indice].trim()) continue;
+
+                const valores = separarLinhaCSV(linhas[indice]);
+                while (valores.length < cabecalho.length) {
+                    valores.push("");
+                }
+
+                const registro = {};
+                for (let coluna = 0; coluna < cabecalho.length; coluna++) {
+                    registro[cabecalho[coluna]] = valores[coluna] || "";
+                }
+                dados.push(registro);
+            }
+
+            return dados;
+        }
+
+        async function carregarCSV() {
+            const urlCSV = `${ARQUIVO_CSV}?atualizadoEm=${Date.now()}`;
+            const resposta = await fetch(urlCSV, { cache: "no-store" });
+
+            if (!resposta.ok) {
+                throw new Error(`HTTP ${resposta.status} ao carregar CSV`);
+            }
+
+            const texto = await resposta.text();
+            return converterCSVParaObjetos(texto);
+        }
+
+        // ============================================================
+        // RENDERIZAR TABELAS
+        // ============================================================
+
+        function renderizarTabela(containerId, dados, titulo) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            if (!dados || dados.length === 0) {
+                container.innerHTML = `<p style="color: #999;">Nenhum dado disponível.</p>`;
                 return;
             }
 
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            ${COLUNAS_FIIS.map(col => `<th>${col}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
 
-            // --------------------------------------------------------
-            // Definir endereço do StatusInvest
-            // --------------------------------------------------------
+            for (const registro of dados) {
+                html += `<tr>`;
+                for (const coluna of COLUNAS_FIIS) {
+                    const valor = registro[coluna] || "-";
+                    const isAtivo = coluna === "Ativo";
+                    const classe = isAtivo ? 'ativo-nome' : '';
+                    html += `<td class="${classe}">${valor}</td>`;
+                }
+                html += `</tr>`;
+            }
 
-            const categoria =
-                tipo === "fii"
-                    ? "fundos-imobiliarios"
-                    : "acoes";
+            html += `
+                    </tbody>
+                </table>
+                <div style="margin-top: 10px; font-size: 11px; color: #999;">
+                    ${dados.length} FII(s) encontrado(s)
+                </div>
+            `;
 
+            container.innerHTML = html;
+        }
 
-            const urlStatusInvest =
-                `https://statusinvest.com.br/${categoria}/${ticker.toLowerCase()}`;
+        function renderizarComparacao() {
+            if (!dadosAtuais.length || !dadosNovos || Object.keys(dadosNovos).length === 0) {
+                return;
+            }
 
+            const container = document.getElementById('tabela-nova');
+            if (!container) return;
 
-            // --------------------------------------------------------
-            // Montar URL do Worker
-            // --------------------------------------------------------
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            ${COLUNAS_FIIS.map(col => `<th>${col}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
 
-            const urlWorker =
-                PROXY_CLOUDFLARE +
-                "?url=" +
-                encodeURIComponent(urlStatusInvest);
+            for (const ticker of Object.keys(dadosNovos)) {
+                const novo = dadosNovos[ticker];
+                const atual = dadosAtuais.find(a => a.Ativo === ticker) || {};
 
+                html += `<tr>`;
+                for (const coluna of COLUNAS_FIIS) {
+                    if (coluna === "Ativo") {
+                        html += `<td class="ativo-nome">${ticker}</td>`;
+                        continue;
+                    }
 
-            status.textContent =
-                "Buscando HTML do StatusInvest...";
+                    const valorNovo = novo[coluna] || "-";
+                    const valorAtual = atual[coluna] || "-";
 
-            resultado.value = "";
+                    // Verifica se é um valor numérico para comparar
+                    const numNovo = parseFloat(String(valorNovo).replace(',', '.'));
+                    const numAtual = parseFloat(String(valorAtual).replace(',', '.'));
 
+                    let classe = '';
+                    let display = valorNovo;
 
-            console.log(
-                "StatusInvest:",
-                urlStatusInvest
-            );
+                    if (!isNaN(numNovo) && !isNaN(numAtual) && numAtual !== 0) {
+                        const diff = ((numNovo - numAtual) / numAtual * 100);
+                        if (Math.abs(diff) > 0.1) {
+                            classe = diff > 0 ? 'diferenca melhor' : 'diferenca pior';
+                            display = `${valorNovo} (${diff > 0 ? '+' : ''}${diff.toFixed(1)}%)`;
+                        }
+                    }
 
-            console.log(
-                "Worker:",
-                urlWorker
-            );
+                    if (valorNovo === "ERRO" || valorNovo === "-") {
+                        classe = 'valor-nao-encontrado';
+                    }
 
+                    html += `<td class="${classe}">${display}</td>`;
+                }
+                html += `</tr>`;
+            }
 
-            // --------------------------------------------------------
-            // Timeout
-            // --------------------------------------------------------
+            html += `
+                    </tbody>
+                </table>
+                <div style="margin-top: 10px; font-size: 11px; color: #999;">
+                    🟢 Melhorou  🔴 Piorou  ⚪ Sem alteração
+                </div>
+            `;
 
-            const controlador =
-                new AbortController();
+            container.innerHTML = html;
+        }
 
+        // ============================================================
+        // FUNÇÃO PRINCIPAL: TESTAR SCRAPING
+        // ============================================================
 
-            const timeout =
-                setTimeout(
-                    () => controlador.abort(),
-                    TIMEOUT_30_SEGUNDOS
-                );
+        async function executarTeste() {
+            const botao = document.getElementById('btnTestar');
+            botao.disabled = true;
+            botao.textContent = '⏳ Executando...';
 
+            limparLog();
+            setStatus('Carregando dados do CSV...', '');
 
             try {
+                // 1. Carregar CSV
+                adicionarLog('📂 Carregando CSV...');
+                const todosDados = await carregarCSV();
 
-                // ----------------------------------------------------
-                // FETCH DO HTML BRUTO
-                // ----------------------------------------------------
-
-                const resposta =
-                    await fetch(
-                        urlWorker,
-                        {
-                            method: "GET",
-                            cache: "no-store",
-                            signal: controlador.signal
-                        }
-                    );
-
-
-                clearTimeout(timeout);
-
-
-                console.log(
-                    "HTTP:",
-                    resposta.status
+                // 2. Filtrar FIIs
+                dadosAtuais = todosDados.filter(reg =>
+                    reg.Tipo && reg.Tipo.trim().toLowerCase() === "fii"
                 );
 
-
-                if (!resposta.ok) {
-
-                    throw new Error(
-                        `Worker retornou HTTP ${resposta.status}`
-                    );
-
+                if (dadosAtuais.length === 0) {
+                    adicionarLog('⚠️ Nenhum FII encontrado no CSV.', 'erro');
+                    setStatus('Nenhum FII encontrado.', 'erro');
+                    botao.disabled = false;
+                    botao.textContent = '🚀 Executar scraping (sem gravar)';
+                    return;
                 }
 
+                adicionarLog(`✅ ${dadosAtuais.length} FII(s) encontrados.`, 'sucesso');
+                renderizarTabela('tabela-atual', dadosAtuais, 'Dados Atuais');
 
-                // ----------------------------------------------------
-                // LER HTML COMO TEXTO
-                // ----------------------------------------------------
+                setStatus(`Executando scraping para ${dadosAtuais.length} FII(s)...`, '');
 
-                htmlRecebido =
-                    await resposta.text();
+                // 3. Executar scraping para cada FII
+                dadosNovos = {};
+                let sucessos = 0;
+                let erros = 0;
 
+                for (let i = 0; i < dadosAtuais.length; i++) {
+                    const fii = dadosAtuais[i];
+                    const ticker = fii.Ativo;
 
-                if (!htmlRecebido) {
+                    adicionarLog(`\n🔍 [${i + 1}/${dadosAtuais.length}] Scraping ${ticker}...`, 'destaque');
+                    setStatus(`Scraping ${ticker} (${i + 1}/${dadosAtuais.length})...`, '');
 
-                    throw new Error(
-                        "HTML recebido está vazio."
-                    );
+                    try {
+                        const resultado = await scrapingFIIs(ticker);
 
-                }
+                        // Mapear resultado para as colunas
+                        const dadosExtraidos = {
+                            Ativo: ticker,
+                            CapRate: resultado.capRate || "ERRO",
+                            RendimentoMensal: resultado.rendimentoMensal || "ERRO",
+                            Rendimento12M: resultado.rendimento12M || "ERRO",
+                            VacanciaMedia: resultado.vacanciaMedia || "ERRO",
+                            VacanciaFisica: resultado.vacanciaFisica || "ERRO",
+                            VacanciaFinanceira: resultado.vacanciaFinanceira || "ERRO",
+                            QtdImoveis: resultado.qtdImoveis || "ERRO",
+                            Alavancagem: resultado.alavancagem || "ERRO",
+                            PrazoContratos: resultado.prazoContratos || "ERRO",
+                            RentabilidadeImobiliaria: resultado.rentabilidadeImobiliaria || "ERRO"
+                        };
 
+                        dadosNovos[ticker] = dadosExtraidos;
 
-                // ----------------------------------------------------
-                // MOSTRAR HTML BRUTO
-                // ----------------------------------------------------
+                        const encontrados = resultado.diagnostico?.encontrados || 0;
+                        adicionarLog(`   ✅ ${encontrados}/10 indicadores encontrados.`, 'sucesso');
+                        sucessos++;
 
-                resultado.value =
-                    htmlRecebido;
-
-
-                status.textContent =
-                    `HTML recebido com sucesso — ` +
-                    `${htmlRecebido.length.toLocaleString("pt-BR")} caracteres.`;
-
-
-                console.log(
-                    "HTML recebido:",
-                    htmlRecebido.length,
-                    "caracteres"
-                );
-
-
-            }
-            catch (erro) {
-
-                clearTimeout(timeout);
-
-
-                console.error(
-                    erro
-                );
-
-
-                if (
-                    erro.name ===
-                    "AbortError"
-                ) {
-
-                    status.textContent =
-                        "Erro: timeout de 30 segundos.";
-
-                }
-                else {
-
-                    status.textContent =
-                        "Erro: " +
-                        erro.message;
-
-                }
-
-            }
-
-        }
-
-
-        // ============================================================
-        // SALVAR HTML COMO ARQUIVO
-        // ============================================================
-
-        function salvarHTML() {
-
-            if (!htmlRecebido) {
-
-                alert(
-                    "Primeiro busque o HTML."
-                );
-
-                return;
-            }
-
-
-            const blob =
-                new Blob(
-                    [htmlRecebido],
-                    {
-                        type: "text/html;charset=utf-8"
+                    } catch (erro) {
+                        adicionarLog(`   ❌ Erro: ${erro.message || erro}`, 'erro');
+                        erros++;
                     }
-                );
+                }
 
+                // 4. Renderizar tabela com os novos dados
+                adicionarLog('\n📊 Atualizando tabela comparativa...', 'destaque');
 
-            const url =
-                URL.createObjectURL(blob);
+                // Converter dadosNovos para array para renderizar
+                const dadosNovosArray = Object.values(dadosNovos);
+                renderizarTabela('tabela-nova', dadosNovosArray, 'Dados Novos');
+                renderizarComparacao();
 
+                // 5. Status final
+                const total = dadosAtuais.length;
+                setStatus(`✅ Scraping concluído! ${sucessos} sucessos, ${erros} erros.`, 'sucesso');
+                adicionarLog(`\n📊 RESUMO: ${sucessos}/${total} FIIs processados com sucesso.`, 'destaque');
 
-            const link =
-                document.createElement("a");
+                if (erros > 0) {
+                    adicionarLog(`⚠️ ${erros} FII(s) tiveram erro. Verifique os logs acima.`, 'erro');
+                } else {
+                    adicionarLog('🎉 Todos os FIIs foram processados com sucesso!', 'sucesso');
+                }
 
+            } catch (erro) {
+                console.error(erro);
+                setStatus(`❌ Erro: ${erro.message}`, 'erro');
+                adicionarLog(`❌ ERRO GERAL: ${erro.message}`, 'erro');
+            }
 
-            link.href = url;
-
-            link.download =
-                "statusinvest_html.html";
-
-
-            document.body.appendChild(link);
-
-            link.click();
-
-            document.body.removeChild(link);
-
-
-            URL.revokeObjectURL(url);
-
+            botao.disabled = false;
+            botao.textContent = '🚀 Executar scraping (sem gravar)';
         }
-
 
         // ============================================================
         // EVENTOS
         // ============================================================
 
-        document
-            .getElementById("btnBuscar")
-            .addEventListener(
-                "click",
-                buscarHTML
-            );
+        document.getElementById('btnTestar').addEventListener('click', executarTeste);
 
+        // ============================================================
+        // CARREGAR INICIAL
+        // ============================================================
 
-        document
-            .getElementById("btnSalvar")
-            .addEventListener(
-                "click",
-                salvarHTML
-            );
+        // Carregar os dados atuais ao abrir a página
+        async function carregarInicial() {
+            try {
+                const todosDados = await carregarCSV();
+                dadosAtuais = todosDados.filter(reg =>
+                    reg.Tipo && reg.Tipo.trim().toLowerCase() === "fii"
+                );
 
-
-        // Permitir ENTER no ticker
-
-        document
-            .getElementById("ticker")
-            .addEventListener(
-                "keydown",
-                evento => {
-
-                    if (
-                        evento.key ===
-                        "Enter"
-                    ) {
-
-                        buscarHTML();
-
-                    }
-
+                if (dadosAtuais.length > 0) {
+                    renderizarTabela('tabela-atual', dadosAtuais, 'Dados Atuais');
+                    setStatus(`📊 ${dadosAtuais.length} FII(s) carregados. Clique em "Executar" para testar.`, '');
+                    adicionarLog(`📂 ${dadosAtuais.length} FII(s) carregados do CSV. Aguardando execução...`, 'info');
+                } else {
+                    setStatus('Nenhum FII encontrado no CSV.', 'erro');
+                    adicionarLog('⚠️ Nenhum FII encontrado no CSV.', 'erro');
                 }
-            );
+            } catch (erro) {
+                setStatus(`❌ Erro ao carregar CSV: ${erro.message}`, 'erro');
+                adicionarLog(`❌ Erro ao carregar CSV: ${erro.message}`, 'erro');
+            }
+        }
 
+        // Iniciar
+        carregarInicial();
     </script>
 
 </body>
