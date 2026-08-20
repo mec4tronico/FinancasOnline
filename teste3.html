@@ -81,7 +81,7 @@
 
         .tabela-wrapper {
             flex: 1;
-            min-width: 45%;
+            min-width: 40%;
             background: #fff;
             border-radius: 8px;
             padding: 15px;
@@ -118,11 +118,6 @@
             border-bottom: 1px solid #f0f0f0;
         }
 
-        .ativo-nome {
-            font-weight: 600;
-            color: #00598a;
-        }
-
         .valor-encontrado {
             color: #2e7d32;
         }
@@ -130,18 +125,6 @@
         .valor-nao-encontrado {
             color: #999;
             font-style: italic;
-        }
-
-        .diferenca {
-            font-weight: bold;
-        }
-
-        .diferenca.melhor {
-            color: #2e7d32;
-        }
-
-        .diferenca.pior {
-            color: #d32f2f;
         }
 
         #log-container {
@@ -182,7 +165,7 @@
 
     <div class="controles">
         <button id="btnTestar">🚀 Executar scraping (sem gravar)</button>
-        <span style="font-size: 12px; color: #666;">Os dados serão apenas exibidos, não salvos no CSV.</span>
+        <span style="font-size: 12px; color: #666;">Extrai até 30 indicadores do FII</span>
     </div>
 
     <div id="status">Aguardando...</div>
@@ -195,7 +178,7 @@
             </div>
         </div>
         <div class="tabela-wrapper">
-            <h3>🔄 Dados Novos (após scraping)</h3>
+            <h3>🔄 Dados Extraídos (até 30 indicadores)</h3>
             <div id="tabela-nova">
                 <p style="color: #999;">Aguardando scraping...</p>
             </div>
@@ -215,43 +198,14 @@
     </script>
 
     <script type="module">
-        // ============================================================
-        // IMPORTAÇÕES
-        // ============================================================
-
         import { scrapingFIIs } from './scrapingfiis.js';
-
-        // ============================================================
-        // CONFIGURAÇÃO
-        // ============================================================
 
         const ARQUIVO_CSV =
             "https://raw.githubusercontent.com/mec4tronico/FinancasOnline/main/" +
             "patrimonio_consolidado.csv";
 
-        const COLUNAS_FIIS = [
-            "Ativo",
-            "CapRate",
-            "RendimentoMensal",
-            "Rendimento12M",
-            "VacanciaMedia",
-            "VacanciaFisica",
-            "VacanciaFinanceira",
-            "QtdImoveis",
-            "Alavancagem",
-            "PrazoContratos",
-            "RentabilidadeImobiliaria"
-        ];
-
-        let dadosAtuais = [];
-        let dadosNovos = {};
-
         const logContainer = document.getElementById('log-container');
         const statusDiv = document.getElementById('status');
-
-        // ============================================================
-        // FUNÇÃO DE LOG
-        // ============================================================
 
         function adicionarLog(mensagem, tipo = 'info') {
             const classes = {
@@ -276,84 +230,60 @@
             statusDiv.className = tipo;
         }
 
-        // ============================================================
-        // FUNÇÕES AUXILIARES (CSV)
-        // ============================================================
-
         function separarLinhaCSV(linha) {
             const valores = [];
             let valorAtual = "";
             let dentroDeAspas = false;
-
-            for (let indice = 0; indice < linha.length; indice++) {
-                const caractere = linha[indice];
-                if (caractere === '"') {
-                    if (dentroDeAspas && linha[indice + 1] === '"') {
+            for (let i = 0; i < linha.length; i++) {
+                const c = linha[i];
+                if (c === '"') {
+                    if (dentroDeAspas && linha[i + 1] === '"') {
                         valorAtual += '"';
-                        indice++;
+                        i++;
                     } else {
                         dentroDeAspas = !dentroDeAspas;
                     }
-                } else if (caractere === "," && !dentroDeAspas) {
+                } else if (c === "," && !dentroDeAspas) {
                     valores.push(valorAtual);
                     valorAtual = "";
                 } else {
-                    valorAtual += caractere;
+                    valorAtual += c;
                 }
             }
-
             valores.push(valorAtual);
             return valores;
         }
 
         function converterCSVParaObjetos(texto) {
             const linhas = texto.trim().split(/\r?\n/);
-            if (linhas.length === 0 || !linhas[0].trim()) {
-                throw new Error("CSV vazio.");
-            }
-
-            const cabecalho = separarLinhaCSV(linhas[0]).map(valor => valor.trim());
+            if (linhas.length === 0 || !linhas[0].trim()) throw new Error("CSV vazio.");
+            const cabecalho = separarLinhaCSV(linhas[0]).map(v => v.trim());
             const dados = [];
-
-            for (let indice = 1; indice < linhas.length; indice++) {
-                if (!linhas[indice].trim()) continue;
-
-                const valores = separarLinhaCSV(linhas[indice]);
-                while (valores.length < cabecalho.length) {
-                    valores.push("");
-                }
-
+            for (let i = 1; i < linhas.length; i++) {
+                if (!linhas[i].trim()) continue;
+                const valores = separarLinhaCSV(linhas[i]);
+                while (valores.length < cabecalho.length) valores.push("");
                 const registro = {};
-                for (let coluna = 0; coluna < cabecalho.length; coluna++) {
-                    registro[cabecalho[coluna]] = valores[coluna] || "";
+                for (let j = 0; j < cabecalho.length; j++) {
+                    registro[cabecalho[j]] = valores[j] || "";
                 }
                 dados.push(registro);
             }
-
             return dados;
         }
 
         async function carregarCSV() {
-            const urlCSV = `${ARQUIVO_CSV}?atualizadoEm=${Date.now()}`;
-            const resposta = await fetch(urlCSV, { cache: "no-store" });
-
-            if (!resposta.ok) {
-                throw new Error(`HTTP ${resposta.status} ao carregar CSV`);
-            }
-
-            const texto = await resposta.text();
-            return converterCSVParaObjetos(texto);
+            const url = `${ARQUIVO_CSV}?atualizadoEm=${Date.now()}`;
+            const r = await fetch(url, { cache: "no-store" });
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            return converterCSVParaObjetos(await r.text());
         }
 
-        // ============================================================
-        // RENDERIZAR TABELAS
-        // ============================================================
-
-        function renderizarTabela(containerId, dados, titulo) {
+        function renderizarTabelaDinamica(containerId, dados, titulo) {
             const container = document.getElementById(containerId);
             if (!container) return;
 
-            if (!dados || dados.length === 0) {
+            if (!dados || Object.keys(dados).length === 0) {
                 container.innerHTML = `<p style="color: #999;">Nenhum dado disponível.</p>`;
                 return;
             }
@@ -362,104 +292,33 @@
                 <table>
                     <thead>
                         <tr>
-                            ${COLUNAS_FIIS.map(col => `<th>${col}</th>`).join('')}
+                            <th>Indicador</th>
+                            <th>Valor</th>
                         </tr>
                     </thead>
                     <tbody>
             `;
 
-            for (const registro of dados) {
-                html += `<tr>`;
-                for (const coluna of COLUNAS_FIIS) {
-                    const valor = registro[coluna] || "-";
-                    const isAtivo = coluna === "Ativo";
-                    const classe = isAtivo ? 'ativo-nome' : '';
-                    html += `<td class="${classe}">${valor}</td>`;
-                }
-                html += `</tr>`;
+            for (const [chave, valor] of Object.entries(dados)) {
+                const exibicao = valor || "-";
+                html += `
+                    <tr>
+                        <td style="font-weight: 600;">${chave}</td>
+                        <td>${exibicao}</td>
+                    </tr>
+                `;
             }
 
             html += `
                     </tbody>
                 </table>
                 <div style="margin-top: 10px; font-size: 11px; color: #999;">
-                    ${dados.length} FII(s) encontrado(s)
+                    ${Object.keys(dados).length} indicador(es) encontrado(s)
                 </div>
             `;
 
             container.innerHTML = html;
         }
-
-        function renderizarComparacao() {
-            if (!dadosAtuais.length || !dadosNovos || Object.keys(dadosNovos).length === 0) {
-                return;
-            }
-
-            const container = document.getElementById('tabela-nova');
-            if (!container) return;
-
-            let html = `
-                <table>
-                    <thead>
-                        <tr>
-                            ${COLUNAS_FIIS.map(col => `<th>${col}</th>`).join('')}
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-            for (const ticker of Object.keys(dadosNovos)) {
-                const novo = dadosNovos[ticker];
-                const atual = dadosAtuais.find(a => a.Ativo === ticker) || {};
-
-                html += `<tr>`;
-                for (const coluna of COLUNAS_FIIS) {
-                    if (coluna === "Ativo") {
-                        html += `<td class="ativo-nome">${ticker}</td>`;
-                        continue;
-                    }
-
-                    const valorNovo = novo[coluna] || "-";
-                    const valorAtual = atual[coluna] || "-";
-
-                    // Verifica se é um valor numérico para comparar
-                    const numNovo = parseFloat(String(valorNovo).replace(',', '.'));
-                    const numAtual = parseFloat(String(valorAtual).replace(',', '.'));
-
-                    let classe = '';
-                    let display = valorNovo;
-
-                    if (!isNaN(numNovo) && !isNaN(numAtual) && numAtual !== 0) {
-                        const diff = ((numNovo - numAtual) / numAtual * 100);
-                        if (Math.abs(diff) > 0.1) {
-                            classe = diff > 0 ? 'diferenca melhor' : 'diferenca pior';
-                            display = `${valorNovo} (${diff > 0 ? '+' : ''}${diff.toFixed(1)}%)`;
-                        }
-                    }
-
-                    if (valorNovo === "ERRO" || valorNovo === "-") {
-                        classe = 'valor-nao-encontrado';
-                    }
-
-                    html += `<td class="${classe}">${display}</td>`;
-                }
-                html += `</tr>`;
-            }
-
-            html += `
-                    </tbody>
-                </table>
-                <div style="margin-top: 10px; font-size: 11px; color: #999;">
-                    🟢 Melhorou  🔴 Piorou  ⚪ Sem alteração
-                </div>
-            `;
-
-            container.innerHTML = html;
-        }
-
-        // ============================================================
-        // FUNÇÃO PRINCIPAL: TESTAR SCRAPING
-        // ============================================================
 
         async function executarTeste() {
             const botao = document.getElementById('btnTestar');
@@ -467,19 +326,14 @@
             botao.textContent = '⏳ Executando...';
 
             limparLog();
-            setStatus('Carregando dados do CSV...', '');
+            setStatus('Carregando dados...', '');
 
             try {
-                // 1. Carregar CSV
-                adicionarLog('📂 Carregando CSV...');
+                // 1. Carregar CSV e pegar apenas o primeiro FII para teste
                 const todosDados = await carregarCSV();
+                const fiis = todosDados.filter(r => r.Tipo && r.Tipo.trim().toLowerCase() === "fii");
 
-                // 2. Filtrar FIIs
-                dadosAtuais = todosDados.filter(reg =>
-                    reg.Tipo && reg.Tipo.trim().toLowerCase() === "fii"
-                );
-
-                if (dadosAtuais.length === 0) {
+                if (fiis.length === 0) {
                     adicionarLog('⚠️ Nenhum FII encontrado no CSV.', 'erro');
                     setStatus('Nenhum FII encontrado.', 'erro');
                     botao.disabled = false;
@@ -487,70 +341,47 @@
                     return;
                 }
 
-                adicionarLog(`✅ ${dadosAtuais.length} FII(s) encontrados.`, 'sucesso');
-                renderizarTabela('tabela-atual', dadosAtuais, 'Dados Atuais');
+                // Usar o primeiro FII da lista para teste
+                const fii = fiis[0];
+                const ticker = fii.Ativo;
 
-                setStatus(`Executando scraping para ${dadosAtuais.length} FII(s)...`, '');
+                adicionarLog(`📂 Testando com ${ticker} (${fiis.length} FIIs disponíveis)`, 'destaque');
 
-                // 3. Executar scraping para cada FII
-                dadosNovos = {};
-                let sucessos = 0;
-                let erros = 0;
-
-                for (let i = 0; i < dadosAtuais.length; i++) {
-                    const fii = dadosAtuais[i];
-                    const ticker = fii.Ativo;
-
-                    adicionarLog(`\n🔍 [${i + 1}/${dadosAtuais.length}] Scraping ${ticker}...`, 'destaque');
-                    setStatus(`Scraping ${ticker} (${i + 1}/${dadosAtuais.length})...`, '');
-
-                    try {
-                        const resultado = await scrapingFIIs(ticker);
-
-                        // Mapear resultado para as colunas
-                        const dadosExtraidos = {
-                            Ativo: ticker,
-                            CapRate: resultado.capRate || "ERRO",
-                            RendimentoMensal: resultado.rendimentoMensal || "ERRO",
-                            Rendimento12M: resultado.rendimento12M || "ERRO",
-                            VacanciaMedia: resultado.vacanciaMedia || "ERRO",
-                            VacanciaFisica: resultado.vacanciaFisica || "ERRO",
-                            VacanciaFinanceira: resultado.vacanciaFinanceira || "ERRO",
-                            QtdImoveis: resultado.qtdImoveis || "ERRO",
-                            Alavancagem: resultado.alavancagem || "ERRO",
-                            PrazoContratos: resultado.prazoContratos || "ERRO",
-                            RentabilidadeImobiliaria: resultado.rentabilidadeImobiliaria || "ERRO"
-                        };
-
-                        dadosNovos[ticker] = dadosExtraidos;
-
-                        const encontrados = resultado.diagnostico?.encontrados || 0;
-                        adicionarLog(`   ✅ ${encontrados}/10 indicadores encontrados.`, 'sucesso');
-                        sucessos++;
-
-                    } catch (erro) {
-                        adicionarLog(`   ❌ Erro: ${erro.message || erro}`, 'erro');
-                        erros++;
+                // Mostrar dados atuais do CSV (apenas os que temos)
+                const dadosAtuais = {};
+                for (const [chave, valor] of Object.entries(fii)) {
+                    if (valor && valor !== "ERRO" && valor !== "VAZIO" && chave !== "Tipo") {
+                        dadosAtuais[chave] = valor;
                     }
                 }
+                renderizarTabelaDinamica('tabela-atual', dadosAtuais, 'Dados Atuais');
 
-                // 4. Renderizar tabela com os novos dados
-                adicionarLog('\n📊 Atualizando tabela comparativa...', 'destaque');
+                // 2. Executar scraping
+                setStatus(`Scraping ${ticker}...`, '');
+                adicionarLog(`\n🔍 Scraping ${ticker}...`, 'destaque');
 
-                // Converter dadosNovos para array para renderizar
-                const dadosNovosArray = Object.values(dadosNovos);
-                renderizarTabela('tabela-nova', dadosNovosArray, 'Dados Novos');
-                renderizarComparacao();
+                const resultado = await scrapingFIIs(ticker);
 
-                // 5. Status final
-                const total = dadosAtuais.length;
-                setStatus(`✅ Scraping concluído! ${sucessos} sucessos, ${erros} erros.`, 'sucesso');
-                adicionarLog(`\n📊 RESUMO: ${sucessos}/${total} FIIs processados com sucesso.`, 'destaque');
+                if (resultado.erroDiagnostico) {
+                    adicionarLog(`❌ Erro: ${resultado.erroDiagnostico}`, 'erro');
+                    setStatus(`❌ Erro: ${resultado.erroDiagnostico}`, 'erro');
+                    botao.disabled = false;
+                    botao.textContent = '🚀 Executar scraping (sem gravar)';
+                    return;
+                }
 
-                if (erros > 0) {
-                    adicionarLog(`⚠️ ${erros} FII(s) tiveram erro. Verifique os logs acima.`, 'erro');
-                } else {
-                    adicionarLog('🎉 Todos os FIIs foram processados com sucesso!', 'sucesso');
+                // 3. Mostrar resultados
+                const indicadores = resultado.indicadores || {};
+                const total = Object.keys(indicadores).length;
+
+                adicionarLog(`✅ ${total} indicadores encontrados.`, 'sucesso');
+                renderizarTabelaDinamica('tabela-nova', indicadores, 'Dados Extraídos');
+
+                setStatus(`✅ Scraping concluído! ${total} indicadores encontrados.`, 'sucesso');
+
+                // Log dos indicadores encontrados
+                for (const [titulo, valor] of Object.entries(indicadores)) {
+                    adicionarLog(`   ${titulo}: ${valor}`, 'info');
                 }
 
             } catch (erro) {
@@ -563,28 +394,23 @@
             botao.textContent = '🚀 Executar scraping (sem gravar)';
         }
 
-        // ============================================================
-        // EVENTOS
-        // ============================================================
-
         document.getElementById('btnTestar').addEventListener('click', executarTeste);
 
-        // ============================================================
-        // CARREGAR INICIAL
-        // ============================================================
-
-        // Carregar os dados atuais ao abrir a página
+        // Carregar inicial
         async function carregarInicial() {
             try {
-                const todosDados = await carregarCSV();
-                dadosAtuais = todosDados.filter(reg =>
-                    reg.Tipo && reg.Tipo.trim().toLowerCase() === "fii"
-                );
-
-                if (dadosAtuais.length > 0) {
-                    renderizarTabela('tabela-atual', dadosAtuais, 'Dados Atuais');
-                    setStatus(`📊 ${dadosAtuais.length} FII(s) carregados. Clique em "Executar" para testar.`, '');
-                    adicionarLog(`📂 ${dadosAtuais.length} FII(s) carregados do CSV. Aguardando execução...`, 'info');
+                const dados = await carregarCSV();
+                const fiis = dados.filter(r => r.Tipo && r.Tipo.trim().toLowerCase() === "fii");
+                if (fiis.length > 0) {
+                    const dadosAtuais = {};
+                    for (const [chave, valor] of Object.entries(fiis[0])) {
+                        if (valor && valor !== "ERRO" && valor !== "VAZIO" && chave !== "Tipo") {
+                            dadosAtuais[chave] = valor;
+                        }
+                    }
+                    renderizarTabelaDinamica('tabela-atual', dadosAtuais, 'Dados Atuais');
+                    setStatus(`📊 ${fiis.length} FII(s) carregados. Clique em "Executar" para testar.`, '');
+                    adicionarLog(`📂 ${fiis.length} FII(s) carregados. Exemplo: ${fiis[0].Ativo}`, 'info');
                 } else {
                     setStatus('Nenhum FII encontrado no CSV.', 'erro');
                     adicionarLog('⚠️ Nenhum FII encontrado no CSV.', 'erro');
@@ -595,7 +421,6 @@
             }
         }
 
-        // Iniciar
         carregarInicial();
     </script>
 
