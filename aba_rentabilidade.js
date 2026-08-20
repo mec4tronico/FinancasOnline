@@ -73,6 +73,7 @@ function converterNumero(valor) {
         .trim();
 
     if (texto.includes(",")) {
+
         texto = texto
             .replace(/\./g, "")
             .replace(",", ".");
@@ -88,7 +89,10 @@ function formatarPercentual(numero) {
         return "-";
     }
 
-    const sinal = numero > 0 ? "+" : "";
+    const sinal =
+        numero > 0
+            ? "+"
+            : "";
 
     return `${sinal}${numero.toLocaleString("pt-BR", {
         minimumFractionDigits: 2,
@@ -118,60 +122,102 @@ function linhaParaAtivo(linha, cabecalhos) {
 
     const bruto = {};
 
+
     cabecalhos.forEach((coluna, indice) => {
-        bruto[coluna] = linha[indice];
+
+        bruto[coluna] =
+            linha[indice];
+
     });
 
 
     const Ativo = {
-    Ativo: bruto.Ativo ?? "",
-    Tipo: bruto.Tipo ?? "",
 
-    Quantidade:
-        converterNumero(bruto.Quantidade),
+        Ativo:
+            bruto.Ativo ?? "",
 
-    ValorAtual:
-        converterNumero(bruto.ValorAtual),
+        Tipo:
+            bruto.Tipo ?? "",
 
-    Min52:
-        converterNumero(bruto.Min52),
+        Quantidade:
+            converterNumero(
+                bruto.Quantidade
+            ),
 
-    Max52:
-        converterNumero(bruto.Max52),
+        ValorAtual:
+            converterNumero(
+                bruto.ValorAtual
+            ),
 
-    DY:
-        converterNumero(bruto.DY),
+        Min52:
+            converterNumero(
+                bruto.Min52
+            ),
 
-    Valorizacao:
-        converterNumero(bruto.Valorizacao),
+        Max52:
+            converterNumero(
+                bruto.Max52
+            ),
 
-    PotencialFinanceiroMax52:
-        converterNumero(bruto.PotencialFinanceiroMax52),
+        DY:
+            converterNumero(
+                bruto.DY
+            ),
 
-    RiscoFinanceiroMin52:
-        converterNumero(bruto.RiscoFinanceiroMin52),
+        Valorizacao:
+            converterNumero(
+                bruto.Valorizacao
+            ),
 
-    Rentabilidade:
-        converterNumero(bruto.Rentabilidade),
+        PotencialFinanceiroMax52:
+            converterNumero(
+                bruto.PotencialFinanceiroMax52
+            ),
 
-    ValorAtualPosicao:
-        converterNumero(bruto.ValorAtualPosicao)
+        RiscoFinanceiroMin52:
+            converterNumero(
+                bruto.RiscoFinanceiroMin52
+            ),
+
+        Rentabilidade:
+            converterNumero(
+                bruto.Rentabilidade
+            ),
+
+        ValorAtualPosicao:
+            converterNumero(
+                bruto.ValorAtualPosicao
+            )
     };
+
 
     // --------------------------------------------------------
     // Cálculos centralizados em calculos.js
     // --------------------------------------------------------
 
-     const calculo = calcularMedia52S({
-        Quantidade: Ativo.Quantidade,
-        ValorAtual: Ativo.ValorAtual,
-        Min52: Ativo.Min52,
-        Max52: Ativo.Max52,
-        DY: Ativo.DY
-    });
+    const calculo =
+        calcularMedia52S({
+
+            Quantidade:
+                Ativo.Quantidade,
+
+            ValorAtual:
+                Ativo.ValorAtual,
+
+            Min52:
+                Ativo.Min52,
+
+            Max52:
+                Ativo.Max52,
+
+            DY:
+                Ativo.DY
+
+        });
 
 
     return {
+
         ...Ativo,
 
         media52S:
@@ -319,7 +365,7 @@ function injetarEstilos() {
         }
 
 
-        .far-linha-barra .far-Ativo-label {
+        .far-linha-barra .far-ativo-label {
             font-weight: 700;
             font-size: 13.5px;
             color: #1f2933;
@@ -488,7 +534,7 @@ function injetarEstilos() {
 
 
         .far-celula-heatmap
-        .far-heatmap-Ativo {
+        .far-heatmap-ativo {
             font-size: 13.5px;
             margin-bottom: 6px;
         }
@@ -566,7 +612,7 @@ function injetarEstilos() {
 
 
         .far-tabela-container
-        tboDY td {
+        tbody td {
 
             padding:
                 8px 14px;
@@ -583,14 +629,14 @@ function injetarEstilos() {
 
 
         .far-tabela-container
-        tboDY tr:nth-child(even) {
+        tbody tr:nth-child(even) {
             background-color:
                 #fafafa;
         }
 
 
         .far-tabela-container
-        tboDY tr:hover {
+        tbody tr:hover {
             background-color:
                 #f0f4f8;
         }
@@ -606,7 +652,7 @@ function injetarEstilos() {
         }
 
 
-        .far-Ativo-destaque {
+        .far-ativo-destaque {
             font-weight: 700;
             color: #1f2933;
         }
@@ -617,7 +663,7 @@ function injetarEstilos() {
         }
 
 
-        .far-valor-negAtivo {
+        .far-valor-negativo {
             color: #c62828;
         }
 
@@ -788,7 +834,7 @@ function garantirEstruturaAba(containerAba) {
             </h3>
 
             <p class="far-subtitulo">
-                ComparAtivo do dividend yield entre
+                Comparativo do dividend yield entre
                 os Ativos da carteira.
             </p>
 
@@ -965,6 +1011,8 @@ function renderizarFaixa52Semanas(
         if (
             Number.isFinite(Min52) &&
             Number.isFinite(Max52) &&
+            Number.isFinite(ValorAtual) &&
+            Number.isFinite(media52S) &&
             Max52 > Min52
         ) {
 
@@ -1013,7 +1061,7 @@ function renderizarFaixa52Semanas(
 
         linha.innerHTML = `
 
-            <span class="far-Ativo-label">
+            <span class="far-ativo-label">
                 ${item.Ativo}
             </span>
 
@@ -1115,11 +1163,15 @@ function renderizarDiferencaMedia52S(
     const ordenados =
         [...Ativos].sort(
             (a, b) =>
-                Math.abs(
-                    b.diferencaValorAtual
+                (
+                    Math.abs(
+                        b.diferencaValorAtual
+                    ) || 0
                 ) -
-                Math.abs(
-                    a.diferencaValorAtual
+                (
+                    Math.abs(
+                        a.diferencaValorAtual
+                    ) || 0
                 )
         );
 
@@ -1129,9 +1181,13 @@ function renderizarDiferencaMedia52S(
             1,
             ...ordenados.map(
                 item =>
-                    Math.abs(
+                    Number.isFinite(
                         item.diferencaValorAtual
-                    ) || 0
+                    )
+                        ? Math.abs(
+                            item.diferencaValorAtual
+                        )
+                        : 0
             )
         );
 
@@ -1147,7 +1203,11 @@ function renderizarDiferencaMedia52S(
     ordenados.forEach(item => {
 
         const diferenca =
-            item.diferencaValorAtual;
+            Number.isFinite(
+                item.diferencaValorAtual
+            )
+                ? item.diferencaValorAtual
+                : 0;
 
 
         const largura =
@@ -1171,7 +1231,7 @@ function renderizarDiferencaMedia52S(
 
         linha.innerHTML = `
 
-            <span class="far-Ativo-label">
+            <span class="far-ativo-label">
                 ${item.Ativo}
             </span>
 
@@ -1201,11 +1261,13 @@ function renderizarDiferencaMedia52S(
                     ${
                         positiva
                             ? "far-valor-positivo"
-                            : "far-valor-negAtivo"
+                            : "far-valor-negativo"
                     }
                 "
             >
-                ${formatarMoeda(diferenca)}
+                ${formatarMoeda(
+                    item.diferencaValorAtual
+                )}
             </span>
 
         `;
@@ -1237,8 +1299,20 @@ function renderizarRendaMensalFicticia(
     const ordenados =
         [...Ativos].sort(
             (a, b) =>
-                b.rendaMensalFicticia -
-                a.rendaMensalFicticia
+                (
+                    Number.isFinite(
+                        b.rendaMensalFicticia
+                    )
+                        ? b.rendaMensalFicticia
+                        : 0
+                ) -
+                (
+                    Number.isFinite(
+                        a.rendaMensalFicticia
+                    )
+                        ? a.rendaMensalFicticia
+                        : 0
+                )
         );
 
 
@@ -1247,7 +1321,11 @@ function renderizarRendaMensalFicticia(
             1,
             ...ordenados.map(
                 item =>
-                    item.rendaMensalFicticia || 0
+                    Number.isFinite(
+                        item.rendaMensalFicticia
+                    )
+                        ? item.rendaMensalFicticia
+                        : 0
             )
         );
 
@@ -1263,7 +1341,11 @@ function renderizarRendaMensalFicticia(
     ordenados.forEach(item => {
 
         const renda =
-            item.rendaMensalFicticia;
+            Number.isFinite(
+                item.rendaMensalFicticia
+            )
+                ? item.rendaMensalFicticia
+                : 0;
 
 
         const largura =
@@ -1283,7 +1365,7 @@ function renderizarRendaMensalFicticia(
 
         linha.innerHTML = `
 
-            <span class="far-Ativo-label">
+            <span class="far-ativo-label">
                 ${item.Ativo}
             </span>
 
@@ -1342,8 +1424,20 @@ function renderizarValorizacao(
     const ordenados =
         [...Ativos].sort(
             (a, b) =>
-                b.Valorizacao -
-                a.Valorizacao
+                (
+                    Number.isFinite(
+                        b.Valorizacao
+                    )
+                        ? b.Valorizacao
+                        : -Infinity
+                ) -
+                (
+                    Number.isFinite(
+                        a.Valorizacao
+                    )
+                        ? a.Valorizacao
+                        : -Infinity
+                )
         );
 
 
@@ -1352,9 +1446,13 @@ function renderizarValorizacao(
             1,
             ...ordenados.map(
                 item =>
-                    Math.abs(
+                    Number.isFinite(
                         item.Valorizacao
-                    ) || 0
+                    )
+                        ? Math.abs(
+                            item.Valorizacao
+                        )
+                        : 0
             )
         );
 
@@ -1369,17 +1467,23 @@ function renderizarValorizacao(
 
     ordenados.forEach(item => {
 
+        const valorizacao =
+            Number.isFinite(
+                item.Valorizacao
+            )
+                ? item.Valorizacao
+                : 0;
+
+
         const percentualLargura =
             (
-                Math.abs(
-                    item.Valorizacao
-                ) /
+                Math.abs(valorizacao) /
                 maiorModulo
             ) * 100;
 
 
         const positiva =
-            item.Valorizacao >= 0;
+            valorizacao >= 0;
 
 
         const linha =
@@ -1392,7 +1496,7 @@ function renderizarValorizacao(
 
         linha.innerHTML = `
 
-            <span class="far-Ativo-label">
+            <span class="far-ativo-label">
                 ${item.Ativo}
             </span>
 
@@ -1423,7 +1527,7 @@ function renderizarValorizacao(
                     ${
                         positiva
                             ? "far-valor-positivo"
-                            : "far-valor-negAtivo"
+                            : "far-valor-negativo"
                     }
                 "
             >
@@ -1447,7 +1551,7 @@ function renderizarValorizacao(
 // 3.5 — DIVIDEND YIELD
 // ============================================================
 
-function renderizarDividenDYield(
+function renderizarDividendYield(
     wrapper,
     Ativos
 ) {
@@ -1461,8 +1565,16 @@ function renderizarDividenDYield(
     const ordenados =
         [...Ativos].sort(
             (a, b) =>
-                b.DY -
-                a.DY
+                (
+                    Number.isFinite(b.DY)
+                        ? b.DY
+                        : -Infinity
+                ) -
+                (
+                    Number.isFinite(a.DY)
+                        ? a.DY
+                        : -Infinity
+                )
         );
 
 
@@ -1471,7 +1583,9 @@ function renderizarDividenDYield(
             1,
             ...ordenados.map(
                 item =>
-                    item.DY || 0
+                    Number.isFinite(item.DY)
+                        ? item.DY
+                        : 0
             )
         );
 
@@ -1486,9 +1600,15 @@ function renderizarDividenDYield(
 
     ordenados.forEach(item => {
 
+        const dy =
+            Number.isFinite(item.DY)
+                ? item.DY
+                : 0;
+
+
         const percentualLargura =
             (
-                Math.max(0, item.DY) /
+                Math.max(0, dy) /
                 maiorDY
             ) * 100;
 
@@ -1503,7 +1623,7 @@ function renderizarDividenDYield(
 
         linha.innerHTML = `
 
-            <span class="far-Ativo-label">
+            <span class="far-ativo-label">
                 ${item.Ativo}
             </span>
 
@@ -1609,9 +1729,13 @@ function renderizarHeatmap(
             1,
             ...Ativos.map(
                 item =>
-                    Math.abs(
+                    Number.isFinite(
                         item.Rentabilidade
-                    ) || 0
+                    )
+                        ? Math.abs(
+                            item.Rentabilidade
+                        )
+                        : 0
             )
         );
 
@@ -1644,7 +1768,7 @@ function renderizarHeatmap(
         celula.innerHTML = `
 
             <div
-                class="far-heatmap-Ativo"
+                class="far-heatmap-ativo"
             >
                 ${item.Ativo}
             </div>
@@ -1686,7 +1810,7 @@ function classeCor(valor) {
 
     return valor > 0
         ? "far-valor-positivo"
-        : "far-valor-negAtivo";
+        : "far-valor-negativo";
 }
 
 
@@ -1752,8 +1876,8 @@ function renderizarTabela(
     `;
 
 
-    const tboDY =
-        document.createElement("tboDY");
+    const tbody =
+        document.createElement("tbody");
 
 
     Ativos.forEach(item => {
@@ -1767,7 +1891,7 @@ function renderizarTabela(
             <td
                 class="
                     far-alinhar-esquerda
-                    far-Ativo-destaque
+                    far-ativo-destaque
                 "
             >
                 ${item.Ativo}
@@ -1871,7 +1995,7 @@ function renderizarTabela(
                 "
             >
                 ${formatarMoeda(
-                    item.potencialMax52
+                    item.PotencialFinanceiroMax52
                 )}
             </td>
 
@@ -1879,11 +2003,11 @@ function renderizarTabela(
             <td
                 class="
                     far-alinhar-direita
-                    far-valor-negAtivo
+                    far-valor-negativo
                 "
             >
                 ${formatarMoeda(
-                    item.riscoMin52
+                    item.RiscoFinanceiroMin52
                 )}
             </td>
 
@@ -1904,12 +2028,12 @@ function renderizarTabela(
         `;
 
 
-        tboDY.appendChild(tr);
+        tbody.appendChild(tr);
     });
 
 
     tabela.appendChild(thead);
-    tabela.appendChild(tboDY);
+    tabela.appendChild(tbody);
 
     container.appendChild(tabela);
 
@@ -1998,7 +2122,7 @@ async function carregarERenderizar() {
 
 
         // ----------------------------------------------------
-        // RENDERIZAÇÃO NA NOVA ORDEM
+        // RENDERIZAÇÃO NA ORDEM DEFINIDA
         // ----------------------------------------------------
 
         renderizarFaixa52Semanas(
@@ -2025,7 +2149,7 @@ async function carregarERenderizar() {
         );
 
 
-        renderizarDividenDYield(
+        renderizarDividendYield(
             wrapper,
             AtivosRentabilidade
         );
