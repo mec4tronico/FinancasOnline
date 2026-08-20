@@ -584,29 +584,17 @@
             <div id="progresso-acoes"></div>
             <!-- Container dos Gráficos (EM COLUNA ÚNICA) -->
             <div id="graficos-acoes-container" style="display: flex; flex-direction: column; gap: 20px; margin-bottom: 30px;">
-                <!-- GRÁFICO 1: Valuation Heatmap -->
-                <div class="chart-card" style="background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                    <h3 style="margin-top: 0; color: #333; font-size: 14px;">📊 Valuation Heatmap</h3>
-                    <div id="grafico-heatmap" style="height: 300px; overflow-y: auto;"></div>
-                </div>
-            
-                <!-- GRÁFICO 2: Rentabilidade vs Endividamento -->
-                <div class="chart-card" style="background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                    <h3 style="margin-top: 0; color: #333; font-size: 14px;">📈 Rentabilidade vs Endividamento</h3>
-                    <div id="grafico-bolhas" style="height: 350px;"></div>
-                </div>
-            
-                <!-- GRÁFICO 3: Crescimento (Top 5) -->
-                <div class="chart-card" style="background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                    <h3 style="margin-top: 0; color: #333; font-size: 14px;">🚀 Crescimento (Top 5)</h3>
-                    <div id="grafico-crescimento" style="height: 350px;"></div>
-                </div>
-            
-                <!-- GRÁFICO 4: Scorecard de Qualidade -->
-                <div class="chart-card" style="background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                    <h3 style="margin-top: 0; color: #333; font-size: 14px;">⭐ Scorecard de Qualidade</h3>
-                    <div id="grafico-scorecard" style="max-height: 300px; overflow-y: auto;"></div>
-                </div>
+               <!-- GRÁFICO 1: Valorização vs DY -->
+                <div id="grafico-dispersao" style="height: 300px;"></div>
+                
+                <!-- GRÁFICO 2: Tamanho vs Valorização -->
+                <div id="grafico-bolhas" style="height: 300px;"></div>
+                
+                <!-- GRÁFICO 3: Endividamento -->
+                <div id="grafico-endividamento" style="height: 300px;"></div>
+                
+                <!-- GRÁFICO 4: Scorecard -->
+                <div id="grafico-scorecard" style="max-height: 300px; overflow-y: auto;"></div>
             </div>
 
 
