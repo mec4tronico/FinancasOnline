@@ -138,7 +138,57 @@
                     MERCADO
                 </span>
 
+                        </button>
+            <!-- ============================================================
+                 BOTÃO DA ABA AÇÕES
+                 ============================================================ -->
+            
+            <button class="tab-button" data-tab="tab-acoes" role="tab" aria-selected="false">
+                📊 Ações
             </button>
+            
+            <!-- ============================================================
+                 ABA AÇÕES
+                 ============================================================ -->
+            
+            <section id="tab-acoes" role="tabpanel" hidden aria-labelledby="tab-acoes">
+                <div class="tab-content">
+                    <h2>📊 Análise de Ações</h2>
+                    <p style="color: #666; margin-bottom: 20px;">
+                        Indicadores fundamentalistas exclusivos para ações.
+                    </p>
+            
+                    <!-- Botão de atualização -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                        <div>
+                            <button id="botao-atualizar-acoes" style="
+                                padding: 10px 24px;
+                                background: #00598a;
+                                color: #fff;
+                                border: none;
+                                border-radius: 6px;
+                                font-size: 14px;
+                                font-weight: 600;
+                                cursor: pointer;
+                                transition: background 0.2s;
+                            " onmouseover="this.style.background='#003d66'" onmouseout="this.style.background='#00598a'">
+                                🔄 ATUALIZAR AÇÕES
+                            </button>
+                            <span style="font-size: 12px; color: #999; margin-left: 10px;">
+                                Atualiza os indicadores das ações
+                            </span>
+                        </div>
+                        <div id="status-acoes" style="font-size: 12px; color: #999;">
+                            Última atualização: <span id="ultima-atualizacao-acoes">-</span>
+                        </div>
+                    </div>
+            
+                    <!-- Container da tabela -->
+                    <div id="tabela-acoes-container">
+                        <!-- A tabela será renderizada aqui pelo JavaScript -->
+                    </div>
+                </div>
+            </section>
 
 
             <!-- 4. CONFIGURAÇÃO -->
