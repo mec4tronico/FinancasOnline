@@ -38,6 +38,12 @@ import {
     atualizarAbaMercado
 } from "./aba_mercado.js";
 
+// ============================================================================
+// APP.JS (com adições para ABA AÇÕES)
+// ============================================================================
+
+import { iniciarAbaAcoes } from "./aba_acoes.js";
+
 
 // ============================================================================
 // INICIALIZAÇÃO DA APLICAÇÃO
@@ -108,6 +114,18 @@ document.addEventListener(
                 erro
             );
 
+        }
+        
+        // ====================================================================
+        // 2.5 INICIALIZAÇÃO DA ABA AÇÕES
+        // ====================================================================
+
+        try {
+            if (typeof iniciarAbaAcoes === "function") {
+                iniciarAbaAcoes();
+            }
+        } catch (erro) {
+            console.error("Erro ao iniciar a aba Ações:", erro);
         }
 
 
@@ -386,7 +404,22 @@ document.addEventListener(
             }
 
         }
+        // ====================================================================
+        // 6.5 CARREGAR ABA AÇÕES
+        // ====================================================================
 
+        if (idAbaAlvo === "tab-acoes") {
+            try {
+                const resultado = iniciarAbaAcoes();
+                if (resultado && typeof resultado.catch === "function") {
+                    resultado.catch(erro => {
+                        console.error("Erro ao carregar a aba Ações:", erro);
+                    });
+                }
+            } catch (erro) {
+                console.error("Erro ao carregar a aba Ações:", erro);
+            }
+        }
 
         // ====================================================================
         // 8. REGISTRAR CLIQUES DOS BOTÕES DAS ABAS
