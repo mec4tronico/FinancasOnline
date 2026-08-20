@@ -9,16 +9,15 @@
  *   3.1 — Faixa de 52 semanas
  *          - Mínimo 52S
  *          - Valor atual
- *          - Média 52S
  *          - Máximo 52S
- *          - Renda mensal fictícia total
- *          - Renda anual fictícia total
  *
  *   3.2 — Diferença para a Média 52S
  *          - Valor atual da posição
  *          - Valor fictício da posição na Média 52S
  *
  *   3.3 — Renda mensal fictícia na Média 52S
+ *          - Renda mensal fictícia
+ *          - Renda anual fictícia
  *
  *   3.4 — Valorização
  *
@@ -121,7 +120,6 @@ function formatarMoeda(numero) {
 function linhaParaAtivo(linha, cabecalhos) {
 
     const bruto = {};
-
 
     cabecalhos.forEach((coluna, indice) => {
 
@@ -471,24 +469,6 @@ function injetarEstilos() {
         }
 
 
-        .far-marcador-media {
-            position: absolute;
-            top: 50%;
-
-            width: 10px;
-            height: 10px;
-
-            border-radius: 50%;
-
-            background: #ffffff;
-
-            border: 2px solid #7b61a8;
-
-            transform:
-                translate(-50%, -50%);
-        }
-
-
         .far-legenda-faixa {
             display: flex;
             justify-content: space-between;
@@ -749,8 +729,8 @@ function garantirEstruturaAba(containerAba) {
             </h3>
 
             <p class="far-subtitulo">
-                Posição do preço atual entre a mínima,
-                média e máxima dos últimos 52 semanas.
+                Posição do preço atual entre a mínima
+                e a máxima dos últimos 52 semanas.
             </p>
 
             <div class="far-conteudo far-status">
@@ -771,7 +751,7 @@ function garantirEstruturaAba(containerAba) {
 
             <p class="far-subtitulo">
                 Diferença entre o valor atual da posição
-                e o valor fictício caso a cotação estivesse
+                e o valor da posição caso o preço estivesse
                 na Média 52S.
             </p>
 
@@ -792,8 +772,8 @@ function garantirEstruturaAba(containerAba) {
             </h3>
 
             <p class="far-subtitulo">
-                Renda mensal estimada caso cada Ativo
-                estivesse cotado na sua Média 52S.
+                Renda estimada caso cada Ativo estivesse
+                cotado na sua Média 52S.
             </p>
 
             <div class="far-conteudo far-status">
@@ -898,6 +878,14 @@ function garantirEstruturaAba(containerAba) {
 // ============================================================
 // 3.1 — FAIXA DE 52 SEMANAS
 // ============================================================
+// IMPORTANTE:
+// Aqui NÃO existe Média 52S.
+// Aqui NÃO existe cálculo de média.
+// O gráfico mostra somente:
+//
+// Mínimo 52S ---- posição do Atual ---- Máximo 52S
+//
+// ============================================================
 
 function renderizarFaixa52Semanas(
     wrapper,
@@ -908,82 +896,6 @@ function renderizarFaixa52Semanas(
         wrapper.querySelector(
             "#far-cartao-faixa52 .far-conteudo"
         );
-
-
-    // --------------------------------------------------------
-    // KPIs
-    // --------------------------------------------------------
-
-    const rendaMensalTotal =
-        Ativos.reduce(
-            (total, item) =>
-                total +
-                (
-                    Number.isFinite(
-                        item.rendaMensalFicticia
-                    )
-                        ? item.rendaMensalFicticia
-                        : 0
-                ),
-            0
-        );
-
-
-    const rendaAnualTotal =
-        Ativos.reduce(
-            (total, item) =>
-                total +
-                (
-                    Number.isFinite(
-                        item.rendaAnualFicticia
-                    )
-                        ? item.rendaAnualFicticia
-                        : 0
-                ),
-            0
-        );
-
-
-    const conteudo =
-        document.createElement("div");
-
-
-    conteudo.innerHTML = `
-
-        <div class="far-kpis">
-
-            <div class="far-kpi">
-
-                <div class="far-kpi-label">
-                    Renda mensal fictícia total
-                </div>
-
-                <div class="far-kpi-valor">
-                    ${formatarMoeda(
-                        rendaMensalTotal
-                    )}
-                </div>
-
-            </div>
-
-
-            <div class="far-kpi">
-
-                <div class="far-kpi-label">
-                    Renda anual fictícia total
-                </div>
-
-                <div class="far-kpi-valor">
-                    ${formatarMoeda(
-                        rendaAnualTotal
-                    )}
-                </div>
-
-            </div>
-
-        </div>
-
-    `;
 
 
     const lista =
@@ -999,20 +911,17 @@ function renderizarFaixa52Semanas(
         const {
             Min52,
             Max52,
-            ValorAtual,
-            media52S
+            ValorAtual
         } = item;
 
 
         let posicaoAtual = 50;
-        let posicaoMedia = 50;
 
 
         if (
             Number.isFinite(Min52) &&
             Number.isFinite(Max52) &&
             Number.isFinite(ValorAtual) &&
-            Number.isFinite(media52S) &&
             Max52 > Min52
         ) {
 
@@ -1023,29 +932,12 @@ function renderizarFaixa52Semanas(
                 ) * 100;
 
 
-            posicaoMedia =
-                (
-                    (media52S - Min52) /
-                    (Max52 - Min52)
-                ) * 100;
-
-
             posicaoAtual =
                 Math.min(
                     100,
                     Math.max(
                         0,
                         posicaoAtual
-                    )
-                );
-
-
-            posicaoMedia =
-                Math.min(
-                    100,
-                    Math.max(
-                        0,
-                        posicaoMedia
                     )
                 );
         }
@@ -1065,21 +957,10 @@ function renderizarFaixa52Semanas(
                 ${item.Ativo}
             </span>
 
+
             <div>
 
                 <div class="far-trilha-faixa">
-
-                    <div
-                        class="far-marcador-media"
-                        style="
-                            left:${posicaoMedia}%;
-                        "
-                        title="
-                            Média 52S:
-                            ${formatarMoeda(media52S)}
-                        "
-                    ></div>
-
 
                     <div
                         class="far-marcador-faixa"
@@ -1101,14 +982,6 @@ function renderizarFaixa52Semanas(
                         Mín.
                         <strong>
                             ${formatarMoeda(Min52)}
-                        </strong>
-                    </span>
-
-
-                    <span>
-                        Média
-                        <strong>
-                            ${formatarMoeda(media52S)}
                         </strong>
                     </span>
 
@@ -1139,14 +1012,21 @@ function renderizarFaixa52Semanas(
     });
 
 
-    conteudo.appendChild(lista);
-
-    alvo.replaceWith(conteudo);
+    alvo.replaceWith(lista);
 }
 
 
 // ============================================================
 // 3.2 — DIFERENÇA PARA A MÉDIA 52S
+// ============================================================
+// Aqui SIM é utilizada a Média 52S.
+//
+// A comparação é:
+//
+// Valor atual da posição
+//        X
+// Valor fictício da posição na Média 52S
+//
 // ============================================================
 
 function renderizarDiferencaMedia52S(
@@ -1235,6 +1115,7 @@ function renderizarDiferencaMedia52S(
                 ${item.Ativo}
             </span>
 
+
             <div class="far-trilha-barra">
 
                 <div
@@ -1282,7 +1163,12 @@ function renderizarDiferencaMedia52S(
 
 
 // ============================================================
-// 3.3 — RENDA MENSAL FICTÍCIA
+// 3.3 — RENDA MENSAL FICTÍCIA NA MÉDIA 52S
+// ============================================================
+// Aqui ficam os KPIs que estavam indevidamente na 3.1.
+//
+// Todos os valores desta seção são baseados na
+// Média 52S através dos cálculos já existentes.
 // ============================================================
 
 function renderizarRendaMensalFicticia(
@@ -1294,6 +1180,82 @@ function renderizarRendaMensalFicticia(
         wrapper.querySelector(
             "#far-cartao-renda52 .far-conteudo"
         );
+
+
+    // --------------------------------------------------------
+    // KPIs
+    // --------------------------------------------------------
+
+    const rendaMensalTotal =
+        Ativos.reduce(
+            (total, item) =>
+                total +
+                (
+                    Number.isFinite(
+                        item.rendaMensalFicticia
+                    )
+                        ? item.rendaMensalFicticia
+                        : 0
+                ),
+            0
+        );
+
+
+    const rendaAnualTotal =
+        Ativos.reduce(
+            (total, item) =>
+                total +
+                (
+                    Number.isFinite(
+                        item.rendaAnualFicticia
+                    )
+                        ? item.rendaAnualFicticia
+                        : 0
+                ),
+            0
+        );
+
+
+    const conteudo =
+        document.createElement("div");
+
+
+    conteudo.innerHTML = `
+
+        <div class="far-kpis">
+
+            <div class="far-kpi">
+
+                <div class="far-kpi-label">
+                    Renda mensal fictícia total
+                </div>
+
+                <div class="far-kpi-valor">
+                    ${formatarMoeda(
+                        rendaMensalTotal
+                    )}
+                </div>
+
+            </div>
+
+
+            <div class="far-kpi">
+
+                <div class="far-kpi-label">
+                    Renda anual fictícia total
+                </div>
+
+                <div class="far-kpi-valor">
+                    ${formatarMoeda(
+                        rendaAnualTotal
+                    )}
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
 
 
     const ordenados =
@@ -1402,7 +1364,9 @@ function renderizarRendaMensalFicticia(
     });
 
 
-    alvo.replaceWith(lista);
+    conteudo.appendChild(lista);
+
+    alvo.replaceWith(conteudo);
 }
 
 
