@@ -1026,7 +1026,6 @@ function criarGraficoClasses(
 
 }
 
-
 // ============================================================
 // GRÁFICO LUCRO / PREJUÍZO
 // ============================================================
@@ -1053,6 +1052,21 @@ function criarGraficoLucroPrejuizo(
   }
 
 
+  // ==========================================================
+  // DETECTAR CELULAR
+  // ==========================================================
+
+  const ehCelular =
+
+    window.matchMedia(
+      "(max-width: 700px)"
+    ).matches;
+
+
+  // ==========================================================
+  // GRÁFICO
+  // ==========================================================
+
   graficosCarteira.lucroPrejuizo =
 
     new Chart(
@@ -1062,6 +1076,7 @@ function criarGraficoLucroPrejuizo(
       {
 
         type: "bar",
+
 
         data: {
 
@@ -1074,10 +1089,12 @@ function criarGraficoLucroPrejuizo(
 
             ),
 
+
           datasets: [{
 
             label:
               "Lucro / prejuízo",
+
 
             data:
 
@@ -1087,6 +1104,7 @@ function criarGraficoLucroPrejuizo(
                   posicao.lucroPrejuizo
 
               ),
+
 
             backgroundColor:
 
@@ -1102,29 +1120,48 @@ function criarGraficoLucroPrejuizo(
 
               ),
 
+
             borderRadius: 6
 
           }]
 
         },
 
+
         options: {
 
           ...opcoesBase,
 
+
+          // ==================================================
+          // CELULAR = BARRAS HORIZONTAIS
+          // DESKTOP = BARRAS VERTICAIS
+          // ==================================================
+
+          indexAxis:
+
+            ehCelular
+              ? "y"
+              : "x",
+
+
           scales: {
+
+            // =================================================
+            // EIXO X
+            // =================================================
 
             x: {
 
               grid: {
 
-                display: false
+                display:
+                  ehCelular
+                    ? true
+                    : false
 
-              }
+              },
 
-            },
-
-            y: {
 
               ticks: {
 
@@ -1132,11 +1169,56 @@ function criarGraficoLucroPrejuizo(
 
                   valor =>
 
-                    formatarMoeda(
-                      valor
-                    )
+                    ehCelular
+
+                      ? formatarMoeda(valor)
+
+                      : valor
 
               },
+
+
+              border: {
+
+                display: false
+
+              }
+
+            },
+
+
+            // =================================================
+            // EIXO Y
+            // =================================================
+
+            y: {
+
+              grid: {
+
+                display:
+                  ehCelular
+                    ? false
+                    : true
+
+              },
+
+
+              ticks: {
+
+                autoSkip:
+                  false,
+
+                font: {
+
+                  size:
+                    ehCelular
+                      ? 11
+                      : 12
+
+                }
+
+              },
+
 
               border: {
 
