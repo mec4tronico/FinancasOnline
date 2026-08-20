@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Teste scrapingacoes.js - Loop</title>
+    <title>Teste scrapingfiis.js - Loop</title>
 
     <style>
         * {
@@ -164,6 +164,7 @@
             font-weight: bold;
         }
 
+        /* Tabela com scroll horizontal */
         .table-scroll {
             overflow-x: auto;
             max-height: 600px;
@@ -174,11 +175,11 @@
 
 <body>
 
-    <h1>🧪 Teste scrapingacoes.js - Loop</h1>
+    <h1>🧪 Teste scrapingfiis.js - Loop</h1>
 
     <div class="controles">
-        <button id="btnTestar">🚀 Extrair indicadores de TODAS as Ações</button>
-        <span style="font-size: 12px; color: #666;">Percorre todas as ações do CSV e compila os indicadores</span>
+        <button id="btnTestar">🚀 Extrair indicadores de TODOS os FIIs</button>
+        <span style="font-size: 12px; color: #666;">Percorre todos os FIIs do CSV e compila os indicadores</span>
     </div>
 
     <div id="status">Aguardando...</div>
@@ -196,13 +197,13 @@
     <script type="importmap">
         {
             "imports": {
-                "./scrapingacoes.js": "./scrapingacoes.js"
+                "./scrapingfiis.js": "./scrapingfiis.js"
             }
         }
     </script>
 
     <script type="module">
-        import { scrapingAcoes } from './scrapingacoes.js';
+        import { scrapingFIIs } from './scrapingfiis.js';
 
         const ARQUIVO_CSV =
             "https://raw.githubusercontent.com/mec4tronico/FinancasOnline/main/" +
@@ -292,8 +293,8 @@
         // RENDERIZAR TABELA DINÂMICA
         // ============================================================
 
-        function renderizarTabela(acoesData) {
-            if (!acoesData || acoesData.length === 0) {
+        function renderizarTabela(fiisData) {
+            if (!fiisData || fiisData.length === 0) {
                 tabelaContainer.innerHTML = `
                     <div style="padding: 20px; text-align: center; color: #999;">
                         Nenhum dado encontrado.
@@ -304,7 +305,7 @@
 
             // Coletar TODOS os títulos de indicadores únicos
             const todosTitulos = new Set();
-            for (const item of acoesData) {
+            for (const item of fiisData) {
                 for (const titulo of Object.keys(item.indicadores)) {
                     todosTitulos.add(titulo);
                 }
@@ -314,7 +315,7 @@
             // Construir HTML da tabela
             let html = `
                 <div class="resumo">
-                    <span>📊 <strong>${acoesData.length}</strong> ação(ões) processada(s)</span>
+                    <span>📊 <strong>${fiisData.length}</strong> FII(s) processados</span>
                     <span>📈 <strong>${colunas.length}</strong> indicador(es) únicos encontrados</span>
                     <span>🔄 Última atualização: <strong>${new Date().toLocaleString()}</strong></span>
                 </div>
@@ -322,14 +323,14 @@
                     <table>
                         <thead>
                             <tr>
-                                <th style="min-width: 80px; position: sticky; left: 0; z-index: 20; background: #f5f5f5;">Ação</th>
+                                <th style="min-width: 80px; position: sticky; left: 0; z-index: 20; background: #f5f5f5;">FII</th>
                                 ${colunas.map(col => `<th>${col}</th>`).join('')}
                             </tr>
                         </thead>
                         <tbody>
             `;
 
-            for (const item of acoesData) {
+            for (const item of fiisData) {
                 html += `<tr>`;
                 html += `<td style="font-weight: 600; color: #00598a; position: sticky; left: 0; z-index: 5; background: #fff;">${item.ticker}</td>`;
                 for (const coluna of colunas) {
@@ -345,7 +346,7 @@
                     </table>
                 </div>
                 <div style="margin-top: 10px; font-size: 11px; color: #999;">
-                    * Limite de 30 indicadores por ação. Valores com "-" não foram encontrados.
+                    * Limite de 30 indicadores por FII. Valores com "-" não foram encontrados.
                 </div>
             `;
 
@@ -353,7 +354,7 @@
         }
 
         // ============================================================
-        // FUNÇÃO PRINCIPAL: EXECUTAR LOOP PARA TODAS AS AÇÕES
+        // FUNÇÃO PRINCIPAL: EXECUTAR LOOP PARA TODOS OS FIIs
         // ============================================================
 
         async function executarLoop() {
@@ -365,35 +366,35 @@
             setStatus('Carregando CSV...', '');
 
             try {
-                // 1. Carregar CSV e filtrar Ações
+                // 1. Carregar CSV e filtrar FIIs
                 const todosDados = await carregarCSV();
-                const acoes = todosDados.filter(r => r.Tipo && r.Tipo.trim().toLowerCase() === "acoes");
+                const fiis = todosDados.filter(r => r.Tipo && r.Tipo.trim().toLowerCase() === "fii");
 
-                if (acoes.length === 0) {
-                    adicionarLog('⚠️ Nenhuma ação encontrada no CSV.', 'erro');
-                    setStatus('Nenhuma ação encontrada.', 'erro');
+                if (fiis.length === 0) {
+                    adicionarLog('⚠️ Nenhum FII encontrado no CSV.', 'erro');
+                    setStatus('Nenhum FII encontrado.', 'erro');
                     botao.disabled = false;
-                    botao.textContent = '🚀 Extrair indicadores de TODAS as Ações';
+                    botao.textContent = '🚀 Extrair indicadores de TODOS os FIIs';
                     return;
                 }
 
-                adicionarLog(`📂 ${acoes.length} ação(ões) encontrada(s) no CSV.`, 'destaque');
-                setStatus(`🔄 Processando ${acoes.length} ação(ões)...`, '');
+                adicionarLog(`📂 ${fiis.length} FII(s) encontrados no CSV.`, 'destaque');
+                setStatus(`🔄 Processando ${fiis.length} FII(s)...`, '');
 
                 const resultados = [];
                 let sucessos = 0;
                 let erros = 0;
 
-                // 2. Loop para cada ação
-                for (let i = 0; i < acoes.length; i++) {
-                    const acao = acoes[i];
-                    const ticker = acao.Ativo;
+                // 2. Loop para cada FII
+                for (let i = 0; i < fiis.length; i++) {
+                    const fii = fiis[i];
+                    const ticker = fii.Ativo;
 
-                    adicionarLog(`\n🔍 [${i + 1}/${acoes.length}] Scraping ${ticker}...`, 'destaque');
-                    setStatus(`🔄 ${ticker} (${i + 1}/${acoes.length})...`, '');
+                    adicionarLog(`\n🔍 [${i + 1}/${fiis.length}] Scraping ${ticker}...`, 'destaque');
+                    setStatus(`🔄 ${ticker} (${i + 1}/${fiis.length})...`, '');
 
                     try {
-                        const resultado = await scrapingAcoes(ticker);
+                        const resultado = await scrapingFIIs(ticker);
 
                         if (resultado.erroDiagnostico) {
                             adicionarLog(`   ❌ Erro: ${resultado.erroDiagnostico}`, 'erro');
@@ -452,7 +453,7 @@
             }
 
             botao.disabled = false;
-            botao.textContent = '🚀 Extrair indicadores de TODAS as Ações';
+            botao.textContent = '🚀 Extrair indicadores de TODOS os FIIs';
         }
 
         // ============================================================
@@ -465,13 +466,13 @@
         async function carregarInicial() {
             try {
                 const dados = await carregarCSV();
-                const acoes = dados.filter(r => r.Tipo && r.Tipo.trim().toLowerCase() === "acoes");
-                if (acoes.length > 0) {
-                    adicionarLog(`📂 ${acoes.length} ação(ões) carregada(s) do CSV.`, 'info');
-                    setStatus(`📊 ${acoes.length} ação(ões) disponível(eis). Clique em "Extrair" para começar.`, '');
+                const fiis = dados.filter(r => r.Tipo && r.Tipo.trim().toLowerCase() === "fii");
+                if (fiis.length > 0) {
+                    adicionarLog(`📂 ${fiis.length} FII(s) carregados do CSV.`, 'info');
+                    setStatus(`📊 ${fiis.length} FII(s) disponíveis. Clique em "Extrair" para começar.`, '');
                 } else {
-                    setStatus('Nenhuma ação encontrada no CSV.', 'erro');
-                    adicionarLog('⚠️ Nenhuma ação encontrada no CSV.', 'erro');
+                    setStatus('Nenhum FII encontrado no CSV.', 'erro');
+                    adicionarLog('⚠️ Nenhum FII encontrado no CSV.', 'erro');
                 }
             } catch (erro) {
                 setStatus(`❌ Erro ao carregar CSV: ${erro.message}`, 'erro');
