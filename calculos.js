@@ -146,12 +146,18 @@ export function calcularMedia52S(registro) {
     const rendaMensalFicticia =
         rendaAnualFicticia / 12;
 
-
+    const valorAtualPosicao =
+        quantidade * registro.ValorAtual;
+    
+    const diferencaValorAtual =
+        valorAtualPosicao - valorFicticio;
+    
     return {
         media52S,
         valorFicticio,
         rendaAnualFicticia,
-        rendaMensalFicticia
+        rendaMensalFicticia,
+        diferencaValorAtual
     };
 }
 
