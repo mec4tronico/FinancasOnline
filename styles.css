@@ -575,6 +575,27 @@ tbody tr:hover {
     width: 100% !important;
 }
 
+/* Estilos para o botão ATUALIZAR TUDO */
+#btn-atualizar-tudo {
+    background: #00598a;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, opacity 0.2s;
+}
+
+#btn-atualizar-tudo:hover {
+    background: #003d66;
+}
+
+#btn-atualizar-tudo:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 /* Responsividade para telas menores */
 @media (max-width: 768px) {
     #graficos-acoes-container .chart-card {
@@ -601,6 +622,8 @@ tbody tr:hover {
         padding: 6px 8px;
     }
 }
+
+
 
 @media (max-width: 700px) {
     .app-header {
