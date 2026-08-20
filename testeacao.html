@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Teste scrapingacoes.js - Loop</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        .controles {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            background: #00598a;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #003d66;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        #status {
+            margin: 15px 0;
+            padding: 12px 16px;
+            background: #e3f2fd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            border-left: 4px solid #00598a;
+        }
+
+        #status.erro {
+            background: #ffebee;
+            border-left-color: #d32f2f;
+            color: #b71c1c;
+        }
+
+        #status.sucesso {
+            background: #e8f5e9;
+            border-left-color: #2e7d32;
+            color: #1b5e20;
+        }
+
+        #tabela-container {
+            background: #fff;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        th {
+            background: #f5f5f5;
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e0e0e0;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        td {
+            padding: 6px 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        tr:hover {
+            background: #fafafa;
+        }
+
+        .valor-encontrado {
+            color: #2e7d32;
+        }
+
+        .valor-nao-encontrado {
+            color: #999;
+            font-style: italic;
+        }
+
+        #log-container {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: Consolas, monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-top: 20px;
+        }
+
+        #log-container .log-info {
+            color: #4fc3f7;
+        }
+
+        #log-container .log-sucesso {
+            color: #81c784;
+        }
+
+        #log-container .log-erro {
+            color: #e57373;
+        }
+
+        #log-container .log-destaque {
+            color: #ffb74d;
+        }
+
+        .resumo {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .resumo span {
+            font-weight: bold;
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>🧪 Teste scrapingacoes.js - Loop</h1>
+
+    <div class="controles">
+        <button id="btnTestar">🚀 Extrair indicadores de TODAS as Ações</button>
+        <span style="font-size: 12px; color: #666;">Percorre todas as ações do CSV e compila os indicadores</span>
+    </div>
+
+    <div id="status">Aguardando...</div>
+
+    <div id="tabela-container">
+        <div style="padding: 20px; text-align: center; color: #999;">
+            Aguardando execução...
+        </div>
+    </div>
+
+    <div id="log-container">
+        <span class="log-info">📋 Aguardando execução...</span>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "./scrapingacoes.js": "./scrapingacoes.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import { scrapingAcoes } from './scrapingacoes.js';
+
+        const ARQUIVO_CSV =
+            "https://raw.githubusercontent.com/mec4tronico/FinancasOnline/main/" +
+            "patrimonio_consolidado.csv";
+
+        const logContainer = document.getElementById('log-container');
+        const statusDiv = document.getElementById('status');
+        const tabelaContainer = document.getElementById('tabela-container');
+
+        function adicionarLog(mensagem, tipo = 'info') {
+            const classes = {
+                'info': 'log-info',
+                'sucesso': 'log-sucesso',
+                'erro': 'log-erro',
+                'destaque': 'log-destaque'
+            };
+            const span = document.createElement('span');
+            span.className = classes[tipo] || 'log-info';
+            span.textContent = mensagem + '\n';
+            logContainer.appendChild(span);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function limparLog() {
+            logContainer.innerHTML = '';
+        }
+
+        function setStatus(mensagem, tipo = '') {
+            statusDiv.textContent = mensagem;
+            statusDiv.className = tipo;
+        }
+
+        // ============================================================
+        // FUNÇÕES PARA LER CSV
+        // ============================================================
+
+        function separarLinhaCSV(linha) {
+            const valores = [];
+            let valorAtual = "";
+            let dentroDeAspas = false;
+            for (let i = 0; i < linha.length; i++) {
+                const c = linha[i];
+                if (c === '"') {
+                    if (dentroDeAspas && linha[i + 1] === '"') {
+                        valorAtual += '"';
+                        i++;
+                    } else {
+                        dentroDeAspas = !dentroDeAspas;
+                    }
+                } else if (c === "," && !dentroDeAspas) {
+                    valores.push(valorAtual);
+                    valorAtual = "";
+                } else {
+                    valorAtual += c;
+                }
+            }
+            valores.push(valorAtual);
+            return valores;
+        }
+
+        function converterCSVParaObjetos(texto) {
+            const linhas = texto.trim().split(/\r?\n/);
+            if (linhas.length === 0 || !linhas[0].trim()) throw new Error("CSV vazio.");
+            const cabecalho = separarLinhaCSV(linhas[0]).map(v => v.trim());
+            const dados = [];
+            for (let i = 1; i < linhas.length; i++) {
+                if (!linhas[i].trim()) continue;
+                const valores = separarLinhaCSV(linhas[i]);
+                while (valores.length < cabecalho.length) valores.push("");
+                const registro = {};
+                for (let j = 0; j < cabecalho.length; j++) {
+                    registro[cabecalho[j]] = valores[j] || "";
+                }
+                dados.push(registro);
+            }
+            return dados;
+        }
+
+        async function carregarCSV() {
+            const url = `${ARQUIVO_CSV}?atualizadoEm=${Date.now()}`;
+            const r = await fetch(url, { cache: "no-store" });
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            return converterCSVParaObjetos(await r.text());
+        }
+
+        // ============================================================
+        // RENDERIZAR TABELA DINÂMICA
+        // ============================================================
+
+        function renderizarTabela(acoesData) {
+            if (!acoesData || acoesData.length === 0) {
+                tabelaContainer.innerHTML = `
+                    <div style="padding: 20px; text-align: center; color: #999;">
+                        Nenhum dado encontrado.
+                    </div>
+                `;
+                return;
+            }
+
+            // Coletar TODOS os títulos de indicadores únicos
+            const todosTitulos = new Set();
+            for (const item of acoesData) {
+                for (const titulo of Object.keys(item.indicadores)) {
+                    todosTitulos.add(titulo);
+                }
+            }
+            const colunas = Array.from(todosTitulos).slice(0, 30); // Limite de 30 colunas
+
+            // Construir HTML da tabela
+            let html = `
+                <div class="resumo">
+                    <span>📊 <strong>${acoesData.length}</strong> ação(ões) processada(s)</span>
+                    <span>📈 <strong>${colunas.length}</strong> indicador(es) únicos encontrados</span>
+                    <span>🔄 Última atualização: <strong>${new Date().toLocaleString()}</strong></span>
+                </div>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="min-width: 80px; position: sticky; left: 0; z-index: 20; background: #f5f5f5;">Ação</th>
+                                ${colunas.map(col => `<th>${col}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            for (const item of acoesData) {
+                html += `<tr>`;
+                html += `<td style="font-weight: 600; color: #00598a; position: sticky; left: 0; z-index: 5; background: #fff;">${item.ticker}</td>`;
+                for (const coluna of colunas) {
+                    const valor = item.indicadores[coluna] || '-';
+                    const classe = valor !== '-' ? 'valor-encontrado' : 'valor-nao-encontrado';
+                    html += `<td class="${classe}">${valor}</td>`;
+                }
+                html += `</tr>`;
+            }
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top: 10px; font-size: 11px; color: #999;">
+                    * Limite de 30 indicadores por ação. Valores com "-" não foram encontrados.
+                </div>
+            `;
+
+            tabelaContainer.innerHTML = html;
+        }
+
+        // ============================================================
+        // FUNÇÃO PRINCIPAL: EXECUTAR LOOP PARA TODAS AS AÇÕES
+        // ============================================================
+
+        async function executarLoop() {
+            const botao = document.getElementById('btnTestar');
+            botao.disabled = true;
+            botao.textContent = '⏳ Executando...';
+
+            limparLog();
+            setStatus('Carregando CSV...', '');
+
+            try {
+                // 1. Carregar CSV e filtrar Ações
+                const todosDados = await carregarCSV();
+                const acoes = todosDados.filter(r => r.Tipo && r.Tipo.trim().toLowerCase() === "acoes");
+
+                if (acoes.length === 0) {
+                    adicionarLog('⚠️ Nenhuma ação encontrada no CSV.', 'erro');
+                    setStatus('Nenhuma ação encontrada.', 'erro');
+                    botao.disabled = false;
+                    botao.textContent = '🚀 Extrair indicadores de TODAS as Ações';
+                    return;
+                }
+
+                adicionarLog(`📂 ${acoes.length} ação(ões) encontrada(s) no CSV.`, 'destaque');
+                setStatus(`🔄 Processando ${acoes.length} ação(ões)...`, '');
+
+                const resultados = [];
+                let sucessos = 0;
+                let erros = 0;
+
+                // 2. Loop para cada ação
+                for (let i = 0; i < acoes.length; i++) {
+                    const acao = acoes[i];
+                    const ticker = acao.Ativo;
+
+                    adicionarLog(`\n🔍 [${i + 1}/${acoes.length}] Scraping ${ticker}...`, 'destaque');
+                    setStatus(`🔄 ${ticker} (${i + 1}/${acoes.length})...`, '');
+
+                    try {
+                        const resultado = await scrapingAcoes(ticker);
+
+                        if (resultado.erroDiagnostico) {
+                            adicionarLog(`   ❌ Erro: ${resultado.erroDiagnostico}`, 'erro');
+                            erros++;
+                            resultados.push({
+                                ticker: ticker,
+                                indicadores: {},
+                                erro: resultado.erroDiagnostico
+                            });
+                            continue;
+                        }
+
+                        const total = Object.keys(resultado.indicadores).length;
+                        adicionarLog(`   ✅ ${total} indicadores encontrados.`, 'sucesso');
+                        sucessos++;
+                        resultados.push({
+                            ticker: ticker,
+                            indicadores: resultado.indicadores,
+                            erro: null
+                        });
+
+                    } catch (erro) {
+                        adicionarLog(`   ❌ Erro inesperado: ${erro.message}`, 'erro');
+                        erros++;
+                        resultados.push({
+                            ticker: ticker,
+                            indicadores: {},
+                            erro: erro.message
+                        });
+                    }
+                }
+
+                // 3. Renderizar tabela com resultados
+                adicionarLog(`\n📊 RESUMO: ${sucessos} sucessos, ${erros} erros.`, 'destaque');
+                setStatus(`✅ Concluído! ${sucessos} sucessos, ${erros} erros.`, 'sucesso');
+
+                if (resultados.length > 0) {
+                    renderizarTabela(resultados);
+                } else {
+                    tabelaContainer.innerHTML = `
+                        <div style="padding: 20px; text-align: center; color: #999;">
+                            Nenhum resultado para exibir.
+                        </div>
+                    `;
+                }
+
+            } catch (erro) {
+                console.error(erro);
+                setStatus(`❌ Erro: ${erro.message}`, 'erro');
+                adicionarLog(`❌ ERRO GERAL: ${erro.message}`, 'erro');
+                tabelaContainer.innerHTML = `
+                    <div style="padding: 20px; text-align: center; color: #d32f2f;">
+                        ❌ Erro ao executar: ${erro.message}
+                    </div>
+                `;
+            }
+
+            botao.disabled = false;
+            botao.textContent = '🚀 Extrair indicadores de TODAS as Ações';
+        }
+
+        // ============================================================
+        // EVENTOS
+        // ============================================================
+
+        document.getElementById('btnTestar').addEventListener('click', executarLoop);
+
+        // Carregar inicial
+        async function carregarInicial() {
+            try {
+                const dados = await carregarCSV();
+                const acoes = dados.filter(r => r.Tipo && r.Tipo.trim().toLowerCase() === "acoes");
+                if (acoes.length > 0) {
+                    adicionarLog(`📂 ${acoes.length} ação(ões) carregada(s) do CSV.`, 'info');
+                    setStatus(`📊 ${acoes.length} ação(ões) disponível(eis). Clique em "Extrair" para começar.`, '');
+                } else {
+                    setStatus('Nenhuma ação encontrada no CSV.', 'erro');
+                    adicionarLog('⚠️ Nenhuma ação encontrada no CSV.', 'erro');
+                }
+            } catch (erro) {
+                setStatus(`❌ Erro ao carregar CSV: ${erro.message}`, 'erro');
+                adicionarLog(`❌ Erro ao carregar CSV: ${erro.message}`, 'erro');
+            }
+        }
+
+        carregarInicial();
+    </script>
+
+</body>
+
+</html>
