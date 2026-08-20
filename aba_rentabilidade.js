@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * MÓDULO: RENTABILIDADE (aba_rentabilidade.js)
+ * MÓDULO: Rentabilidade (aba_Rentabilidade.js)
  * ============================================================================
  * Responsável por carregar e exibir a aba "3. 📈 Rentabilidade".
  *
@@ -46,9 +46,9 @@ import {
 
 const ARQUIVO_CSV = "patrimonio_consolidado.csv";
 
-const ID_CONTAINER_ABA = "tab-rentabilidade";
+const ID_CONTAINER_ABA = "tab-Rentabilidade";
 
-let ativosRentabilidade = [];
+let AtivosRentabilidade = [];
 
 
 // ============================================================
@@ -123,7 +123,7 @@ function linhaParaAtivo(linha, cabecalhos) {
     });
 
 
-    const ativo = {
+    const Ativo = {
     Ativo: bruto.Ativo ?? "",
     Tipo: bruto.Tipo ?? "",
 
@@ -163,16 +163,16 @@ function linhaParaAtivo(linha, cabecalhos) {
     // --------------------------------------------------------
 
      const calculo = calcularMedia52S({
-        Quantidade: ativo.Quantidade,
-        ValorAtual: ativo.ValorAtual,
-        Min52: ativo.Min52,
-        Max52: ativo.Max52,
-        DY: ativo.DY
+        Quantidade: Ativo.Quantidade,
+        ValorAtual: Ativo.ValorAtual,
+        Min52: Ativo.Min52,
+        Max52: Ativo.Max52,
+        DY: Ativo.DY
     });
 
 
     return {
-        ...ativo,
+        ...Ativo,
 
         media52S:
             calculo.media52S,
@@ -211,7 +211,7 @@ function injetarEstilos() {
 
 
     estilo.id =
-        "fo-estilos-aba-rentabilidade";
+        "fo-estilos-aba-Rentabilidade";
 
 
     estilo.textContent = `
@@ -319,7 +319,7 @@ function injetarEstilos() {
         }
 
 
-        .far-linha-barra .far-ativo-label {
+        .far-linha-barra .far-Ativo-label {
             font-weight: 700;
             font-size: 13.5px;
             color: #1f2933;
@@ -353,7 +353,7 @@ function injetarEstilos() {
         }
 
 
-        .far-cor-neutra-dy {
+        .far-cor-neutra-DY {
             background: #2f7ed8;
         }
 
@@ -488,7 +488,7 @@ function injetarEstilos() {
 
 
         .far-celula-heatmap
-        .far-heatmap-ativo {
+        .far-heatmap-Ativo {
             font-size: 13.5px;
             margin-bottom: 6px;
         }
@@ -566,7 +566,7 @@ function injetarEstilos() {
 
 
         .far-tabela-container
-        tbody td {
+        tboDY td {
 
             padding:
                 8px 14px;
@@ -583,14 +583,14 @@ function injetarEstilos() {
 
 
         .far-tabela-container
-        tbody tr:nth-child(even) {
+        tboDY tr:nth-child(even) {
             background-color:
                 #fafafa;
         }
 
 
         .far-tabela-container
-        tbody tr:hover {
+        tboDY tr:hover {
             background-color:
                 #f0f4f8;
         }
@@ -606,7 +606,7 @@ function injetarEstilos() {
         }
 
 
-        .far-ativo-destaque {
+        .far-Ativo-destaque {
             font-weight: 700;
             color: #1f2933;
         }
@@ -617,7 +617,7 @@ function injetarEstilos() {
         }
 
 
-        .far-valor-negativo {
+        .far-valor-negAtivo {
             color: #c62828;
         }
 
@@ -746,7 +746,7 @@ function garantirEstruturaAba(containerAba) {
             </h3>
 
             <p class="far-subtitulo">
-                Renda mensal estimada caso cada ativo
+                Renda mensal estimada caso cada Ativo
                 estivesse cotado na sua Média 52S.
             </p>
 
@@ -759,7 +759,7 @@ function garantirEstruturaAba(containerAba) {
 
         <section
             class="far-cartao"
-            id="far-cartao-valorizacao"
+            id="far-cartao-Valorizacao"
         >
 
             <h3 class="far-titulo">
@@ -768,7 +768,7 @@ function garantirEstruturaAba(containerAba) {
 
             <p class="far-subtitulo">
                 Variação percentual do preço desde a compra,
-                por ativo.
+                por Ativo.
             </p>
 
             <div class="far-conteudo far-status">
@@ -780,7 +780,7 @@ function garantirEstruturaAba(containerAba) {
 
         <section
             class="far-cartao"
-            id="far-cartao-dy"
+            id="far-cartao-DY"
         >
 
             <h3 class="far-titulo">
@@ -788,8 +788,8 @@ function garantirEstruturaAba(containerAba) {
             </h3>
 
             <p class="far-subtitulo">
-                Comparativo do dividend yield entre
-                os ativos da carteira.
+                ComparAtivo do dividend yield entre
+                os Ativos da carteira.
             </p>
 
             <div class="far-conteudo far-status">
@@ -810,7 +810,7 @@ function garantirEstruturaAba(containerAba) {
 
             <p class="far-subtitulo">
                 Visualização rápida de ganhos e perdas
-                pela rentabilidade da posição.
+                pela Rentabilidade da posição.
             </p>
 
             <div class="far-conteudo far-status">
@@ -831,7 +831,7 @@ function garantirEstruturaAba(containerAba) {
 
             <p class="far-subtitulo">
                 Resumo dos principais indicadores
-                de rentabilidade e Média 52S.
+                de Rentabilidade e Média 52S.
             </p>
 
             <div class="far-conteudo far-status">
@@ -855,7 +855,7 @@ function garantirEstruturaAba(containerAba) {
 
 function renderizarFaixa52Semanas(
     wrapper,
-    ativos
+    Ativos
 ) {
 
     const alvo =
@@ -869,7 +869,7 @@ function renderizarFaixa52Semanas(
     // --------------------------------------------------------
 
     const rendaMensalTotal =
-        ativos.reduce(
+        Ativos.reduce(
             (total, item) =>
                 total +
                 (
@@ -884,7 +884,7 @@ function renderizarFaixa52Semanas(
 
 
     const rendaAnualTotal =
-        ativos.reduce(
+        Ativos.reduce(
             (total, item) =>
                 total +
                 (
@@ -948,12 +948,12 @@ function renderizarFaixa52Semanas(
         "far-lista-faixas";
 
 
-    ativos.forEach(item => {
+    Ativos.forEach(item => {
 
         const {
-            min52,
-            max52,
-            valorAtual,
+            Min52,
+            Max52,
+            ValorAtual,
             media52S
         } = item;
 
@@ -963,22 +963,22 @@ function renderizarFaixa52Semanas(
 
 
         if (
-            Number.isFinite(min52) &&
-            Number.isFinite(max52) &&
-            max52 > min52
+            Number.isFinite(Min52) &&
+            Number.isFinite(Max52) &&
+            Max52 > Min52
         ) {
 
             posicaoAtual =
                 (
-                    (valorAtual - min52) /
-                    (max52 - min52)
+                    (ValorAtual - Min52) /
+                    (Max52 - Min52)
                 ) * 100;
 
 
             posicaoMedia =
                 (
-                    (media52S - min52) /
-                    (max52 - min52)
+                    (media52S - Min52) /
+                    (Max52 - Min52)
                 ) * 100;
 
 
@@ -1013,8 +1013,8 @@ function renderizarFaixa52Semanas(
 
         linha.innerHTML = `
 
-            <span class="far-ativo-label">
-                ${item.ativo}
+            <span class="far-Ativo-label">
+                ${item.Ativo}
             </span>
 
             <div>
@@ -1040,7 +1040,7 @@ function renderizarFaixa52Semanas(
                         "
                         title="
                             Atual:
-                            ${formatarMoeda(valorAtual)}
+                            ${formatarMoeda(ValorAtual)}
                         "
                     ></div>
 
@@ -1052,7 +1052,7 @@ function renderizarFaixa52Semanas(
                     <span>
                         Mín.
                         <strong>
-                            ${formatarMoeda(min52)}
+                            ${formatarMoeda(Min52)}
                         </strong>
                     </span>
 
@@ -1068,7 +1068,7 @@ function renderizarFaixa52Semanas(
                     <span>
                         Atual
                         <strong>
-                            ${formatarMoeda(valorAtual)}
+                            ${formatarMoeda(ValorAtual)}
                         </strong>
                     </span>
 
@@ -1076,7 +1076,7 @@ function renderizarFaixa52Semanas(
                     <span>
                         Máx.
                         <strong>
-                            ${formatarMoeda(max52)}
+                            ${formatarMoeda(Max52)}
                         </strong>
                     </span>
 
@@ -1103,7 +1103,7 @@ function renderizarFaixa52Semanas(
 
 function renderizarDiferencaMedia52S(
     wrapper,
-    ativos
+    Ativos
 ) {
 
     const alvo =
@@ -1113,7 +1113,7 @@ function renderizarDiferencaMedia52S(
 
 
     const ordenados =
-        [...ativos].sort(
+        [...Ativos].sort(
             (a, b) =>
                 Math.abs(
                     b.diferencaValorAtual
@@ -1171,8 +1171,8 @@ function renderizarDiferencaMedia52S(
 
         linha.innerHTML = `
 
-            <span class="far-ativo-label">
-                ${item.ativo}
+            <span class="far-Ativo-label">
+                ${item.Ativo}
             </span>
 
             <div class="far-trilha-barra">
@@ -1201,7 +1201,7 @@ function renderizarDiferencaMedia52S(
                     ${
                         positiva
                             ? "far-valor-positivo"
-                            : "far-valor-negativo"
+                            : "far-valor-negAtivo"
                     }
                 "
             >
@@ -1225,7 +1225,7 @@ function renderizarDiferencaMedia52S(
 
 function renderizarRendaMensalFicticia(
     wrapper,
-    ativos
+    Ativos
 ) {
 
     const alvo =
@@ -1235,7 +1235,7 @@ function renderizarRendaMensalFicticia(
 
 
     const ordenados =
-        [...ativos].sort(
+        [...Ativos].sort(
             (a, b) =>
                 b.rendaMensalFicticia -
                 a.rendaMensalFicticia
@@ -1283,8 +1283,8 @@ function renderizarRendaMensalFicticia(
 
         linha.innerHTML = `
 
-            <span class="far-ativo-label">
-                ${item.ativo}
+            <span class="far-Ativo-label">
+                ${item.Ativo}
             </span>
 
 
@@ -1330,20 +1330,20 @@ function renderizarRendaMensalFicticia(
 
 function renderizarValorizacao(
     wrapper,
-    ativos
+    Ativos
 ) {
 
     const alvo =
         wrapper.querySelector(
-            "#far-cartao-valorizacao .far-conteudo"
+            "#far-cartao-Valorizacao .far-conteudo"
         );
 
 
     const ordenados =
-        [...ativos].sort(
+        [...Ativos].sort(
             (a, b) =>
-                b.valorizacao -
-                a.valorizacao
+                b.Valorizacao -
+                a.Valorizacao
         );
 
 
@@ -1353,7 +1353,7 @@ function renderizarValorizacao(
             ...ordenados.map(
                 item =>
                     Math.abs(
-                        item.valorizacao
+                        item.Valorizacao
                     ) || 0
             )
         );
@@ -1372,14 +1372,14 @@ function renderizarValorizacao(
         const percentualLargura =
             (
                 Math.abs(
-                    item.valorizacao
+                    item.Valorizacao
                 ) /
                 maiorModulo
             ) * 100;
 
 
         const positiva =
-            item.valorizacao >= 0;
+            item.Valorizacao >= 0;
 
 
         const linha =
@@ -1392,8 +1392,8 @@ function renderizarValorizacao(
 
         linha.innerHTML = `
 
-            <span class="far-ativo-label">
-                ${item.ativo}
+            <span class="far-Ativo-label">
+                ${item.Ativo}
             </span>
 
 
@@ -1423,12 +1423,12 @@ function renderizarValorizacao(
                     ${
                         positiva
                             ? "far-valor-positivo"
-                            : "far-valor-negativo"
+                            : "far-valor-negAtivo"
                     }
                 "
             >
                 ${formatarPercentual(
-                    item.valorizacao
+                    item.Valorizacao
                 )}
             </span>
 
@@ -1447,31 +1447,31 @@ function renderizarValorizacao(
 // 3.5 — DIVIDEND YIELD
 // ============================================================
 
-function renderizarDividendYield(
+function renderizarDividenDYield(
     wrapper,
-    ativos
+    Ativos
 ) {
 
     const alvo =
         wrapper.querySelector(
-            "#far-cartao-dy .far-conteudo"
+            "#far-cartao-DY .far-conteudo"
         );
 
 
     const ordenados =
-        [...ativos].sort(
+        [...Ativos].sort(
             (a, b) =>
-                b.dy -
-                a.dy
+                b.DY -
+                a.DY
         );
 
 
-    const maiorDy =
+    const maiorDY =
         Math.max(
             1,
             ...ordenados.map(
                 item =>
-                    item.dy || 0
+                    item.DY || 0
             )
         );
 
@@ -1488,8 +1488,8 @@ function renderizarDividendYield(
 
         const percentualLargura =
             (
-                Math.max(0, item.dy) /
-                maiorDy
+                Math.max(0, item.DY) /
+                maiorDY
             ) * 100;
 
 
@@ -1503,8 +1503,8 @@ function renderizarDividendYield(
 
         linha.innerHTML = `
 
-            <span class="far-ativo-label">
-                ${item.ativo}
+            <span class="far-Ativo-label">
+                ${item.Ativo}
             </span>
 
 
@@ -1513,7 +1513,7 @@ function renderizarDividendYield(
                 <div
                     class="
                         far-barra-preenchimento
-                        far-cor-neutra-dy
+                        far-cor-neutra-DY
                     "
                     style="
                         left:0;
@@ -1530,7 +1530,7 @@ function renderizarDividendYield(
                     far-valor-neutro
                 "
             >
-                ${formatarPercentual(item.dy)}
+                ${formatarPercentual(item.DY)}
             </span>
 
         `;
@@ -1595,7 +1595,7 @@ function corHeatmap(
 
 function renderizarHeatmap(
     wrapper,
-    ativos
+    Ativos
 ) {
 
     const alvo =
@@ -1607,10 +1607,10 @@ function renderizarHeatmap(
     const maiorModulo =
         Math.max(
             1,
-            ...ativos.map(
+            ...Ativos.map(
                 item =>
                     Math.abs(
-                        item.rentabilidade
+                        item.Rentabilidade
                     ) || 0
             )
         );
@@ -1624,7 +1624,7 @@ function renderizarHeatmap(
         "far-grade-heatmap";
 
 
-    ativos.forEach(item => {
+    Ativos.forEach(item => {
 
         const celula =
             document.createElement("div");
@@ -1636,7 +1636,7 @@ function renderizarHeatmap(
 
         celula.style.backgroundColor =
             corHeatmap(
-                item.rentabilidade,
+                item.Rentabilidade,
                 maiorModulo
             );
 
@@ -1644,9 +1644,9 @@ function renderizarHeatmap(
         celula.innerHTML = `
 
             <div
-                class="far-heatmap-ativo"
+                class="far-heatmap-Ativo"
             >
-                ${item.ativo}
+                ${item.Ativo}
             </div>
 
 
@@ -1654,7 +1654,7 @@ function renderizarHeatmap(
                 class="far-heatmap-valor"
             >
                 ${formatarPercentual(
-                    item.rentabilidade
+                    item.Rentabilidade
                 )}
             </div>
 
@@ -1686,7 +1686,7 @@ function classeCor(valor) {
 
     return valor > 0
         ? "far-valor-positivo"
-        : "far-valor-negativo";
+        : "far-valor-negAtivo";
 }
 
 
@@ -1696,7 +1696,7 @@ function classeCor(valor) {
 
 function renderizarTabela(
     wrapper,
-    ativos
+    Ativos
 ) {
 
     const alvo =
@@ -1752,11 +1752,11 @@ function renderizarTabela(
     `;
 
 
-    const tbody =
-        document.createElement("tbody");
+    const tboDY =
+        document.createElement("tboDY");
 
 
-    ativos.forEach(item => {
+    Ativos.forEach(item => {
 
         const tr =
             document.createElement("tr");
@@ -1767,10 +1767,10 @@ function renderizarTabela(
             <td
                 class="
                     far-alinhar-esquerda
-                    far-ativo-destaque
+                    far-Ativo-destaque
                 "
             >
-                ${item.ativo}
+                ${item.Ativo}
             </td>
 
 
@@ -1781,7 +1781,7 @@ function renderizarTabela(
                 "
             >
                 ${formatarMoeda(
-                    item.valorAtual
+                    item.ValorAtual
                 )}
             </td>
 
@@ -1826,12 +1826,12 @@ function renderizarTabela(
                 class="
                     far-alinhar-direita
                     ${classeCor(
-                        item.valorizacao
+                        item.Valorizacao
                     )}
                 "
             >
                 ${formatarPercentual(
-                    item.valorizacao
+                    item.Valorizacao
                 )}
             </td>
 
@@ -1843,7 +1843,7 @@ function renderizarTabela(
                 "
             >
                 ${formatarPercentual(
-                    item.dy
+                    item.DY
                 )}
             </td>
 
@@ -1855,11 +1855,11 @@ function renderizarTabela(
                 "
             >
                 ${formatarMoeda(
-                    item.min52
+                    item.Min52
                 )}
                 –
                 ${formatarMoeda(
-                    item.max52
+                    item.Max52
                 )}
             </td>
 
@@ -1879,7 +1879,7 @@ function renderizarTabela(
             <td
                 class="
                     far-alinhar-direita
-                    far-valor-negativo
+                    far-valor-negAtivo
                 "
             >
                 ${formatarMoeda(
@@ -1892,24 +1892,24 @@ function renderizarTabela(
                 class="
                     far-alinhar-direita
                     ${classeCor(
-                        item.rentabilidade
+                        item.Rentabilidade
                     )}
                 "
             >
                 ${formatarPercentual(
-                    item.rentabilidade
+                    item.Rentabilidade
                 )}
             </td>
 
         `;
 
 
-        tbody.appendChild(tr);
+        tboDY.appendChild(tr);
     });
 
 
     tabela.appendChild(thead);
-    tabela.appendChild(tbody);
+    tabela.appendChild(tboDY);
 
     container.appendChild(tabela);
 
@@ -1987,7 +1987,7 @@ async function carregarERenderizar() {
             );
 
 
-        ativosRentabilidade =
+        AtivosRentabilidade =
             dadosPatrimonio.map(
                 linha =>
                     linhaParaAtivo(
@@ -2003,50 +2003,50 @@ async function carregarERenderizar() {
 
         renderizarFaixa52Semanas(
             wrapper,
-            ativosRentabilidade
+            AtivosRentabilidade
         );
 
 
         renderizarDiferencaMedia52S(
             wrapper,
-            ativosRentabilidade
+            AtivosRentabilidade
         );
 
 
         renderizarRendaMensalFicticia(
             wrapper,
-            ativosRentabilidade
+            AtivosRentabilidade
         );
 
 
         renderizarValorizacao(
             wrapper,
-            ativosRentabilidade
+            AtivosRentabilidade
         );
 
 
-        renderizarDividendYield(
+        renderizarDividenDYield(
             wrapper,
-            ativosRentabilidade
+            AtivosRentabilidade
         );
 
 
         renderizarHeatmap(
             wrapper,
-            ativosRentabilidade
+            AtivosRentabilidade
         );
 
 
         renderizarTabela(
             wrapper,
-            ativosRentabilidade
+            AtivosRentabilidade
         );
 
 
         console.log(
             `[Aba Rentabilidade] ` +
-            `${ativosRentabilidade.length} ` +
-            `ativos renderizados.`
+            `${AtivosRentabilidade.length} ` +
+            `Ativos renderizados.`
         );
 
     }
