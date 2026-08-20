@@ -30,6 +30,9 @@ const MAPEAMENTO = {
     
     // Novos indicadores (extraídos do scraping)
     "Volume (dia)": "VolumeDia",
+    "Volume": "VolumeDia",
+    "VOLUME (dia)": "VolumeDia",
+    "VOLUME": "VolumeDia",
     "Valor de mercado": "ValorMercado",
     "Valor de firma": "ValorFirma",
     "PART. IBOV": "PartIBOV",
