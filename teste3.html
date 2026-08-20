@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Teste scrapingfiis.js</title>
+    <title>Teste scrapingfiis.js - Loop</title>
 
     <style>
         * {
@@ -72,29 +72,13 @@
             color: #1b5e20;
         }
 
-        .container-tabelas {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-
-        .tabela-wrapper {
-            flex: 1;
-            min-width: 40%;
+        #tabela-container {
             background: #fff;
             border-radius: 8px;
             padding: 15px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             overflow-x: auto;
-        }
-
-        .tabela-wrapper h3 {
-            margin-top: 0;
-            font-size: 14px;
-            color: #333;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
+            margin-bottom: 20px;
         }
 
         table {
@@ -111,11 +95,18 @@
             color: #333;
             border-bottom: 2px solid #e0e0e0;
             white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         td {
             padding: 6px 10px;
             border-bottom: 1px solid #f0f0f0;
+        }
+
+        tr:hover {
+            background: #fafafa;
         }
 
         .valor-encontrado {
@@ -156,32 +147,46 @@
         #log-container .log-destaque {
             color: #ffb74d;
         }
+
+        .resumo {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .resumo span {
+            font-weight: bold;
+        }
+
+        /* Tabela com scroll horizontal */
+        .table-scroll {
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+        }
     </style>
 </head>
 
 <body>
 
-    <h1>🧪 Teste scrapingfiis.js</h1>
+    <h1>🧪 Teste scrapingfiis.js - Loop</h1>
 
     <div class="controles">
-        <button id="btnTestar">🚀 Executar scraping (sem gravar)</button>
-        <span style="font-size: 12px; color: #666;">Extrai até 30 indicadores do FII</span>
+        <button id="btnTestar">🚀 Extrair indicadores de TODOS os FIIs</button>
+        <span style="font-size: 12px; color: #666;">Percorre todos os FIIs do CSV e compila os indicadores</span>
     </div>
 
     <div id="status">Aguardando...</div>
 
-    <div class="container-tabelas">
-        <div class="tabela-wrapper">
-            <h3>📊 Dados Atuais (do CSV)</h3>
-            <div id="tabela-atual">
-                <p style="color: #999;">Carregando dados...</p>
-            </div>
-        </div>
-        <div class="tabela-wrapper">
-            <h3>🔄 Dados Extraídos (até 30 indicadores)</h3>
-            <div id="tabela-nova">
-                <p style="color: #999;">Aguardando scraping...</p>
-            </div>
+    <div id="tabela-container">
+        <div style="padding: 20px; text-align: center; color: #999;">
+            Aguardando execução...
         </div>
     </div>
 
@@ -206,6 +211,7 @@
 
         const logContainer = document.getElementById('log-container');
         const statusDiv = document.getElementById('status');
+        const tabelaContainer = document.getElementById('tabela-container');
 
         function adicionarLog(mensagem, tipo = 'info') {
             const classes = {
@@ -229,6 +235,10 @@
             statusDiv.textContent = mensagem;
             statusDiv.className = tipo;
         }
+
+        // ============================================================
+        // FUNÇÕES PARA LER CSV
+        // ============================================================
 
         function separarLinhaCSV(linha) {
             const valores = [];
@@ -279,57 +289,84 @@
             return converterCSVParaObjetos(await r.text());
         }
 
-        function renderizarTabelaDinamica(containerId, dados, titulo) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
+        // ============================================================
+        // RENDERIZAR TABELA DINÂMICA
+        // ============================================================
 
-            if (!dados || Object.keys(dados).length === 0) {
-                container.innerHTML = `<p style="color: #999;">Nenhum dado disponível.</p>`;
+        function renderizarTabela(fiisData) {
+            if (!fiisData || fiisData.length === 0) {
+                tabelaContainer.innerHTML = `
+                    <div style="padding: 20px; text-align: center; color: #999;">
+                        Nenhum dado encontrado.
+                    </div>
+                `;
                 return;
             }
 
+            // Coletar TODOS os títulos de indicadores únicos
+            const todosTitulos = new Set();
+            for (const item of fiisData) {
+                for (const titulo of Object.keys(item.indicadores)) {
+                    todosTitulos.add(titulo);
+                }
+            }
+            const colunas = Array.from(todosTitulos).slice(0, 30); // Limite de 30 colunas
+
+            // Construir HTML da tabela
             let html = `
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Indicador</th>
-                            <th>Valor</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                <div class="resumo">
+                    <span>📊 <strong>${fiisData.length}</strong> FII(s) processados</span>
+                    <span>📈 <strong>${colunas.length}</strong> indicador(es) únicos encontrados</span>
+                    <span>🔄 Última atualização: <strong>${new Date().toLocaleString()}</strong></span>
+                </div>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="min-width: 80px; position: sticky; left: 0; z-index: 20; background: #f5f5f5;">FII</th>
+                                ${colunas.map(col => `<th>${col}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
             `;
 
-            for (const [chave, valor] of Object.entries(dados)) {
-                const exibicao = valor || "-";
-                html += `
-                    <tr>
-                        <td style="font-weight: 600;">${chave}</td>
-                        <td>${exibicao}</td>
-                    </tr>
-                `;
+            for (const item of fiisData) {
+                html += `<tr>`;
+                html += `<td style="font-weight: 600; color: #00598a; position: sticky; left: 0; z-index: 5; background: #fff;">${item.ticker}</td>`;
+                for (const coluna of colunas) {
+                    const valor = item.indicadores[coluna] || '-';
+                    const classe = valor !== '-' ? 'valor-encontrado' : 'valor-nao-encontrado';
+                    html += `<td class="${classe}">${valor}</td>`;
+                }
+                html += `</tr>`;
             }
 
             html += `
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </div>
                 <div style="margin-top: 10px; font-size: 11px; color: #999;">
-                    ${Object.keys(dados).length} indicador(es) encontrado(s)
+                    * Limite de 30 indicadores por FII. Valores com "-" não foram encontrados.
                 </div>
             `;
 
-            container.innerHTML = html;
+            tabelaContainer.innerHTML = html;
         }
 
-        async function executarTeste() {
+        // ============================================================
+        // FUNÇÃO PRINCIPAL: EXECUTAR LOOP PARA TODOS OS FIIs
+        // ============================================================
+
+        async function executarLoop() {
             const botao = document.getElementById('btnTestar');
             botao.disabled = true;
             botao.textContent = '⏳ Executando...';
 
             limparLog();
-            setStatus('Carregando dados...', '');
+            setStatus('Carregando CSV...', '');
 
             try {
-                // 1. Carregar CSV e pegar apenas o primeiro FII para teste
+                // 1. Carregar CSV e filtrar FIIs
                 const todosDados = await carregarCSV();
                 const fiis = todosDados.filter(r => r.Tipo && r.Tipo.trim().toLowerCase() === "fii");
 
@@ -337,64 +374,93 @@
                     adicionarLog('⚠️ Nenhum FII encontrado no CSV.', 'erro');
                     setStatus('Nenhum FII encontrado.', 'erro');
                     botao.disabled = false;
-                    botao.textContent = '🚀 Executar scraping (sem gravar)';
+                    botao.textContent = '🚀 Extrair indicadores de TODOS os FIIs';
                     return;
                 }
 
-                // Usar o primeiro FII da lista para teste
-                const fii = fiis[0];
-                const ticker = fii.Ativo;
+                adicionarLog(`📂 ${fiis.length} FII(s) encontrados no CSV.`, 'destaque');
+                setStatus(`🔄 Processando ${fiis.length} FII(s)...`, '');
 
-                adicionarLog(`📂 Testando com ${ticker} (${fiis.length} FIIs disponíveis)`, 'destaque');
+                const resultados = [];
+                let sucessos = 0;
+                let erros = 0;
 
-                // Mostrar dados atuais do CSV (apenas os que temos)
-                const dadosAtuais = {};
-                for (const [chave, valor] of Object.entries(fii)) {
-                    if (valor && valor !== "ERRO" && valor !== "VAZIO" && chave !== "Tipo") {
-                        dadosAtuais[chave] = valor;
+                // 2. Loop para cada FII
+                for (let i = 0; i < fiis.length; i++) {
+                    const fii = fiis[i];
+                    const ticker = fii.Ativo;
+
+                    adicionarLog(`\n🔍 [${i + 1}/${fiis.length}] Scraping ${ticker}...`, 'destaque');
+                    setStatus(`🔄 ${ticker} (${i + 1}/${fiis.length})...`, '');
+
+                    try {
+                        const resultado = await scrapingFIIs(ticker);
+
+                        if (resultado.erroDiagnostico) {
+                            adicionarLog(`   ❌ Erro: ${resultado.erroDiagnostico}`, 'erro');
+                            erros++;
+                            resultados.push({
+                                ticker: ticker,
+                                indicadores: {},
+                                erro: resultado.erroDiagnostico
+                            });
+                            continue;
+                        }
+
+                        const total = Object.keys(resultado.indicadores).length;
+                        adicionarLog(`   ✅ ${total} indicadores encontrados.`, 'sucesso');
+                        sucessos++;
+                        resultados.push({
+                            ticker: ticker,
+                            indicadores: resultado.indicadores,
+                            erro: null
+                        });
+
+                    } catch (erro) {
+                        adicionarLog(`   ❌ Erro inesperado: ${erro.message}`, 'erro');
+                        erros++;
+                        resultados.push({
+                            ticker: ticker,
+                            indicadores: {},
+                            erro: erro.message
+                        });
                     }
                 }
-                renderizarTabelaDinamica('tabela-atual', dadosAtuais, 'Dados Atuais');
 
-                // 2. Executar scraping
-                setStatus(`Scraping ${ticker}...`, '');
-                adicionarLog(`\n🔍 Scraping ${ticker}...`, 'destaque');
+                // 3. Renderizar tabela com resultados
+                adicionarLog(`\n📊 RESUMO: ${sucessos} sucessos, ${erros} erros.`, 'destaque');
+                setStatus(`✅ Concluído! ${sucessos} sucessos, ${erros} erros.`, 'sucesso');
 
-                const resultado = await scrapingFIIs(ticker);
-
-                if (resultado.erroDiagnostico) {
-                    adicionarLog(`❌ Erro: ${resultado.erroDiagnostico}`, 'erro');
-                    setStatus(`❌ Erro: ${resultado.erroDiagnostico}`, 'erro');
-                    botao.disabled = false;
-                    botao.textContent = '🚀 Executar scraping (sem gravar)';
-                    return;
-                }
-
-                // 3. Mostrar resultados
-                const indicadores = resultado.indicadores || {};
-                const total = Object.keys(indicadores).length;
-
-                adicionarLog(`✅ ${total} indicadores encontrados.`, 'sucesso');
-                renderizarTabelaDinamica('tabela-nova', indicadores, 'Dados Extraídos');
-
-                setStatus(`✅ Scraping concluído! ${total} indicadores encontrados.`, 'sucesso');
-
-                // Log dos indicadores encontrados
-                for (const [titulo, valor] of Object.entries(indicadores)) {
-                    adicionarLog(`   ${titulo}: ${valor}`, 'info');
+                if (resultados.length > 0) {
+                    renderizarTabela(resultados);
+                } else {
+                    tabelaContainer.innerHTML = `
+                        <div style="padding: 20px; text-align: center; color: #999;">
+                            Nenhum resultado para exibir.
+                        </div>
+                    `;
                 }
 
             } catch (erro) {
                 console.error(erro);
                 setStatus(`❌ Erro: ${erro.message}`, 'erro');
                 adicionarLog(`❌ ERRO GERAL: ${erro.message}`, 'erro');
+                tabelaContainer.innerHTML = `
+                    <div style="padding: 20px; text-align: center; color: #d32f2f;">
+                        ❌ Erro ao executar: ${erro.message}
+                    </div>
+                `;
             }
 
             botao.disabled = false;
-            botao.textContent = '🚀 Executar scraping (sem gravar)';
+            botao.textContent = '🚀 Extrair indicadores de TODOS os FIIs';
         }
 
-        document.getElementById('btnTestar').addEventListener('click', executarTeste);
+        // ============================================================
+        // EVENTOS
+        // ============================================================
+
+        document.getElementById('btnTestar').addEventListener('click', executarLoop);
 
         // Carregar inicial
         async function carregarInicial() {
@@ -402,15 +468,8 @@
                 const dados = await carregarCSV();
                 const fiis = dados.filter(r => r.Tipo && r.Tipo.trim().toLowerCase() === "fii");
                 if (fiis.length > 0) {
-                    const dadosAtuais = {};
-                    for (const [chave, valor] of Object.entries(fiis[0])) {
-                        if (valor && valor !== "ERRO" && valor !== "VAZIO" && chave !== "Tipo") {
-                            dadosAtuais[chave] = valor;
-                        }
-                    }
-                    renderizarTabelaDinamica('tabela-atual', dadosAtuais, 'Dados Atuais');
-                    setStatus(`📊 ${fiis.length} FII(s) carregados. Clique em "Executar" para testar.`, '');
-                    adicionarLog(`📂 ${fiis.length} FII(s) carregados. Exemplo: ${fiis[0].Ativo}`, 'info');
+                    adicionarLog(`📂 ${fiis.length} FII(s) carregados do CSV.`, 'info');
+                    setStatus(`📊 ${fiis.length} FII(s) disponíveis. Clique em "Extrair" para começar.`, '');
                 } else {
                     setStatus('Nenhum FII encontrado no CSV.', 'erro');
                     adicionarLog('⚠️ Nenhum FII encontrado no CSV.', 'erro');
