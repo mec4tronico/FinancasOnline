@@ -23,7 +23,13 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
     min52: "ERRO",
     max52: "ERRO",
     dy: "ERRO",
-    valorizacao: "ERRO"
+    valorizacao: "ERRO",
+    // Novos campos comuns
+    setor: "ERRO",
+    subsetor: "ERRO",
+    segmento: "ERRO",
+    participacaoIndices: "ERRO",
+    freeFloat: "ERRO"
   };
 
   console.log("========================================");
@@ -128,6 +134,8 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
     // - Mín. 52 semanas
     // - Máx. 52 semanas
     // - Valorização 12M
+    // - Setor, Subsetor, Segmento
+    // - Free Float
     // Também continua sendo usada para DY dos FIIs.
     // ====================================================
 
@@ -244,20 +252,109 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
 
     return null;
 }
+
     // ====================================================
-    // 10. EXTRAIR OS CINCO DADOS
+    // 9.1 FUNÇÃO ESPECÍFICA PARA PARTICIPAÇÃO EM ÍNDICES
+    // No StatusInvest, os índices aparecem em uma seção
+    // específica com múltiplos valores separados por ponto e vírgula.
     // ====================================================
-    console.log(`[${ticker}] Extraindo indicadores...`);
+
+    function obterParticipacaoIndices(documento) {
+      console.log(`[${ticker}] Procurando Participação em Índices...`);
+
+      // Primeiro tenta com o método padrão
+      let resultado = obterValorPorTitulo("PARTICIPAÇÃO EM ÍNDICES");
+      if (resultado) {
+        console.log(`[${ticker}] Índices encontrados (método 1):`, resultado);
+        return resultado;
+      }
+
+      // Tenta buscar por "Índices" ou "Índices de Referência"
+      resultado = obterValorPorTitulo("ÍNDICES");
+      if (resultado) {
+        console.log(`[${ticker}] Índices encontrados (método 2):`, resultado);
+        return resultado;
+      }
+
+      // Busca em uma seção específica (se existir)
+      const secoes = documento.querySelectorAll("div.info");
+      for (const secao of secoes) {
+        const titulo = secao.querySelector("h3, small, span");
+        if (titulo) {
+          const texto = titulo.textContent.trim().toUpperCase();
+          if (texto.includes("ÍNDICES") || texto.includes("PARTICIPAÇÃO")) {
+            const valor = secao.querySelector("strong.value");
+            if (valor) {
+              const textoValor = valor.textContent.trim();
+              if (textoValor) {
+                console.log(`[${ticker}] Índices encontrados (método 3):`, textoValor);
+                return textoValor;
+              }
+            }
+          }
+        }
+      }
+
+      console.error(`[${ticker}] Participação em Índices não encontrado.`);
+      return null;
+    }
+
+    // ====================================================
+    // 9.2 FUNÇÃO ESPECÍFICA PARA FREE FLOAT
+    // O Free Float pode aparecer como "Free Float" ou "Free-Float"
+    // e pode ter o símbolo de percentual.
+    // ====================================================
+
+    function obterFreeFloat(documento) {
+      console.log(`[${ticker}] Procurando Free Float...`);
+
+      // Tenta com o método padrão
+      let resultado = obterValorPorTitulo("FREE FLOAT");
+      if (resultado) {
+        console.log(`[${ticker}] Free Float encontrado (método 1):`, resultado);
+        return resultado;
+      }
+
+      // Tenta com "FREE-FLOAT"
+      resultado = obterValorPorTitulo("FREE-FLOAT");
+      if (resultado) {
+        console.log(`[${ticker}] Free Float encontrado (método 2):`, resultado);
+        return resultado;
+      }
+
+      // Busca em uma seção específica
+      const secoes = documento.querySelectorAll("div.info");
+      for (const secao of secoes) {
+        const titulo = secao.querySelector("h3, small, span");
+        if (titulo) {
+          const texto = titulo.textContent.trim().toUpperCase();
+          if (texto.includes("FREE FLOAT") || texto.includes("FREE-FLOAT")) {
+            const valor = secao.querySelector("strong.value");
+            if (valor) {
+              const textoValor = valor.textContent.trim();
+              if (textoValor) {
+                console.log(`[${ticker}] Free Float encontrado (método 3):`, textoValor);
+                return textoValor;
+              }
+            }
+          }
+        }
+      }
+
+      console.error(`[${ticker}] Free Float não encontrado.`);
+      return null;
+    }
+
+    // ====================================================
+    // 10. EXTRAIR OS 5 INDICADORES ATUAIS
+    // ====================================================
+    console.log(`[${ticker}] Extraindo indicadores básicos...`);
 
     const valorAtual = obterValorPorTitulo("VALOR ATUAL");
     const min52 = obterValorPorTitulo("MIN. 52 SEMANAS");
     const max52 = obterValorPorTitulo("MÁX. 52 SEMANAS");
 
-    // ----------------------------------------------------
-    // DY
-    // AÇÕES: usar busca específica do Dividend Yield 12M.
-    // FII: manter a lógica anterior.
-    // ----------------------------------------------------
+    // DY com tratamento especial
     let dy;
     if (tipo === "acoes") {
       dy = obterDY12MAcao();
@@ -268,13 +365,33 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
     const valorizacao = obterValorPorTitulo("VALORIZAÇÃO (12M)");
 
     // ====================================================
+    // 10.1 NOVOS INDICADORES COMUNS (adicionados)
+    // ====================================================
+    console.log(`[${ticker}] Extraindo indicadores comuns...`);
+
+    // Usa a função padrão para Setor, Subsetor e Segmento
+    const setor = obterValorPorTitulo("SETOR");
+    const subsetor = obterValorPorTitulo("SUBSETOR");
+    const segmento = obterValorPorTitulo("SEGMENTO");
+
+    // Usa funções específicas para Índices e Free Float
+    const participacaoIndices = obterParticipacaoIndices(documento);
+    const freeFloat = obterFreeFloat(documento);
+
+    // ====================================================
     // 11. LOG DOS RESULTADOS
     // ====================================================
-    console.log(`[${ticker}] Valor Atual:`, valorAtual);
-    console.log(`[${ticker}] Mín. 52 Semanas:`, min52);
-    console.log(`[${ticker}] Máx. 52 Semanas:`, max52);
-    console.log(`[${ticker}] DY 12M:`, dy);
-    console.log(`[${ticker}] Valorização 12M:`, valorizacao);
+    console.log(`[${ticker}] Resultados da extração:`);
+    console.log(`  Valor Atual:`, valorAtual);
+    console.log(`  Mín. 52 Semanas:`, min52);
+    console.log(`  Máx. 52 Semanas:`, max52);
+    console.log(`  DY 12M:`, dy);
+    console.log(`  Valorização 12M:`, valorizacao);
+    console.log(`  Setor:`, setor);
+    console.log(`  Subsetor:`, subsetor);
+    console.log(`  Segmento:`, segmento);
+    console.log(`  Participação em Índices:`, participacaoIndices);
+    console.log(`  Free Float:`, freeFloat);
 
     // ====================================================
     // 12. VALIDAR VALOR PRINCIPAL
@@ -285,15 +402,23 @@ async function buscarIndicadoresStatusInvest(ticker, tipo) {
     }
 
     // ====================================================
-    // 13. RETORNAR OBJETO
+    // 13. RETORNAR OBJETO (ATUALIZADO)
     // ====================================================
     const resultado = {
+      // Básicos (já existentes)
       ticker: ticker,
       valorAtual: valorAtual || "ERRO",
       min52: min52 || "ERRO",
       max52: max52 || "ERRO",
       dy: dy || "ERRO",
-      valorizacao: valorizacao || "ERRO"
+      valorizacao: valorizacao || "ERRO",
+      
+      // Novos (comuns)
+      setor: setor || "ERRO",
+      subsetor: subsetor || "ERRO",
+      segmento: segmento || "ERRO",
+      participacaoIndices: participacaoIndices || "ERRO",
+      freeFloat: freeFloat || "ERRO"
     };
 
     console.log(`[${ticker}] SCRAPING CONCLUÍDO`);
