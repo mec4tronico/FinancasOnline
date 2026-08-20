@@ -124,51 +124,50 @@ function linhaParaAtivo(linha, cabecalhos) {
 
 
     const ativo = {
-        ativo: bruto.Ativo ?? "",
-        tipo: bruto.Tipo ?? "",
+    Ativo: bruto.Ativo ?? "",
+    Tipo: bruto.Tipo ?? "",
 
-        quantidade:
-            converterNumero(bruto.Quantidade),
+    Quantidade:
+        converterNumero(bruto.Quantidade),
 
-        valorAtual:
-            converterNumero(bruto.ValorAtual),
+    ValorAtual:
+        converterNumero(bruto.ValorAtual),
 
-        min52:
-            converterNumero(bruto.Min52),
+    Min52:
+        converterNumero(bruto.Min52),
 
-        max52:
-            converterNumero(bruto.Max52),
+    Max52:
+        converterNumero(bruto.Max52),
 
-        dy:
-            converterNumero(bruto.DY),
+    DY:
+        converterNumero(bruto.DY),
 
-        valorizacao:
-            converterNumero(bruto.Valorizacao),
+    Valorizacao:
+        converterNumero(bruto.Valorizacao),
 
-        potencialMax52:
-            converterNumero(bruto.PotencialFinanceiroMax52),
+    PotencialFinanceiroMax52:
+        converterNumero(bruto.PotencialFinanceiroMax52),
 
-        riscoMin52:
-            converterNumero(bruto.RiscoFinanceiroMin52),
+    RiscoFinanceiroMin52:
+        converterNumero(bruto.RiscoFinanceiroMin52),
 
-        rentabilidade:
-            converterNumero(bruto.Rentabilidade),
+    Rentabilidade:
+        converterNumero(bruto.Rentabilidade),
 
-        valorAtualPosicao:
-            converterNumero(bruto.ValorAtualPosicao)
+    ValorAtualPosicao:
+        converterNumero(bruto.ValorAtualPosicao)
     };
-
 
     // --------------------------------------------------------
     // Cálculos centralizados em calculos.js
     // --------------------------------------------------------
 
-    const calculo = calcularMedia52S({
-        quantidade: ativo.quantidade,
-        valorAtual: ativo.valorAtual,
-        min52: ativo.min52,
-        max52: ativo.max52,
-        dy: ativo.dy
+     const calculo = calcularMedia52S({
+        Quantidade: ativo.Quantidade,
+        ValorAtual: ativo.ValorAtual,
+        Min52: ativo.Min52,
+        Max52: ativo.Max52,
+        DY: ativo.DY
     });
 
 
