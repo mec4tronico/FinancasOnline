@@ -645,6 +645,8 @@ function iniciarAbaFIIs() {
 
 export {
     iniciarAbaFIIs,
-    atualizarAbaFIIs: iniciarAbaFIIs, // alias
     executarAtualizacaoFIIs
 };
+
+// Exportar o alias separadamente
+export { iniciarAbaFIIs as atualizarAbaFIIs };
