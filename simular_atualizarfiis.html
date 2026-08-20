@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simular atualizarfiis.js (sem gravar)</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        h1 { color: #00598a; }
+        .controles { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+        button { padding: 10px 20px; font-size: 14px; cursor: pointer; background: #00598a; color: #fff; border: none; border-radius: 6px; }
+        button:hover { background: #003d66; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        #status { margin: 15px 0; padding: 12px 16px; background: #e3f2fd; border-radius: 6px; border-left: 4px solid #00598a; font-weight: bold; }
+        #status.erro { background: #ffebee; border-left-color: #d32f2f; color: #b71c1c; }
+        #status.sucesso { background: #e8f5e9; border-left-color: #2e7d32; color: #1b5e20; }
+        .table-wrapper { overflow-x: auto; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th { background: #f5f5f5; padding: 8px 10px; text-align: left; border-bottom: 2px solid #e0e0e0; position: sticky; top: 0; z-index: 10; white-space: nowrap; }
+        td { padding: 6px 10px; border-bottom: 1px solid #f0f0f0; }
+        tr:hover { background: #fafafa; }
+        .valor-encontrado { color: #2e7d32; }
+        .valor-nao-encontrado { color: #999; font-style: italic; }
+        .resumo { display: flex; gap: 20px; flex-wrap: wrap; margin: 15px 0; padding: 12px 16px; background: #f9f9f9; border-radius: 6px; font-size: 13px; color: #555; }
+        .resumo span { font-weight: bold; }
+        #log { background: #1e1e1e; color: #d4d4d4; padding: 15px; font-family: Consolas, monospace; font-size: 12px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; margin-top: 20px; border-radius: 6px; }
+        .log-info { color: #4fc3f7; }
+        .log-sucesso { color: #81c784; }
+        .log-erro { color: #e57373; }
+        .log-destaque { color: #ffb74d; }
+        .coluna-fiis { background: #e3f2fd; font-weight: 600; }
+        .coluna-vaZia { color: #f44336; font-weight: 600; }
+        .coluna-preenchida { color: #2e7d32; font-weight: 600; }
+        .diff { font-size: 10px; color: #666; margin-left: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Simular atualizarfiis.js (sem gravar)</h1>
+        <p>Este diagnóstico executa a mesma lógica do <code>atualizarfiis.js</code>, mas <strong>não grava no CSV</strong>. Ele mostra na tela os dados que seriam salvos.</p>
+
+        <div class="controles">
+            <button id="btnTestar">🚀 Executar simulação</button>
+            <span style="font-size: 12px; color: #666;">Processa todos os FIIs do CSV e exibe os resultados</span>
+        </div>
+
+        <div id="status">Aguardando...</div>
+
+        <div id="resultado-container">
+            <p style="color: #999;">Clique em "Executar simulação" para começar.</p>
+        </div>
+
+        <div id="log">📋 Aguardando execução...</div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "./scrapingfiis.js": "./scrapingfiis.js",
+                "./atualizarfiis.js": "./atualizarfiis.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        // ============================================================
+        // IMPORTA A FUNÇÃO PRINCIPAL E O MAPEAMENTO
+        // ============================================================
+        import { scrapingFIIs } from './scrapingfiis.js';
+        import { atualizarFIIs } from './atualizarfiis.js';
+
+        // ============================================================
+        // CONFIGURAÇÃO
+        // ============================================================
+        const ARQUIVO_CSV =
+            "https://raw.githubusercontent.com/mec4tronico/FinancasOnline/main/" +
+            "patrimonio_consolidado.csv";
+
+        // ============================================================
+        // MAPEAMENTO (copiado do atualizarfiis.js para referência)
+        // ============================================================
+        const MAPEAMENTO = {
+            "Valor Patrimonial por Cota": "ValorPatrimonialPorCota",
+            "Val. Patrimonial P/Cota": "ValorPatrimonialPorCota",
+            "Val. patrimonial p/cota": "ValorPatrimonialPorCota",
+            "Valor Patrimonial P/Cota": "ValorPatrimonialPorCota",
+            "Valor Patrimonial por cota": "ValorPatrimonialPorCota",
+            "P/VP": "PVP",
+            "Valor em Caixa": "ValorEmCaixa",
+            "Valor em caixa": "ValorEmCaixa",
+            "Valor Em Caixa": "ValorEmCaixa",
+            "DY CAGR (3 anos)": "DYCAGR3Anos",
+            "DYCAGR3Anos": "DYCAGR3Anos",
+            "Nº de Cotistas": "NumeroCotistas",
+            "N. de Cotistas": "NumeroCotistas",
+            "Numero de Cotistas": "NumeroCotistas",
+            "Número de Cotistas": "NumeroCotistas",
+            "Rendimento Mensal Médio (24M)": "RendimentoMensalMedio24M",
+            "Rendimento Mensal Médio": "RendimentoMensalMedio24M",
+            "RENDIMENTO MENSAL MÉDIO (24M)": "RendimentoMensalMedio24M",
+            "Rendimento mensal médio (24M)": "RendimentoMensalMedio24M",
+            "Rendimento Médio (24M)": "RendimentoMensalMedio24M",
+            "Ano passado": "AnoPassado",
+            "Ano Passado": "AnoPassado",
+            "Ano atual": "AnoAtual",
+            "Ano Atual": "AnoAtual",
+            "Volume (dia)": "VolumeDia",
+            "Volume": "VolumeDia",
+            "VOLUME (dia)": "VolumeDia",
+            "Volume Dia": "VolumeDia",
+            "VOLUME DIA": "VolumeDia",
+            "Segmento ANBIMA": "SegmentoANBIMA",
+            "Segmento": "SegmentoANBIMA",
+            "Segmento Anbima": "SegmentoANBIMA",
+            "Valor CAGR (3 anos)": "ValorCAGR3Anos",
+            "Valor CAGR": "ValorCAGR3Anos",
+            "PARTICIPAÇÃO NO IFIX": "ParticipacaoIFIX",
+            "Participação no IFIX": "ParticipacaoIFIX",
+            "Provisionado": "Provisionado",
+            "TOMADOR (média)": "TomadorMedia",
+            "Tomador (média)": "TomadorMedia",
+            "DOADOR (média)": "DoadorMedia",
+            "Doador (média)": "DoadorMedia",
+            "Nº DE AÇÕES ALUGADAS (dia)": "NumeroAcoesAlugadasDia",
+            "Nº de Ações Alugadas (dia)": "NumeroAcoesAlugadasDia",
+            "Nº DE CONTRATOS": "NumeroContratos",
+            "Nº de Contratos": "NumeroContratos"
+        };
+
+        const logEl = document.getElementById('log');
+        const statusEl = document.getElementById('status');
+        const resultadoContainer = document.getElementById('resultado-container');
+
+        function adicionarLog(mensagem, tipo = 'info') {
+            const span = document.createElement('span');
+            span.className = `log-${tipo}`;
+            span.textContent = mensagem + '\n';
+            logEl.appendChild(span);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function limparLog() {
+            logEl.innerHTML = '';
+        }
+
+        function setStatus(mensagem, tipo = '') {
+            statusEl.textContent = mensagem;
+            statusEl.className = tipo;
+        }
+
+        // ============================================================
+        // FUNÇÕES PARA LER CSV
+        // ============================================================
+        function separarLinhaCSV(linha) {
+            const valores = [];
+            let valorAtual = "";
+            let dentroDeAspas = false;
+            for (let i = 0; i < linha.length; i++) {
+                const c = linha[i];
+                if (c === '"') {
+                    if (dentroDeAspas && linha[i + 1] === '"') {
+                        valorAtual += '"';
+                        i++;
+                    } else {
+                        dentroDeAspas = !dentroDeAspas;
+                    }
+                } else if (c === "," && !dentroDeAspas) {
+                    valores.push(valorAtual);
+                    valorAtual = "";
+                } else {
+                    valorAtual += c;
+                }
+            }
+            valores.push(valorAtual);
+            return valores;
+        }
+
+        function converterCSVParaObjetos(texto) {
+            const linhas = texto.trim().split(/\r?\n/);
+            if (linhas.length === 0 || !linhas[0].trim()) throw new Error("CSV vazio.");
+            const cabecalho = separarLinhaCSV(linhas[0]).map(v => v.trim());
+            const dados = [];
+            for (let i = 1; i < linhas.length; i++) {
+                if (!linhas[i].trim()) continue;
+                const valores = separarLinhaCSV(linhas[i]);
+                while (valores.length < cabecalho.length) valores.push("");
+                const registro = {};
+                for (let j = 0; j < cabecalho.length; j++) {
+                    registro[cabecalho[j]] = valores[j] || "";
+                }
+                dados.push(registro);
+            }
+            return { cabecalho, dados };
+        }
+
+        async function carregarCSV() {
+            const url = `${ARQUIVO_CSV}?atualizadoEm=${Date.now()}`;
+            const r = await fetch(url, { cache: "no-store" });
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            return converterCSVParaObjetos(await r.text());
+        }
+
+        // ============================================================
+        // FUNÇÃO PRINCIPAL: SIMULAR ATUALIZAR (SEM GRAVAR)
+        // ============================================================
+        async function executarSimulacao() {
+            const botao = document.getElementById('btnTestar');
+            botao.disabled = true;
+            botao.textContent = '⏳ Executando...';
+
+            limparLog();
+            setStatus('Carregando CSV...', '');
+            resultadoContainer.innerHTML = '<p style="color: #999;">Processando...</p>';
+
+            try {
+                // 1. Carregar CSV
+                adicionarLog('📂 Carregando CSV...', 'info');
+                const { cabecalho, dados } = await carregarCSV();
+                adicionarLog(`✅ CSV carregado: ${dados.length} ativos, ${cabecalho.length} colunas.`, 'sucesso');
+
+                // 2. Filtrar FIIs
+                const fiis = dados.filter(reg => reg.Tipo && reg.Tipo.trim().toLowerCase() === "fii");
+                if (fiis.length === 0) {
+                    setStatus('Nenhum FII encontrado.', 'erro');
+                    adicionarLog('⚠️ Nenhum FII encontrado no CSV.', 'erro');
+                    botao.disabled = false;
+                    botao.textContent = '🚀 Executar simulação';
+                    return;
+                }
+                adicionarLog(`📂 ${fiis.length} FII(s) encontrados.`, 'destaque');
+                setStatus(`🔄 Processando ${fiis.length} FII(s)...`, '');
+
+                // 3. Identificar colunas de FIIs
+                const COLUNAS_ORIGINAIS = [
+                    "Ativo", "Tipo", "Quantidade", "TotalInvestido", "DataPrimeiraCompra",
+                    "DataAtualizacao", "ValorAtual", "Min52", "Max52", "DY", "Valorizacao",
+                    "ValorAtualPosicao", "LucroPrejuizo", "Rentabilidade", "PesoCarteira",
+                    "RendaAnualEstimada", "RendaMensalEstimada", "ValorPosicaoMax52",
+                    "ValorPosicaoMin52", "PotencialFinanceiroMax52", "RiscoFinanceiroMin52"
+                ];
+                const COLUNAS_ACOES = [
+                    "Setor", "Subsetor", "Segmento", "ParticipacaoIndices", "FreeFloat",
+                    "VolumeDia", "ValorMercado", "ValorFirma", "PartIBOV", "Ativos", "DividaLiquida"
+                ];
+                const colunasFIIs = cabecalho.filter(coluna =>
+                    !COLUNAS_ORIGINAIS.includes(coluna) &&
+                    !COLUNAS_ACOES.includes(coluna)
+                );
+
+                adicionarLog(`📋 Colunas de FIIs identificadas: ${colunasFIIs.length}`, 'info');
+                if (colunasFIIs.length > 0) {
+                    adicionarLog(`  ${colunasFIIs.join(', ')}`, 'info');
+                }
+
+                // 4. Processar cada FII (SIMULAÇÃO)
+                const resultados = [];
+                let sucessos = 0;
+                let erros = 0;
+
+                for (let i = 0; i < fiis.length; i++) {
+                    const registro = fiis[i];
+                    const ticker = registro.Ativo;
+
+                    adicionarLog(`\n🔍 [${i+1}/${fiis.length}] Processando ${ticker}...`, 'destaque');
+                    setStatus(`🔄 ${ticker} (${i+1}/${fiis.length})...`, '');
+
+                    try {
+                        // 4a. Chamar scraping
+                        const dadosScraping = await scrapingFIIs(ticker);
+
+                        if (dadosScraping.erroDiagnostico) {
+                            adicionarLog(`   ❌ Erro no scraping: ${dadosScraping.erroDiagnostico}`, 'erro');
+                            erros++;
+                            resultados.push({ ticker, erro: dadosScraping.erroDiagnostico, dados: {} });
+                            continue;
+                        }
+
+                        // 4b. Criar um clone do registro para simular a atualização
+                        const registroSimulado = { ...registro };
+                        let indicadoresEncontrados = 0;
+                        const mapeados = [];
+
+                        // 4c. Aplicar o mapeamento
+                        for (const [tituloSite, valor] of Object.entries(dadosScraping.indicadores)) {
+                            const nomeColuna = MAPEAMENTO[tituloSite];
+                            if (nomeColuna && valor && valor !== "ERRO" && valor !== "VAZIO") {
+                                if (cabecalho.includes(nomeColuna)) {
+                                    registroSimulado[nomeColuna] = valor;
+                                    indicadoresEncontrados++;
+                                    mapeados.push({ tituloSite, nomeColuna, valor });
+                                }
+                            }
+                        }
+
+                        sucessos++;
+                        adicionarLog(`   ✅ ${indicadoresEncontrados} indicadores mapeados.`, 'sucesso');
+                        resultados.push({
+                            ticker,
+                            dados: registroSimulado,
+                            mapeados,
+                            indicadoresEncontrados,
+                            totalIndicadores: Object.keys(dadosScraping.indicadores).length
+                        });
+
+                    } catch (erro) {
+                        adicionarLog(`   ❌ Erro: ${erro.message}`, 'erro');
+                        erros++;
+                        resultados.push({ ticker, erro: erro.message, dados: {} });
+                    }
+                }
+
+                // 5. Renderizar resultados
+                adicionarLog(`\n📊 RESUMO: ${sucessos} sucessos, ${erros} erros.`, 'destaque');
+                setStatus(`✅ Simulação concluída! ${sucessos} sucessos, ${erros} erros.`, 'sucesso');
+
+                renderizarResultados(resultados, colunasFIIs, cabecalho);
+
+            } catch (erro) {
+                console.error(erro);
+                setStatus(`❌ Erro: ${erro.message}`, 'erro');
+                adicionarLog(`❌ ERRO GERAL: ${erro.message}`, 'erro');
+                resultadoContainer.innerHTML = `<p style="color: #d32f2f;">❌ Erro ao executar: ${erro.message}</p>`;
+            }
+
+            botao.disabled = false;
+            botao.textContent = '🚀 Executar simulação';
+        }
+
+        // ============================================================
+        // RENDERIZAR RESULTADOS
+        // ============================================================
+        function renderizarResultados(resultados, colunasFIIs, cabecalho) {
+            if (resultados.length === 0) {
+                resultadoContainer.innerHTML = `<p style="color: #999;">Nenhum resultado para exibir.</p>`;
+                return;
+            }
+
+            // Verificar quais colunas de FIIs existem no cabeçalho
+            const colunasExistentes = colunasFIIs.filter(c => cabecalho.includes(c));
+
+            // Construir tabela
+            let html = `
+                <div class="resumo">
+                    <span>📊 <strong>${resultados.length}</strong> FII(s) processados</span>
+                    <span>📈 Colunas de FIIs: <strong>${colunasExistentes.length}</strong></span>
+                    <span>🔄 Simulação sem gravação</span>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="min-width: 80px; position: sticky; left: 0; z-index: 20; background: #f5f5f5;">FII</th>
+                                ${colunasExistentes.map(col => `<th>${col}</th>`).join('')}
+                                <th style="min-width: 60px;">Mapeados</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            for (const item of resultados) {
+                const dados = item.dados || {};
+                html += `<tr>`;
+                html += `<td style="font-weight: 600; color: #00598a; position: sticky; left: 0; z-index: 5; background: #fff;">${item.ticker}</td>`;
+
+                // Para cada coluna de FII, mostra o valor (se existir) ou '-' 
+                let preenchidos = 0;
+                for (const coluna of colunasExistentes) {
+                    const valor = dados[coluna] || '-';
+                    const isPreenchido = valor !== '-' && valor !== 'ERRO' && valor !== 'VAZIO';
+                    if (isPreenchido) preenchidos++;
+                    const classe = isPreenchido ? 'valor-encontrado' : 'valor-nao-encontrado';
+                    html += `<td class="${classe}">${valor}</td>`;
+                }
+
+                // Coluna de contagem
+                const totalMapeados = item.mapeados ? item.mapeados.length : 0;
+                const cor = totalMapeados > 0 ? '#2e7d32' : '#999';
+                html += `<td style="text-align: center; color: ${cor}; font-weight: ${totalMapeados > 0 ? 'bold' : 'normal'};">${totalMapeados}</td>`;
+                html += `</tr>`;
+            }
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top: 10px; font-size: 11px; color: #999;">
+                    ✅ Valores em <span style="color: #2e7d32;">verde</span> seriam salvos no CSV. 
+                    ⚪ Valores em <span style="color: #999;">cinza</span> ficariam vazios.
+                </div>
+                <div style="margin-top: 8px; padding: 10px; background: #e3f2fd; border-radius: 6px; font-size: 12px; color: #0d47a1; border: 1px solid #90caf9;">
+                    <strong>💡 Interpretação:</strong><br>
+                    • Se a tabela mostrar valores em <span style="color: #2e7d32; font-weight: bold;">verde</span> → O <strong>mapeamento e a lógica de preenchimento estão corretos</strong>. O problema está na <strong>gravação do CSV</strong> (Worker ou permissões).<br>
+                    • Se a tabela mostrar <span style="color: #999; font-weight: bold;">cinza</span> → O problema está no <strong>mapeamento</strong> ou na <strong>lógica de preenchimento</strong>.
+                </div>
+            `;
+
+            resultadoContainer.innerHTML = html;
+        }
+
+        // ============================================================
+        // EVENTOS
+        // ============================================================
+        document.getElementById('btnTestar').addEventListener('click', executarSimulacao);
+
+        // Carregar automático ao abrir
+        setTimeout(executarSimulacao, 500);
+    </script>
+</body>
+</html>
