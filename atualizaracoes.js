@@ -1,6 +1,6 @@
 // ============================================================
 // atualizaracoes.js
-// Atualiza APENAS as colunas exclusivas de AÇÕES (colunas 27-44)
+// Atualiza DINAMICAMENTE as colunas de AÇÕES
 // ============================================================
 
 import { scrapingAcoes } from "./scrapingacoes.js";
@@ -17,32 +17,7 @@ const URL_WORKER_CSV =
     "https://financasonline-csv.augusto-gouveia2000.workers.dev/";
 
 // ============================================================
-// COLUNAS EXCLUSIVAS DE AÇÕES (colunas 27 a 44)
-// ============================================================
-
-const COLUNAS_ACOES = [
-    "PL",
-    "PVP",
-    "LiquidezMediaDiaria",
-    "EVEBITDA",
-    "DividaLiquidaPL",
-    "LiquidezCorrente",
-    "MargemEBITDA",
-    "ValorFirma",
-    "ROE",
-    "ROIC",
-    "ROA",
-    "MargemLiquida",
-    "MargemBruta",
-    "DYPayout",
-    "CrescimentoReceita",
-    "CrescimentoLucro",
-    "DividaBrutaPL",
-    "CoberturaJuros"
-];
-
-// ============================================================
-// FUNÇÕES AUXILIARES (reutilizadas do atualizar.js)
+// FUNÇÕES AUXILIARES
 // ============================================================
 
 function separarLinhaCSV(linha) {
@@ -118,13 +93,6 @@ function converterCSVParaPatrimonio(texto) {
 
     const cabecalho = separarLinhaCSV(linhas[0]).map(valor => valor.trim());
 
-    // Valida se as colunas de ações existem
-    for (const coluna of COLUNAS_ACOES) {
-        if (!cabecalho.includes(coluna)) {
-            console.warn(`ATENÇÃO: Coluna "${coluna}" não encontrada no CSV. Será ignorada.`);
-        }
-    }
-
     const dados = [];
     for (let indice = 1; indice < linhas.length; indice++) {
         if (!linhas[indice].trim()) continue;
@@ -179,28 +147,20 @@ async function gravarPatrimonioNoWorker(patrimonio, cabecalho) {
 }
 
 // ============================================================
-// VALIDAR RESULTADO DO SCRAPING
+// VALIDAR RESULTADO DO SCRAPING (Dinâmico)
 // ============================================================
 
 function dadosScrapingValidos(dados) {
     if (!dados) return false;
-
-    // Verifica se o PL foi encontrado (indicador principal)
-    const pl = dados.pl;
-    if (
-        pl === undefined ||
-        pl === null ||
-        (typeof pl === "string" && pl.trim() === "") ||
-        (typeof pl === "string" && pl.trim().toUpperCase() === "ERRO")
-    ) {
-        return false;
-    }
-
-    return true;
+    // Verifica se pelo menos um indicador foi encontrado
+    const temAlgumDado = Object.values(dados).some(valor => 
+        valor && valor !== "ERRO" && valor !== "VAZIO"
+    );
+    return temAlgumDado;
 }
 
 // ============================================================
-// FUNÇÃO PRINCIPAL: ATUALIZAR AÇÕES
+// FUNÇÃO PRINCIPAL: ATUALIZAR AÇÕES (DINÂMICA)
 // ============================================================
 
 async function atualizarAcoes(opcoes = {}) {
@@ -229,12 +189,40 @@ async function atualizarAcoes(opcoes = {}) {
     let erros = 0;
 
     onProgress("========================================");
-    onProgress("ATUALIZAÇÃO DE AÇÕES");
+    onProgress("ATUALIZAÇÃO DE AÇÕES (DINÂMICA)");
     onProgress("========================================");
     onProgress(`Total de ações: ${total}`);
 
     // --------------------------------------------------------
-    // 3. PROCESSAR CADA AÇÃO
+    // 3. IDENTIFICAR QUAIS COLUNAS DO CSV SÃO DE AÇÕES
+    // --------------------------------------------------------
+    // Definição das colunas que são de Ações (excluindo as originais 1-21)
+    const COLUNAS_ORIGINAIS = [
+        "Ativo", "Tipo", "Quantidade", "TotalInvestido", "DataPrimeiraCompra",
+        "DataAtualizacao", "ValorAtual", "Min52", "Max52", "DY", "Valorizacao",
+        "ValorAtualPosicao", "LucroPrejuizo", "Rentabilidade", "PesoCarteira",
+        "RendaAnualEstimada", "RendaMensalEstimada", "ValorPosicaoMax52",
+        "ValorPosicaoMin52", "PotencialFinanceiroMax52", "RiscoFinanceiroMin52"
+    ];
+
+    // Colunas de FIIs (não devem ser alteradas pelo atualizador de Ações)
+    const COLUNAS_FIIS = [
+        "ValorPatrimonialPorCota", "PVP", "ValorEmCaixa", "DYCAGR3Anos",
+        "NumeroCotistas", "RendimentoMensalMedio24M", "AnoPassado", "AnoAtual",
+        "VolumeDia", "SegmentoANBIMA"
+    ];
+
+    // Colunas de Ações (tudo que não é original nem FII)
+    const colunasAcoes = cabecalho.filter(coluna => 
+        !COLUNAS_ORIGINAIS.includes(coluna) && 
+        !COLUNAS_FIIS.includes(coluna)
+    );
+
+    onProgress(`Colunas de Ações identificadas: ${colunasAcoes.length}`);
+    onProgress(`  ${colunasAcoes.join(', ')}`);
+
+    // --------------------------------------------------------
+    // 4. PROCESSAR CADA AÇÃO
     // --------------------------------------------------------
     for (let indice = 0; indice < total; indice++) {
         const registro = acoes[indice];
@@ -254,47 +242,32 @@ async function atualizarAcoes(opcoes = {}) {
             // ------------------------------------------------
             if (!dadosScrapingValidos(dados)) {
                 erros++;
-                onProgress(`Resultado: ERRO (PL não encontrado)`);
+                onProgress("Resultado: ERRO (Nenhum indicador encontrado)");
                 onProgress("Dados anteriores mantidos.");
                 continue;
             }
 
             // ------------------------------------------------
-            // ATUALIZAR APENAS AS COLUNAS DE AÇÕES
+            // ATUALIZAR DINAMICAMENTE AS COLUNAS DE AÇÕES
             // ------------------------------------------------
             const dataAtualizacao = formatarDataAtualizacao();
             registro.DataAtualizacao = dataAtualizacao;
 
-            // Mapear os campos do scraping para as colunas do CSV
-            const mapeamento = {
-                pl: "PL",
-                pvp: "PVP",
-                liquidezMediaDiaria: "LiquidezMediaDiaria",
-                evebitda: "EVEBITDA",
-                dividaLiquidaPL: "DividaLiquidaPL",
-                liquidezCorrente: "LiquidezCorrente",
-                margemEBITDA: "MargemEBITDA",
-                valorFirma: "ValorFirma",
-                roe: "ROE",
-                roic: "ROIC",
-                roa: "ROA",
-                margemLiquida: "MargemLiquida",
-                margemBruta: "MargemBruta",
-                dyPayout: "DYPayout",
-                crescimentoReceita: "CrescimentoReceita",
-                crescimentoLucro: "CrescimentoLucro",
-                dividaBrutaPL: "DividaBrutaPL",
-                coberturaJuros: "CoberturaJuros"
-            };
+            let indicadoresEncontrados = 0;
 
-            for (const [campoScraping, colunaCSV] of Object.entries(mapeamento)) {
-                if (dados[campoScraping] && dados[campoScraping] !== "ERRO") {
-                    registro[colunaCSV] = dados[campoScraping];
+            // Para cada coluna de ação no CSV, verifica se o scraping retornou um valor
+            for (const coluna of colunasAcoes) {
+                // Converte o nome da coluna para o formato usado no scraping (camelCase)
+                const campoScraping = coluna.charAt(0).toLowerCase() + coluna.slice(1);
+                
+                if (dados[campoScraping] && dados[campoScraping] !== "ERRO" && dados[campoScraping] !== "VAZIO") {
+                    registro[coluna] = dados[campoScraping];
+                    indicadoresEncontrados++;
                 }
             }
 
             atualizados++;
-            onProgress(`Resultado: OK (${dados.diagnostico?.encontrados || 0}/18 indicadores)`);
+            onProgress(`Resultado: OK (${indicadoresEncontrados}/${colunasAcoes.length} indicadores)`);
 
         } catch (erro) {
             console.error(`Erro no scraping de ${ticker}:`, erro);
@@ -305,7 +278,7 @@ async function atualizarAcoes(opcoes = {}) {
     }
 
     // --------------------------------------------------------
-    // 4. GRAVAR CSV
+    // 5. GRAVAR CSV
     // --------------------------------------------------------
     onProgress("");
     onProgress("Gravando patrimonio_consolidado.csv...");
@@ -313,7 +286,7 @@ async function atualizarAcoes(opcoes = {}) {
     const respostaGravacao = await gravarPatrimonioNoWorker(patrimonio, cabecalho);
 
     // --------------------------------------------------------
-    // 5. RESUMO
+    // 6. RESUMO
     // --------------------------------------------------------
     onProgress("");
     onProgress("========================================");
