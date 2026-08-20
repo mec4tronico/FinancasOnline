@@ -1,6 +1,6 @@
 // ============================================================
 // atualizaracoes.js
-// Atualiza DINAMICAMENTE as colunas de AÇÕES
+// Atualiza as colunas de AÇÕES usando mapeamento dinâmico
 // ============================================================
 
 import { scrapingAcoes } from "./scrapingacoes.js";
@@ -15,6 +15,45 @@ const ARQUIVO_CSV =
 
 const URL_WORKER_CSV =
     "https://financasonline-csv.augusto-gouveia2000.workers.dev/";
+
+// ============================================================
+// MAPEAMENTO: Títulos do StatusInvest → Colunas do CSV
+// ============================================================
+
+const MAPEAMENTO = {
+    // Indicadores básicos (já existentes)
+    "Valor atual": "ValorAtual",
+    "Min. 52 semanas": "Min52",
+    "Máx. 52 semanas": "Max52",
+    "Dividend Yield": "DY",
+    "Valorização (12m)": "Valorizacao",
+    
+    // Novos indicadores (extraídos do scraping)
+    "Volume (dia)": "VolumeDia",
+    "Valor de mercado": "ValorMercado",
+    "Valor de firma": "ValorFirma",
+    "PART. IBOV": "PartIBOV",
+    "Ativos": "Ativos",
+    "Dívida líquida": "DividaLiquida",
+    "Free Float": "FreeFloat",
+    
+    // Classificação setorial
+    "Setor": "Setor",
+    "Subsetor": "Subsetor",
+    "Segmento": "Segmento",
+    "Participação em Índices": "ParticipacaoIndices",
+    
+    // Outros (caso apareçam)
+    "Nº total de papéis": "NumeroPapeis",
+    "Segmento de listagem": "SegmentoListagem",
+    "TOMADOR (média)": "TomadorMedia",
+    "DOADOR (média)": "DoadorMedia",
+    "Nº DE AÇÕES ALUGADAS (dia)": "AcoesAlugadasDia",
+    "Nº DE CONTRATOS": "NumeroContratos",
+    "Ano passado": "AnoPassado",
+    "Ano atual": "AnoAtual",
+    "Provisionado": "Provisionado"
+};
 
 // ============================================================
 // FUNÇÕES AUXILIARES
@@ -147,20 +186,21 @@ async function gravarPatrimonioNoWorker(patrimonio, cabecalho) {
 }
 
 // ============================================================
-// VALIDAR RESULTADO DO SCRAPING (Dinâmico)
+// VALIDAR RESULTADO DO SCRAPING
 // ============================================================
 
 function dadosScrapingValidos(dados) {
-    if (!dados) return false;
+    if (!dados || !dados.indicadores) return false;
+    
     // Verifica se pelo menos um indicador foi encontrado
-    const temAlgumDado = Object.values(dados).some(valor => 
+    const temAlgumDado = Object.values(dados.indicadores).some(valor => 
         valor && valor !== "ERRO" && valor !== "VAZIO"
     );
     return temAlgumDado;
 }
 
 // ============================================================
-// FUNÇÃO PRINCIPAL: ATUALIZAR AÇÕES (DINÂMICA)
+// FUNÇÃO PRINCIPAL: ATUALIZAR AÇÕES
 // ============================================================
 
 async function atualizarAcoes(opcoes = {}) {
@@ -189,40 +229,12 @@ async function atualizarAcoes(opcoes = {}) {
     let erros = 0;
 
     onProgress("========================================");
-    onProgress("ATUALIZAÇÃO DE AÇÕES (DINÂMICA)");
+    onProgress("ATUALIZAÇÃO DE AÇÕES");
     onProgress("========================================");
     onProgress(`Total de ações: ${total}`);
 
     // --------------------------------------------------------
-    // 3. IDENTIFICAR QUAIS COLUNAS DO CSV SÃO DE AÇÕES
-    // --------------------------------------------------------
-    // Definição das colunas que são de Ações (excluindo as originais 1-21)
-    const COLUNAS_ORIGINAIS = [
-        "Ativo", "Tipo", "Quantidade", "TotalInvestido", "DataPrimeiraCompra",
-        "DataAtualizacao", "ValorAtual", "Min52", "Max52", "DY", "Valorizacao",
-        "ValorAtualPosicao", "LucroPrejuizo", "Rentabilidade", "PesoCarteira",
-        "RendaAnualEstimada", "RendaMensalEstimada", "ValorPosicaoMax52",
-        "ValorPosicaoMin52", "PotencialFinanceiroMax52", "RiscoFinanceiroMin52"
-    ];
-
-    // Colunas de FIIs (não devem ser alteradas pelo atualizador de Ações)
-    const COLUNAS_FIIS = [
-        "ValorPatrimonialPorCota", "PVP", "ValorEmCaixa", "DYCAGR3Anos",
-        "NumeroCotistas", "RendimentoMensalMedio24M", "AnoPassado", "AnoAtual",
-        "VolumeDia", "SegmentoANBIMA"
-    ];
-
-    // Colunas de Ações (tudo que não é original nem FII)
-    const colunasAcoes = cabecalho.filter(coluna => 
-        !COLUNAS_ORIGINAIS.includes(coluna) && 
-        !COLUNAS_FIIS.includes(coluna)
-    );
-
-    onProgress(`Colunas de Ações identificadas: ${colunasAcoes.length}`);
-    onProgress(`  ${colunasAcoes.join(', ')}`);
-
-    // --------------------------------------------------------
-    // 4. PROCESSAR CADA AÇÃO
+    // 3. PROCESSAR CADA AÇÃO
     // --------------------------------------------------------
     for (let indice = 0; indice < total; indice++) {
         const registro = acoes[indice];
@@ -248,26 +260,28 @@ async function atualizarAcoes(opcoes = {}) {
             }
 
             // ------------------------------------------------
-            // ATUALIZAR DINAMICAMENTE AS COLUNAS DE AÇÕES
+            // ATUALIZAR AS COLUNAS USANDO O MAPEAMENTO
             // ------------------------------------------------
             const dataAtualizacao = formatarDataAtualizacao();
             registro.DataAtualizacao = dataAtualizacao;
 
             let indicadoresEncontrados = 0;
 
-            // Para cada coluna de ação no CSV, verifica se o scraping retornou um valor
-            for (const coluna of colunasAcoes) {
-                // Converte o nome da coluna para o formato usado no scraping (camelCase)
-                const campoScraping = coluna.charAt(0).toLowerCase() + coluna.slice(1);
-                
-                if (dados[campoScraping] && dados[campoScraping] !== "ERRO" && dados[campoScraping] !== "VAZIO") {
-                    registro[coluna] = dados[campoScraping];
-                    indicadoresEncontrados++;
+            // Percorre todos os indicadores retornados pelo scraping
+            for (const [tituloSite, valor] of Object.entries(dados.indicadores)) {
+                // Verifica se o título está no mapeamento
+                const nomeColuna = MAPEAMENTO[tituloSite];
+                if (nomeColuna && valor && valor !== "ERRO" && valor !== "VAZIO") {
+                    // Verifica se a coluna existe no cabeçalho do CSV
+                    if (cabecalho.includes(nomeColuna)) {
+                        registro[nomeColuna] = valor;
+                        indicadoresEncontrados++;
+                    }
                 }
             }
 
             atualizados++;
-            onProgress(`Resultado: OK (${indicadoresEncontrados}/${colunasAcoes.length} indicadores)`);
+            onProgress(`Resultado: OK (${indicadoresEncontrados} indicadores atualizados)`);
 
         } catch (erro) {
             console.error(`Erro no scraping de ${ticker}:`, erro);
@@ -278,7 +292,7 @@ async function atualizarAcoes(opcoes = {}) {
     }
 
     // --------------------------------------------------------
-    // 5. GRAVAR CSV
+    // 4. GRAVAR CSV
     // --------------------------------------------------------
     onProgress("");
     onProgress("Gravando patrimonio_consolidado.csv...");
@@ -286,7 +300,7 @@ async function atualizarAcoes(opcoes = {}) {
     const respostaGravacao = await gravarPatrimonioNoWorker(patrimonio, cabecalho);
 
     // --------------------------------------------------------
-    // 6. RESUMO
+    // 5. RESUMO
     // --------------------------------------------------------
     onProgress("");
     onProgress("========================================");
